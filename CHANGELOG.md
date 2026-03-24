@@ -5,6 +5,12 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-03-24
+### Added
+- **Countries Management**: Implemented a complete management system for countries (`name`, `code`, `phone_code`).
+- **Database**: Created the `countries` table with `status` enum support and seeded it with initial country data.
+- **API**: Established full CRUD endpoints with advanced filtering and nested JSON:API-style responses.
+
 ## [1.4.0] - 2026-03-24
 ### Added
 - **Password Reset**: Implemented a new `POST /api/users/:uuid/reset-password` endpoint.

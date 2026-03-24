@@ -163,7 +163,51 @@ This document provides a comprehensive reference for all Node.js backend API end
 
 ---
 
-## 2. Global Response Standard
+## 2. Countries
+
+### 2.1 List Countries
+**Endpoint**: `GET /api/countries`  
+**Description**: Retrieve a list of countries with filtering and sorting.
+
+#### Query Parameters
+| Parameter | Type | Description | Example |
+| :--- | :--- | :--- | :--- |
+| `filter[name]` | `string` | Partial match search by name | `?filter[name]=Ind` |
+| `filter[code]` | `string` | Search by ISO code | `?filter[code]=IN` |
+| `filter[phone_code]`| `string` | Search by telephone code | `?filter[phone_code]=+91` |
+| `sort` | `string` | Sort fields (`name`, `code`, `createdAt`) | `?sort=-name` |
+
+#### Example Response
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Countries retrieved successfully",
+  "data": [
+    {
+      "id": "uuid",
+      "type": "country",
+      "attributes": {
+        "name": "India",
+        "code": "IN",
+        "phone_code": "+91",
+        "status": "active"
+      },
+      "meta": {
+        "createdAt": "2026-03-24T14:15:00.000Z",
+        "updatedAt": "2026-03-24T14:15:00.000Z"
+      },
+      "links": {
+        "self": "/api/countries/uuid"
+      }
+    }
+  ]
+}
+```
+
+---
+
+## 3. Global Response Standard
 
 All endpoints follow this structure:
 - **`success`**: `boolean` indicating business logic success.

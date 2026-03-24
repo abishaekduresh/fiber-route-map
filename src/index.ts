@@ -7,6 +7,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { versionCheck } from './middleware/versionCheck.js';
 import { requestId } from './middleware/requestId.js';
 import userRoutes from './routes/userRoutes.js';
+import countryRoutes from './routes/countryRoutes.js';
 import logger from './utils/logger.js';
 
 const app = express();
@@ -24,6 +25,7 @@ app.use(versionCheck);
 
 // Routes
 app.use('/api/users', userRoutes);
+app.use('/api/countries', countryRoutes);
 
 // Root route
 app.get('/', (req: express.Request, res: express.Response) => {
