@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserService } from '../services/UserService.js';
+import { nowDb } from '../utils/time.js';
 import { z } from 'zod';
 
 const userSchema = z.object({
@@ -59,7 +60,7 @@ export class UserController {
         code: 200,
         message: 'Users retrieved successfully',
         data: users,
-        meta: { timestamp: new Date().toISOString(), version: 'v1' }
+        meta: { timestamp: nowDb(), version: 'v1' }
       });
     } catch (error) {
       next(error);
@@ -78,7 +79,7 @@ export class UserController {
         code: 201,
         message: 'User created successfully',
         data: user,
-        meta: { timestamp: new Date().toISOString(), version: 'v1' }
+        meta: { timestamp: nowDb(), version: 'v1' }
       });
     } catch (error) {
       next(error);
@@ -93,7 +94,7 @@ export class UserController {
         code: 200,
         message: 'User retrieved successfully',
         data: user,
-        meta: { timestamp: new Date().toISOString(), version: 'v1' }
+        meta: { timestamp: nowDb(), version: 'v1' }
       });
     } catch (error) {
       next(error);
@@ -110,7 +111,7 @@ export class UserController {
         code: 200,
         message: 'User updated successfully',
         data: user,
-        meta: { timestamp: new Date().toISOString(), version: 'v1' }
+        meta: { timestamp: nowDb(), version: 'v1' }
       });
     } catch (error) {
       next(error);
@@ -126,7 +127,7 @@ export class UserController {
         error: false,
         code: 200,
         message: 'User deleted successfully',
-        meta: { timestamp: new Date().toISOString(), version: 'v1' }
+        meta: { timestamp: nowDb(), version: 'v1' }
       });
     } catch (error) {
       next(error);
@@ -141,7 +142,7 @@ export class UserController {
         code: 200,
         message: 'User blocked successfully',
         data: user,
-        meta: { timestamp: new Date().toISOString(), version: 'v1' }
+        meta: { timestamp: nowDb(), version: 'v1' }
       });
     } catch (error) {
       next(error);
@@ -156,7 +157,7 @@ export class UserController {
         code: 200,
         message: 'User activated successfully',
         data: user,
-        meta: { timestamp: new Date().toISOString(), version: 'v1' }
+        meta: { timestamp: nowDb(), version: 'v1' }
       });
     } catch (error) {
       next(error);

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { nowDb } from '../utils/time.js';
 import logger from '../utils/logger.js';
 
 const getHelpMessage = (status: number, message: string): string => {
@@ -58,7 +59,7 @@ export const errorHandler = (
     message,
     help: getHelpMessage(status, message),
     meta: {
-      timestamp: new Date().toISOString(),
+      timestamp: nowDb(),
       version: 'v1'
     },
     ...(process.env.NODE_ENV === 'development' && status >= 500 && { stack: err.stack }),
