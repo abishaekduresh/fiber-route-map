@@ -5,6 +5,10 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.5] - 2026-03-24
+### Fixed
+- **Knex Typings**: Fixed "Could not find a declaration file for module 'knex'" error in `database.ts` caused by `NodeNext` resolution rules.
+
 ## [1.1.4] - 2026-03-24
 ### Changed
 - **UTC Timestamps**: Reverted the entire application to the standard UTC ISO-8601 format for all timestamps.

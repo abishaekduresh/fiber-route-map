@@ -1,4 +1,5 @@
-import knex from 'knex';
+// @ts-expect-error: Knex types for NodeNext are missing .d.mts but exports index.d.ts
+import { knex } from 'knex';
 import dotenv from 'dotenv';
 
 dotenv.config();
