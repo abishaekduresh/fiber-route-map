@@ -53,14 +53,28 @@ export class UserController {
   // GET /api/users
   index = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const users = await this.service.getAllUsers(req.query);
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) === -1 ? -1 : (Number(req.query.limit) || 10);
+      
+      const { users, total } = await this.service.getAllUsers({ ...req.query, page, limit });
+      const totalPages = limit === -1 ? 1 : Math.ceil(total / limit);
+
       // Success response following SKILL.md standards: error: false, code: 200
       res.json({
         error: false,
         code: 200,
         message: 'Users retrieved successfully',
         data: users,
-        meta: { timestamp: nowDb(), version: 'v1' }
+        meta: { 
+          pagination: {
+            total,
+            page,
+            limit,
+            totalPages
+          },
+          timestamp: nowDb(), 
+          version: 'v1' 
+        }
       });
     } catch (error) {
       next(error);

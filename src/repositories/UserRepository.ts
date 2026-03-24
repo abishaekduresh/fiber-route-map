@@ -28,9 +28,21 @@ export class UserRepository {
     return userWithoutInternalFields as User;
   }
 
-  async getAll(filters: { status?: string; name?: string; email?: string; phone?: string } = {}): Promise<User[]> {
-    let query = db(this.table).select('*');
+  async getAll(filters: { 
+    status?: string; 
+    name?: string; 
+    email?: string; 
+    phone?: string;
+    page?: number;
+    limit?: number;
+  } = {}): Promise<{ users: User[]; total: number }> {
+    const page = Number(filters.page) || 1;
+    const limit = Number(filters.limit) || 10;
+    const offset = (page - 1) * limit;
 
+    let query = db(this.table);
+
+    // Apply filters
     if (filters.status === 'all') {
       // No status filter
     } else if (filters.status && ['active', 'blocked', 'deleted'].includes(filters.status)) {
@@ -51,12 +63,25 @@ export class UserRepository {
       query = query.where('phone', 'like', `%${filters.phone}%`);
     }
 
-    const users = await query.orderBy('createdAt', 'desc');
+    // Get total count first
+    const countResult = await query.clone().count('* as total').first();
+    const total = Number(countResult?.total || 0);
+
+    // Get paginated results
+    let usersQuery = query.select('*').orderBy('createdAt', 'desc');
     
-    return users.map((user: any) => {
+    if (limit !== -1) {
+      usersQuery = usersQuery.limit(limit).offset(offset);
+    }
+    
+    const users = await usersQuery;
+    
+    const sanitizedUsers = users.map((user: any) => {
       const { id, password, ...userWithoutInternalFields } = user;
       return userWithoutInternalFields as User;
     });
+
+    return { users: sanitizedUsers, total };
   }
 
   async findByUuid(uuid: string): Promise<User | null> {

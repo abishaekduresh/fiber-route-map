@@ -30,7 +30,7 @@ export class UserService {
     });
   }
 
-  async getAllUsers(filters: any = {}): Promise<User[]> {
+  async getAllUsers(filters: any = {}): Promise<{ users: User[]; total: number }> {
     return this.repo.getAll(filters);
   }
 

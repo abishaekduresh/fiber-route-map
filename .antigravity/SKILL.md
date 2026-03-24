@@ -64,6 +64,11 @@ Error responses use `error: true` and `errorCode` representing the dynamic statu
 - **message**: human-readable summary.
 - **help**: **Dynamic** contextual guidance for developers/clients with specific remedies.
 - **data**: the primary response payload (success only). **Note**: Internal database `id` is never returned; use `uuid` for identification.
+- **meta.pagination**: Unified object for list endpoints:
+    - **total**: total records matching filters.
+    - **page**: current page number.
+    - **limit**: records per page (Set to `-1` to fetch all records).
+    - **totalPages**: total available pages (1 if limit is `-1`).
 
 ---
 
