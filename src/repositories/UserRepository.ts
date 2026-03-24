@@ -84,19 +84,27 @@ export class UserRepository {
     const total = Number(countResult?.total || 0);
 
     // Apply Sorting
+    const allowedSortFields = ['uuid', 'name', 'email', 'phone', 'status', 'createdAt', 'updatedAt'];
+    
     if (params.sort) {
       if (typeof params.sort === 'string') {
         const sortFields = String(params.sort).split(',');
         sortFields.forEach(sortField => {
           const desc = sortField.trim().startsWith('-');
           const field = desc ? sortField.trim().substring(1) : sortField.trim();
-          query = query.orderBy(field, desc ? 'desc' : 'asc');
+          
+          if (allowedSortFields.includes(field)) {
+            query = query.orderBy(field, desc ? 'desc' : 'asc');
+          }
         });
       } else if (typeof params.sort === 'object') {
         // Handle sort[field]=... or sort[order]=...
         const field = params.sort.field || 'createdAt';
         const order = params.sort.order || 'desc';
-        query = query.orderBy(field, order);
+        
+        if (allowedSortFields.includes(field)) {
+          query = query.orderBy(field, order);
+        }
       }
     } else {
       query = query.orderBy('createdAt', 'desc');
