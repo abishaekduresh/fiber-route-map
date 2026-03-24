@@ -1,12 +1,16 @@
 # Dependency directories
 node_modules/
+**/node_modules/
 
 # Environment variables
 .env
+**/.env
 
 # Build outputs
 dist/
+**/dist/
 build/
+**/build/
 
 # Logs
 *.log
@@ -19,5 +23,7 @@ yarn-error.log*
 .idea/
 .DS_Store
 
-# Temporary/Scripts
-scripts/*.js
+# OS related
+Thumbs.db
+ehthumbs.db
+desktop.ini
