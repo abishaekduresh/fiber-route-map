@@ -117,4 +117,33 @@ export class UserService {
     await this.repo.updateStatus(uuid, 'active');
     return this.getUserByUuid(uuid);
   }
+
+  async resetPassword(uuid: string, data: { password?: string; confirmPassword?: string }): Promise<User> {
+    const user = await this.getUserByUuid(uuid);
+    
+    if (user.status === 'deleted') {
+      const error = new Error('Cannot reset password for a deleted user');
+      (error as any).status = 400;
+      throw error;
+    }
+
+    const { password, confirmPassword } = data;
+
+    if (!password || !confirmPassword) {
+      const error = new Error('Password and confirmation are required');
+      (error as any).status = 400;
+      throw error;
+    }
+
+    if (password !== confirmPassword) {
+      const error = new Error('Passwords do not match');
+      (error as any).status = 400;
+      throw error;
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await this.repo.updatePassword(uuid, hashedPassword);
+
+    return this.getUserByUuid(uuid);
+  }
 }

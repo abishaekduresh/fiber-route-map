@@ -17,5 +17,6 @@ router.delete('/:uuid', userController.delete);
 
 router.post('/:uuid/block', userController.block);
 router.put('/:uuid/unblock', userController.unblock);
+router.post('/:uuid/reset-password', userController.resetPassword);
 
 export default router;

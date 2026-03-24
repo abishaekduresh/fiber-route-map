@@ -171,6 +171,17 @@ export class UserRepository {
     return result > 0;
   }
 
+  async updatePassword(uuid: string, password: string): Promise<boolean> {
+    const now = nowDb();
+    const result = await db(this.table)
+      .where('uuid', uuid)
+      .update({
+        password,
+        updatedAt: now,
+      });
+    return result > 0;
+  }
+
   async delete(uuid: string): Promise<boolean> {
     const now = nowDb();
     const result = await db(this.table)

@@ -125,6 +125,41 @@ This document provides a comprehensive reference for all Node.js backend API end
 | :--- | :--- | :--- | :--- |
 | **Block** | `POST` | `/api/users/:uuid/block` | Sets status to `blocked`. |
 | **Unblock** | `PUT` | `/api/users/:uuid/unblock` | Sets status back to `active`. |
+| **Reset Password** | `POST` | `/api/users/:uuid/reset-password` | Resets the user's password. |
+
+### 1.6 Reset Password
+**Endpoint**: `POST /api/users/:uuid/reset-password`  
+**Description**: Resets a user's password with confirmation validation.
+
+#### Request Body
+```json
+{
+  "password": "NewSecretPassword123",
+  "confirmPassword": "NewSecretPassword123"
+}
+```
+
+#### Example Response
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Password reset successfully",
+  "data": {
+    "id": "uuid",
+    "type": "user",
+    "attributes": { "email": "...", "name": "...", "phone": "...", "status": "active" },
+    "meta": { "createdAt": "...", "updatedAt": "..." },
+    "links": { "self": "/api/users/uuid" }
+  },
+  "meta": {
+    "requestId": "req_...",
+    "timestamp": "2026-03-24T12:00:00.000Z",
+    "version": "v1",
+    "action": "reset-password"
+  }
+}
+```
 
 ---
 

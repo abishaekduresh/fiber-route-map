@@ -292,4 +292,20 @@ export class UserController {
       next(error);
     }
   };
+
+  // POST /api/users/:uuid/reset-password
+  resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = await this.service.resetPassword(req.params.uuid as string, req.body);
+      res.json({
+        success: true,
+        statusCode: 200,
+        message: 'Password reset successfully',
+        data: this.transformUser(user),
+        meta: this.getMeta(req, {}, null, { action: 'reset-password' })
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
