@@ -73,10 +73,29 @@ export class UserController {
    * Extracts common metadata for the response.
    */
   private getMeta = (req: Request, extra = {}) => {
+    const filter = req.query.filter as any || {};
+    const status = req.query.status as string;
+    const appliedFilters = { ...filter };
+    if (status && !appliedFilters.status) {
+      appliedFilters.status = status;
+    }
+
+    const sortStr = req.query.sort as string || '-createdAt';
+    const sort = sortStr.split(',').map(s => {
+      const desc = s.trim().startsWith('-');
+      const field = desc ? s.trim().substring(1) : s.trim();
+      return {
+        field,
+        order: desc ? 'desc' : 'asc'
+      };
+    });
+
     return {
       requestId: (req as any).requestId,
       timestamp: new Date().toISOString(),
       version: 'v1',
+      filters: appliedFilters,
+      sort,
       ...extra
     };
   };
@@ -84,8 +103,8 @@ export class UserController {
   /**
    * Helper to build a URL with query parameters.
    */
-  private buildLink = (path: string, params: any) => {
-    const url = new URL(path, 'http://localhost'); // Base doesn't matter for relative links
+  private buildLink = (req: Request, params: any) => {
+    const url = new URL(req.baseUrl, 'http://localhost'); // Use baseUrl instead of leading '/'
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         if (typeof value === 'object' && key === 'filter') {
@@ -123,14 +142,12 @@ export class UserController {
             perPage: limit === -1 ? total : limit,
             currentPage: page,
             totalPages
-          },
-          filters: req.query.filter || (req.query.status ? { status: req.query.status } : {}),
-          sort: req.query.sort ? String(req.query.sort).split(',') : ['-createdAt']
+          }
         }),
         links: {
-          self: this.buildLink(req.path, { ...req.query, page, limit }),
-          next: page < totalPages ? this.buildLink(req.path, { ...req.query, page: page + 1, limit }) : null,
-          prev: page > 1 ? this.buildLink(req.path, { ...req.query, page: page - 1, limit }) : null
+          self: this.buildLink(req, { ...req.query, page, limit }),
+          next: page < totalPages ? this.buildLink(req, { ...req.query, page: page + 1, limit }) : null,
+          prev: page > 1 ? this.buildLink(req, { ...req.query, page: page - 1, limit }) : null
         }
       });
     } catch (error) {
