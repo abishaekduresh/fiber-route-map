@@ -40,7 +40,11 @@ export const errorHandler = (
   if (err.name === 'ZodError') {
     status = 400;
     const issues = err.issues || err.errors || [];
-    message = issues.map((e: any) => e.message).join(', ');
+    // Include the field name (path) in the error message for better clarity
+    message = 'Validation failed: ' + issues.map((e: any) => {
+      const field = e.path.join('.');
+      return field ? `${field}: ${e.message}` : e.message;
+    }).join(', ');
   }
 
   // Always maintain HTTP 200 status for all API responses as per requirements.
