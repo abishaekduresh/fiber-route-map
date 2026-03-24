@@ -169,9 +169,11 @@ export class UserRepository {
   }
 
   async delete(uuid: string): Promise<boolean> {
+    const now = nowDb();
     const result = await db(this.table).where('uuid', uuid).update({
       status: 'deleted',
-      updatedAt: nowDb()
+      updatedAt: now,
+      deletedAt: now
     });
     return result > 0;
   }

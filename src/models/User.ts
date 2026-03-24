@@ -7,6 +7,7 @@ export interface User {
   status: 'active' | 'blocked' | 'deleted';
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string;
 }
 
 export type CreateUserDTO = Pick<User, 'email' | 'username' | 'name' | 'phone'> & { password: string };
