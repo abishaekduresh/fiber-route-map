@@ -174,7 +174,7 @@ This document provides a comprehensive reference for all Node.js backend API end
 | :--- | :--- | :--- | :--- |
 | `filter[name]` | `string` | Partial match search by name | `?filter[name]=Ind` |
 | `filter[code]` | `string` | Search by ISO code | `?filter[code]=IN` |
-| `filter[phone_code]`| `string` | Search by telephone code | `?filter[phone_code]=+91` |
+| `filter[phoneCode]`| `string` | Search by telephone code | `?filter[phoneCode]=+91` |
 | `sort` | `string` | Sort fields (`name`, `code`, `createdAt`) | `?sort=-name` |
 
 #### Example Response
@@ -190,7 +190,7 @@ This document provides a comprehensive reference for all Node.js backend API end
       "attributes": {
         "name": "India",
         "code": "IN",
-        "phone_code": "+91",
+        "phoneCode": "+91",
         "status": "active"
       },
       "meta": {

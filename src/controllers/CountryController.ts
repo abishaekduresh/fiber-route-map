@@ -10,14 +10,14 @@ export class CountryController {
   }
 
   private transformCountry = (country: Country) => {
-    const { uuid, name, code, phone_code, status, createdAt, updatedAt } = country;
+    const { uuid, name, code, phoneCode, status, createdAt, updatedAt } = country;
     return {
       id: uuid,
       type: 'country',
       attributes: {
         name,
         code,
-        phone_code,
+        phoneCode,
         status
       },
       meta: {
@@ -82,9 +82,9 @@ export class CountryController {
     try {
       const page = Number(req.query.page) || 1;
       const limit = Number(req.query.limit) === -1 ? -1 : (Number(req.query.limit) || 10);
-      const filters_param = typeof req.query.filters === 'object' ? req.query.filters as any : {};
-      const filter_param = typeof req.query.filter === 'object' ? req.query.filter as any : {};
-      const filterObj = { ...filters_param, ...filter_param };
+      const filtersParam = typeof req.query.filters === 'object' ? req.query.filters as any : {};
+      const filterParam = typeof req.query.filter === 'object' ? req.query.filter as any : {};
+      const filterObj = { ...filtersParam, ...filterParam };
       const sortParam = req.query.sort;
 
       const { countries, total } = await this.service.getAllCountries({ ...req.query, filter: filterObj, page, limit });

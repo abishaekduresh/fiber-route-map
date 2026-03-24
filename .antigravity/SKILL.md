@@ -135,3 +135,10 @@ The [API_DOCUMENTATION.md](file:///c:/wamp64/www/fiber_route_map/node_backend/AP
 - Use the centralized `errorHandler.ts` to format all error responses.
 - Keep `UserService` as the holder of business logic.
 - Use `UserRepository` for all database interactions via Knex.
+
+## 7. Coding Standards
+- **Naming Convention**: ALWAYS use `camelCase` for all identifiers, including:
+    - Database column names (e.g., `phoneCode`, `createdAt`).
+    - API request/response keys.
+    - Variable and function names in code.
+- **Snake Case**: NEVER use `snake_case` (e.g., `phone_code`) for any new implementation.

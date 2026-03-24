@@ -21,7 +21,7 @@ export class CountryRepository {
       ...(params.status && !filterObj.status ? { status: params.status } : {}),
       ...(params.name && !filterObj.name ? { name: params.name } : {}),
       ...(params.code && !filterObj.code ? { code: params.code } : {}),
-      ...(params.phone_code && !filterObj.phone_code ? { phone_code: params.phone_code } : {}),
+      ...(params.phoneCode && !filterObj.phoneCode ? { phoneCode: params.phoneCode } : {}),
     };
 
     // Apply status filter
@@ -48,9 +48,9 @@ export class CountryRepository {
       query = query.where('code', 'like', `%${filters.code}%`);
       countQuery = countQuery.where('code', 'like', `%${filters.code}%`);
     }
-    if (filters.phone_code) {
-      query = query.where('phone_code', 'like', `%${filters.phone_code}%`);
-      countQuery = countQuery.where('phone_code', 'like', `%${filters.phone_code}%`);
+    if (filters.phoneCode) {
+      query = query.where('phoneCode', 'like', `%${filters.phoneCode}%`);
+      countQuery = countQuery.where('phoneCode', 'like', `%${filters.phoneCode}%`);
     }
 
     // Date filtering (YYYY-MM-DD)
@@ -64,7 +64,7 @@ export class CountryRepository {
     const total = Number(countResult?.total || 0);
 
     // Sorting
-    const allowedSortFields = ['uuid', 'name', 'code', 'phone_code', 'status', 'createdAt', 'updatedAt'];
+    const allowedSortFields = ['uuid', 'name', 'code', 'phoneCode', 'status', 'createdAt', 'updatedAt'];
     if (params.sort) {
       if (typeof params.sort === 'string') {
         const sortFields = String(params.sort).split(',');
