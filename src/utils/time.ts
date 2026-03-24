@@ -1,24 +1,9 @@
 /**
- * Returns current timestamp formatted for MySQL (YYYY-MM-DD HH:mm:ss)
- * Respects the TIMEZONE environment variable.
+ * Returns current UTC timestamp formatted for MySQL (YYYY-MM-DD HH:mm:ss)
  */
 export const nowDb = (): string => {
-  const timezone = process.env.TIMEZONE || 'Asia/Kolkata';
   const date = new Date();
+  const pad = (num: number) => num.toString().padStart(2, '0');
   
-  const formatter = new Intl.DateTimeFormat('en-GB', {
-    timeZone: timezone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  });
-
-  const parts = formatter.formatToParts(date);
-  const getPart = (type: string) => parts.find(p => p.type === type)?.value;
-
-  return `${getPart('year')}-${getPart('month')}-${getPart('day')} ${getPart('hour')}:${getPart('minute')}:${getPart('second')}`;
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(date.getUTCSeconds())}`;
 };

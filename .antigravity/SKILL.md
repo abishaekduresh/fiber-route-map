@@ -69,6 +69,7 @@ Error responses use `error: true` and `errorCode` representing the dynamic statu
     - **page**: current page number.
     - **limit**: records per page (Set to `-1` to fetch all records).
     - **totalPages**: total available pages (1 if limit is `-1`).
+- **Timestamps**: All timestamps (`createdAt`, `updatedAt`, `meta.timestamp`) must strictly follow the **UTC ISO-8601** format.
 
 ---
 

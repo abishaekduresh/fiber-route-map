@@ -12,7 +12,6 @@ const db = knex({
     password: process.env.DB_PASS || '',
     database: process.env.DB_NAME || 'fiber_route_map',
     charset: process.env.DB_CHARSET || 'utf8mb4',
-    dateStrings: true,
   },
   pool: { min: 0, max: 10 },
 });

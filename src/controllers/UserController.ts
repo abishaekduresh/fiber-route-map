@@ -72,7 +72,7 @@ export class UserController {
             limit,
             totalPages
           },
-          timestamp: nowDb(), 
+          timestamp: new Date().toISOString(), 
           version: 'v1' 
         }
       });
@@ -93,7 +93,7 @@ export class UserController {
         code: 201,
         message: 'User created successfully',
         data: user,
-        meta: { timestamp: nowDb(), version: 'v1' }
+        meta: { timestamp: new Date().toISOString(), version: 'v1' }
       });
     } catch (error) {
       next(error);
@@ -108,7 +108,7 @@ export class UserController {
         code: 200,
         message: 'User retrieved successfully',
         data: user,
-        meta: { timestamp: nowDb(), version: 'v1' }
+        meta: { timestamp: new Date().toISOString(), version: 'v1' }
       });
     } catch (error) {
       next(error);
@@ -125,7 +125,7 @@ export class UserController {
         code: 200,
         message: 'User updated successfully',
         data: user,
-        meta: { timestamp: nowDb(), version: 'v1' }
+        meta: { timestamp: new Date().toISOString(), version: 'v1' }
       });
     } catch (error) {
       next(error);
@@ -141,7 +141,7 @@ export class UserController {
         error: false,
         code: 200,
         message: 'User deleted successfully',
-        meta: { timestamp: nowDb(), version: 'v1' }
+        meta: { timestamp: new Date().toISOString(), version: 'v1' }
       });
     } catch (error) {
       next(error);
@@ -156,7 +156,7 @@ export class UserController {
         code: 200,
         message: 'User blocked successfully',
         data: user,
-        meta: { timestamp: nowDb(), version: 'v1' }
+        meta: { timestamp: new Date().toISOString(), version: 'v1' }
       });
     } catch (error) {
       next(error);
@@ -171,7 +171,7 @@ export class UserController {
         code: 200,
         message: 'User activated successfully',
         data: user,
-        meta: { timestamp: nowDb(), version: 'v1' }
+        meta: { timestamp: new Date().toISOString(), version: 'v1' }
       });
     } catch (error) {
       next(error);
