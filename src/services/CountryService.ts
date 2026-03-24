@@ -23,6 +23,12 @@ export class CountryService {
   }
 
   async createCountry(data: CreateCountryDTO): Promise<Country> {
+    if (!data || !data.code || !data.name) {
+      const error = new Error('Country name and code are required');
+      (error as any).status = 400;
+      throw error;
+    }
+
     if (await this.repo.findByCode(data.code)) {
       const error = new Error(`Country code '${data.code}' already exists`);
       (error as any).status = 409;

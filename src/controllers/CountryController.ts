@@ -132,6 +132,11 @@ export class CountryController {
 
   create = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      if (!req.body || Object.keys(req.body).length === 0) {
+        const error = new Error('Country data is required in request body');
+        (error as any).status = 400;
+        throw error;
+      }
       const country = await this.service.createCountry(req.body);
       res.json({
         success: true,
