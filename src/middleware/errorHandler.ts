@@ -52,13 +52,13 @@ export const errorHandler = (
     logger.warn(`${req.method} ${req.url} - ${message}`);
   }
 
-  // Final response with 200 OK and standardized error JSON
   res.status(200).json({
-    error: true,
-    errorCode: status,
+    success: false,
+    statusCode: status,
     message,
     help: getHelpMessage(status, message),
     meta: {
+      requestId: (req as any).requestId,
       timestamp: new Date().toISOString(),
       version: 'v1'
     },

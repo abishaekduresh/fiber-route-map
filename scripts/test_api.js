@@ -25,13 +25,13 @@ async function test() {
   const result = await createRes.json();
   console.log('Create Response:', createRes.status, JSON.stringify(result, null, 2));
 
-  if (result.error) {
+  if (!result.success) {
     console.error('Failed to create user:', result.message);
     return;
   }
 
   const user = result.data;
-  const uuid = user.uuid;
+  const uuid = user.id;
 
   // 2. Get User
   console.log(`2. Getting user ${uuid}...`);

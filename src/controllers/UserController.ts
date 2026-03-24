@@ -50,6 +50,37 @@ export class UserController {
     this.service = service;
   }
 
+  /**
+   * Transforms a user database object into the new API response format.
+   */
+  private transformUser = (user: any) => {
+    const { uuid, createdAt, updatedAt, ...attributes } = user;
+    return {
+      id: uuid,
+      type: 'user',
+      attributes,
+      meta: {
+        createdAt,
+        updatedAt
+      },
+      links: {
+        self: `/api/users/${uuid}`
+      }
+    };
+  };
+
+  /**
+   * Extracts common metadata for the response.
+   */
+  private getMeta = (req: Request, extra = {}) => {
+    return {
+      requestId: (req as any).requestId,
+      timestamp: new Date().toISOString(),
+      version: 'v1',
+      ...extra
+    };
+  };
+
   // GET /api/users
   index = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -59,21 +90,28 @@ export class UserController {
       const { users, total } = await this.service.getAllUsers({ ...req.query, page, limit });
       const totalPages = limit === -1 ? 1 : Math.ceil(total / limit);
 
-      // Success response following SKILL.md standards: error: false, code: 200
+      const transformedUsers = users.map(user => this.transformUser(user));
+
       res.json({
-        error: false,
-        code: 200,
+        success: true,
+        statusCode: 200,
         message: 'Users retrieved successfully',
-        data: users,
-        meta: { 
+        data: transformedUsers,
+        meta: this.getMeta(req, {
           pagination: {
             total,
-            page,
-            limit,
+            count: transformedUsers.length,
+            perPage: limit === -1 ? total : limit,
+            currentPage: page,
             totalPages
           },
-          timestamp: new Date().toISOString(), 
-          version: 'v1' 
+          filters: req.query.status ? { status: req.query.status } : {},
+          sort: ['-createdAt']
+        }),
+        links: {
+          self: `/api/users?page=${page}&limit=${limit}`,
+          next: page < totalPages ? `/api/users?page=${page + 1}&limit=${limit}` : null,
+          prev: page > 1 ? `/api/users?page=${page - 1}&limit=${limit}` : null
         }
       });
     } catch (error) {
@@ -87,13 +125,12 @@ export class UserController {
       const body = userSchema.parse(req.body);
       const { confirmPassword, ...userData } = body;
       const user = await this.service.createUser(userData);
-      // Success response following SKILL.md standards: error: false, code: 201
       res.json({
-        error: false,
-        code: 201,
+        success: true,
+        statusCode: 201,
         message: 'User created successfully',
-        data: user,
-        meta: { timestamp: new Date().toISOString(), version: 'v1' }
+        data: this.transformUser(user),
+        meta: this.getMeta(req)
       });
     } catch (error) {
       next(error);
@@ -104,11 +141,11 @@ export class UserController {
     try {
       const user = await this.service.getUserByUuid(req.params.uuid as string);
       res.json({
-        error: false,
-        code: 200,
+        success: true,
+        statusCode: 200,
         message: 'User retrieved successfully',
-        data: user,
-        meta: { timestamp: new Date().toISOString(), version: 'v1' }
+        data: this.transformUser(user),
+        meta: this.getMeta(req)
       });
     } catch (error) {
       next(error);
@@ -121,11 +158,11 @@ export class UserController {
       const { confirmPassword, ...updateData } = body;
       const user = await this.service.updateUser(req.params.uuid as string, updateData);
       res.json({
-        error: false,
-        code: 200,
+        success: true,
+        statusCode: 200,
         message: 'User updated successfully',
-        data: user,
-        meta: { timestamp: new Date().toISOString(), version: 'v1' }
+        data: this.transformUser(user),
+        meta: this.getMeta(req)
       });
     } catch (error) {
       next(error);
@@ -136,12 +173,11 @@ export class UserController {
   delete = async (req: Request, res: Response, next: NextFunction) => {
     try {
       await this.service.deleteUser(req.params.uuid as string);
-      // Always return 200 OK and a descriptive message for successful deletion
       res.json({
-        error: false,
-        code: 200,
+        success: true,
+        statusCode: 200,
         message: 'User deleted successfully',
-        meta: { timestamp: new Date().toISOString(), version: 'v1' }
+        meta: this.getMeta(req)
       });
     } catch (error) {
       next(error);
@@ -152,11 +188,11 @@ export class UserController {
     try {
       const user = await this.service.blockUser(req.params.uuid as string);
       res.json({
-        error: false,
-        code: 200,
+        success: true,
+        statusCode: 200,
         message: 'User blocked successfully',
-        data: user,
-        meta: { timestamp: new Date().toISOString(), version: 'v1' }
+        data: this.transformUser(user),
+        meta: this.getMeta(req)
       });
     } catch (error) {
       next(error);
@@ -167,11 +203,11 @@ export class UserController {
     try {
       const user = await this.service.unblockUser(req.params.uuid as string);
       res.json({
-        error: false,
-        code: 200,
+        success: true,
+        statusCode: 200,
         message: 'User activated successfully',
-        data: user,
-        meta: { timestamp: new Date().toISOString(), version: 'v1' }
+        data: this.transformUser(user),
+        meta: this.getMeta(req)
       });
     } catch (error) {
       next(error);

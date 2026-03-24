@@ -5,6 +5,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { errorHandler } from './middleware/errorHandler.js';
 import { versionCheck } from './middleware/versionCheck.js';
+import { requestId } from './middleware/requestId.js';
 import userRoutes from './routes/userRoutes.js';
 import logger from './utils/logger.js';
 
@@ -15,6 +16,7 @@ const port = process.env.PORT || 3000;
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+app.use(requestId);
 app.use(versionCheck);
 
 // Routes

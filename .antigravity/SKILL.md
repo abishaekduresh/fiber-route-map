@@ -26,50 +26,65 @@ It standardizes:
 ## 3. API Response Standard
 
 ### 3.1 Success Response Format
-Success responses use `error: false` and `code: 200` (or 201 for created).
+Success responses use `success: true` and `statusCode: 200` (or 201).
 
 ```json
 {
-  "error": false,
-  "code": 200,
+  "success": true,
+  "statusCode": 200,
   "message": "Request processed successfully",
-  "data": {},
+  "data": {
+    "id": "uuid",
+    "type": "resource_type",
+    "attributes": { "field": "value" },
+    "meta": { "createdAt": "...", "updatedAt": "..." },
+    "links": { "self": "/api/resource/uuid" }
+  },
   "meta": {
-    "timestamp": "2026-03-24T12:00:00Z",
+    "requestId": "req_...",
+    "timestamp": "ISO-8601",
     "version": "v1"
   }
 }
 ```
 
 ### 3.2 Error Response Format
-Error responses use `error: true` and `errorCode` representing the dynamic status.
+Error responses use `success: false` and `statusCode`.
 
 ```json
 {
-  "error": true,
-  "errorCode": 400,
+  "success": false,
+  "statusCode": 400,
   "message": "Invalid request parameters",
-  "help": "Please check the provided input fields and ensure they match the required format.",
+  "help": "Please check...",
   "meta": {
-    "timestamp": "2026-03-24T12:00:00Z",
+    "requestId": "req_...",
+    "timestamp": "ISO-8601",
     "version": "v1"
   }
 }
 ```
 
 ### 3.3 Key Rules
-- **error**: boolean (`false` for success, `true` for failure).
-- **code**: internal success logic code (e.g., 200, 201).
-- **errorCode**: internal error logic code (e.g., 400, 404, 409, 500).
+- **success**: boolean (`true` for success, `false` for failure).
+- **statusCode**: internal logic status (e.g., 200, 201, 400, 404, 409, 500).
 - **message**: human-readable summary.
 - **help**: **Dynamic** contextual guidance for developers/clients with specific remedies.
-- **data**: the primary response payload (success only). **Note**: Internal database `id` is never returned; use `uuid` for identification.
-- **meta.pagination**: Unified object for list endpoints:
-    - **total**: total records matching filters.
-    - **page**: current page number.
-    - **limit**: records per page (Set to `-1` to fetch all records).
-    - **totalPages**: total available pages (1 if limit is `-1`).
-- **Timestamps**: All timestamps (`createdAt`, `updatedAt`, `meta.timestamp`) must strictly follow the **UTC ISO-8601** format.
+- **data**: the primary response payload, nested as a resource object or array.
+    - **id**: the `uuid` of the resource.
+    - **type**: resource type name (e.g., `user`).
+    - **attributes**: actual data fields for the resource.
+    - **meta**: resource-level metadata (e.g., timestamps).
+    - **links**: resource-level hypermedia links (e.g., `self`).
+- **meta**: global metadata.
+    - **requestId**: unique identifier for request tracing.
+    - **pagination**: Unified object for list endpoints:
+        - **total**: total records matching filters.
+        - **count**: records returned in the current response.
+        - **perPage**: records per page (Set to `-1` to fetch all records).
+        - **currentPage**: current page number.
+        - **totalPages**: total available pages.
+- **Timestamps**: All timestamps must strictly follow the **UTC ISO-8601** format.
 
 ---
 
