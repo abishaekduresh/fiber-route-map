@@ -23,8 +23,9 @@ export class UserRepository {
 
     await db(this.table).insert(newUser);
     
-    const { password, ...userWithoutPassword } = newUser;
-    return userWithoutPassword as User;
+    // Cast to any to safely destructure internal fields (id, password) not in User interface
+    const { id, password, ...userWithoutInternalFields } = newUser as any;
+    return userWithoutInternalFields as User;
   }
 
   async getAll(filters: { status?: string; name?: string; email?: string; phone?: string } = {}): Promise<User[]> {
@@ -53,8 +54,8 @@ export class UserRepository {
     const users = await query.orderBy('createdAt', 'desc');
     
     return users.map((user: any) => {
-      const { password, ...userWithoutPassword } = user;
-      return userWithoutPassword as User;
+      const { id, password, ...userWithoutInternalFields } = user;
+      return userWithoutInternalFields as User;
     });
   }
 
@@ -62,24 +63,24 @@ export class UserRepository {
     const user = await db(this.table).where('uuid', uuid).first();
     if (!user) return null;
     
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword as User;
+    const { id, password, ...userWithoutInternalFields } = user as any;
+    return userWithoutInternalFields as User;
   }
 
   async findByEmail(email: string): Promise<User | null> {
     const user = await db(this.table).where('email', email).first();
     if (!user) return null;
     
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword as User;
+    const { id, password, ...userWithoutInternalFields } = user as any;
+    return userWithoutInternalFields as User;
   }
 
   async findByPhone(phone: string | number): Promise<User | null> {
     const user = await db(this.table).where('phone', phone).first();
     if (!user) return null;
     
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword as User;
+    const { id, password, ...userWithoutInternalFields } = user as any;
+    return userWithoutInternalFields as User;
   }
 
   async update(uuid: string, data: UpdateUserDTO): Promise<boolean> {

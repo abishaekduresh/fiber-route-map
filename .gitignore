@@ -20,8 +20,4 @@ yarn-error.log*
 .DS_Store
 
 # Temporary/Scripts
-check_schema.js
-rename_columns.js
-check_db.js
-test_validation_error.js
-test_password_validation.js
+scripts/*.js

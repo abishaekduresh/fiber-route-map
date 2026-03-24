@@ -16,6 +16,7 @@ It standardizes:
 - Follow **RESTful design** for endpoint naming (plural nouns).
 - Maintain **consistent JSON structure**.
 - **Always return HTTP 200** for all processed requests.
+- **Mandatory Header**: All requests to `/api` must include the `X-API-Version` header matching the current version (e.g., `v1`).
 - Use internal `code` (or `status` in body) to represent actual logic status.
 - Implement **proper validation** using Zod.
 - Use **modular architecture** (TypeScript, Express, Knex).
@@ -62,7 +63,7 @@ Error responses use `error: true` and `errorCode` representing the dynamic statu
 - **errorCode**: internal error logic code (e.g., 400, 404, 409, 500).
 - **message**: human-readable summary.
 - **help**: **Dynamic** contextual guidance for developers/clients with specific remedies.
-- **data**: the primary response payload (success only).
+- **data**: the primary response payload (success only). **Note**: Internal database `id` is never returned; use `uuid` for identification.
 
 ---
 

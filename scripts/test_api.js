@@ -9,12 +9,16 @@ async function test() {
   console.log('1. Creating user...');
   const createRes = await fetch(baseUrl, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'X-API-Version': 'v1'
+    },
     body: JSON.stringify({
       email: `test_${Date.now()}@example.com`,
       name: 'Node Test User',
       phone: String(Math.floor(Math.random() * 9000000000) + 1000000000),
-      password: 'password123'
+      password: 'Password123',
+      confirmPassword: 'Password123'
     })
   });
   
@@ -31,7 +35,9 @@ async function test() {
 
   // 2. Get User
   console.log(`2. Getting user ${uuid}...`);
-  const getRes = await fetch(`${baseUrl}/${uuid}`);
+  const getRes = await fetch(`${baseUrl}/${uuid}`, {
+    headers: { 'X-API-Version': 'v1' }
+  });
   const getResult = await getRes.json();
   console.log('Get Response:', getRes.status, JSON.stringify(getResult, null, 2));
 
@@ -39,7 +45,10 @@ async function test() {
   console.log(`3. Updating user ${uuid}...`);
   const updateRes = await fetch(`${baseUrl}/${uuid}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'X-API-Version': 'v1'
+    },
     body: JSON.stringify({ name: 'Updated Name' })
   });
   const updateResult = await updateRes.json();
@@ -47,19 +56,28 @@ async function test() {
 
   // 4. Block User
   console.log(`4. Blocking user ${uuid}...`);
-  const blockRes = await fetch(`${baseUrl}/${uuid}/block`, { method: 'POST' });
+  const blockRes = await fetch(`${baseUrl}/${uuid}/block`, { 
+    method: 'POST',
+    headers: { 'X-API-Version': 'v1' }
+  });
   const blockResult = await blockRes.json();
   console.log('Block Response:', blockRes.status, JSON.stringify(blockResult, null, 2));
 
   // 5. Unblock User
   console.log(`5. Unblocking user ${uuid}...`);
-  const unblockRes = await fetch(`${baseUrl}/${uuid}/unblock`, { method: 'PUT' });
+  const unblockRes = await fetch(`${baseUrl}/${uuid}/unblock`, { 
+    method: 'PUT',
+    headers: { 'X-API-Version': 'v1' }
+  });
   const unblockResult = await unblockRes.json();
   console.log('Unblock Response:', unblockRes.status, JSON.stringify(unblockResult, null, 2));
 
   // 6. Delete User
   console.log(`6. Deleting user ${uuid}...`);
-  const deleteRes = await fetch(`${baseUrl}/${uuid}`, { method: 'DELETE' });
+  const deleteRes = await fetch(`${baseUrl}/${uuid}`, { 
+    method: 'DELETE',
+    headers: { 'X-API-Version': 'v1' }
+  });
   const deleteResult = await deleteRes.json();
   console.log('Delete Response:', deleteRes.status, JSON.stringify(deleteResult, null, 2));
 

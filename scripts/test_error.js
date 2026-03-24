@@ -13,7 +13,10 @@ async function testError() {
   console.log('Attempting to create user with duplicate phone...');
   const res = await fetch(baseUrl, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'X-API-Version': 'v1'
+    },
     body: JSON.stringify(userData)
   });
 
