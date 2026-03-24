@@ -18,13 +18,14 @@ This document provides a comprehensive reference for all Node.js backend API end
 | `filter[status]` | `string` | Filter by `active`, `blocked`, `deleted`, or `all` | `?filter[status]=active` |
 | `filter[name]` | `string` | Partial match search by name | `?filter[name]=Jane` |
 | `filter[email]` | `string` | Partial match search by email | `?filter[email]=test@` |
+| `filter[username]` | `string` | Partial match search by username | `?filter[username]=jane` |
 | `filter[phone]` | `string` | Partial match search by phone | `?filter[phone]=9876` |
 | `filter[createdAt]` | `string` | Exact date match (YYYY-MM-DD) | `?filter[createdAt]=2026-03-24` |
 | `sort` | `string` | Comma-separated fields (prefix `-` for desc) | `?sort=-createdAt,name` |
 | `sort[field]` | `string` | Single field for object-style sorting | `?sort[field]=name` |
 | `sort[order]` | `string` | Order for object-style sorting (`asc`/`desc`) | `?sort[order]=asc` |
 
-#### Example Response (v1.3.4)
+#### Example Response (v1.7.0)
 ```json
 {
   "success": true,
@@ -36,6 +37,7 @@ This document provides a comprehensive reference for all Node.js backend API end
       "type": "user",
       "attributes": {
         "email": "test@example.com",
+        "username": "jane_doe",
         "name": "Jane Doe",
         "phone": "9876543210",
         "status": "active"
@@ -75,6 +77,7 @@ This document provides a comprehensive reference for all Node.js backend API end
 ```json
 {
   "email": "test@example.com",
+  "username": "jane_doe",
   "name": "Jane Doe",
   "phone": "9876543210",
   "password": "SecretPassword123",
@@ -91,7 +94,7 @@ This document provides a comprehensive reference for all Node.js backend API end
   "data": {
     "id": "uuid",
     "type": "user",
-    "attributes": { "email": "...", "name": "...", "phone": "...", "status": "active" },
+    "attributes": { "email": "...", "username": "...", "name": "...", "phone": "...", "status": "active" },
     "meta": { "createdAt": "...", "updatedAt": "..." },
     "links": { "self": "/api/users/uuid" }
   }
@@ -107,6 +110,7 @@ This document provides a comprehensive reference for all Node.js backend API end
 #### Request Body (All fields optional)
 ```json
 {
+  "username": "updated_jane",
   "name": "Updated Name",
   "phone": "1234567890"
 }
@@ -148,7 +152,7 @@ This document provides a comprehensive reference for all Node.js backend API end
   "data": {
     "id": "uuid",
     "type": "user",
-    "attributes": { "email": "...", "name": "...", "phone": "...", "status": "active" },
+    "attributes": { "email": "...", "username": "...", "name": "...", "phone": "...", "status": "active" },
     "meta": { "createdAt": "...", "updatedAt": "..." },
     "links": { "self": "/api/users/uuid" }
   },

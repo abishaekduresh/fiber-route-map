@@ -1,20 +1,21 @@
 import db from '../config/database.js';
-import { User, UpdateUserDTO } from '../models/User.js';
+import { User, CreateUserDTO, UpdateUserDTO } from '../models/User.js';
 import { generateUuidV7 } from '../utils/uuid.js';
 import { nowDb } from '../utils/time.js';
 
 export class UserRepository {
   private readonly table = 'users';
 
-  async create(data: { email: string; name: string; phone: string | number; password: string }): Promise<User> {
+  async create(data: CreateUserDTO): Promise<User> {
     const uuid = generateUuidV7();
     const now = nowDb();
     
-    const newUser: User = {
+    const newUser: any = {
       uuid,
       email: data.email,
+      username: data.username,
       name: data.name,
-      phone: data.phone,
+      phone: String(data.phone),
       password: data.password,
       status: 'active',
       createdAt: now,
@@ -23,85 +24,80 @@ export class UserRepository {
 
     await db(this.table).insert(newUser);
     
-    // Cast to any to safely destructure internal fields (id, password) not in User interface
-    const { id, password, ...userWithoutInternalFields } = newUser as any;
+    const { id, password, ...userWithoutInternalFields } = newUser;
     return userWithoutInternalFields as User;
   }
 
   async getAll(params: any = {}): Promise<{ users: User[]; total: number }> {
     const page = Number(params.page) || 1;
     const limit = Number(params.limit) === -1 ? -1 : (Number(params.limit) || 10);
-    const offset = limit === -1 ? 0 : (page - 1) * limit;
 
     let query = db(this.table);
     let countQuery = db(this.table);
 
-    // Unify Direct filters and filter/filters object
     const filterObj = params.filter || params.filters || {};
     const filters = {
       ...filterObj,
       ...(params.status && !filterObj.status ? { status: params.status } : {}),
       ...(params.name && !filterObj.name ? { name: params.name } : {}),
       ...(params.email && !filterObj.email ? { email: params.email } : {}),
+      ...(params.username && !filterObj.username ? { username: params.username } : {}),
       ...(params.phone && !filterObj.phone ? { phone: params.phone } : {}),
     };
 
-    // Apply Filters
     const statusVal = filters.status ? String(filters.status) : '';
     if (statusVal === 'all') {
-      // No status filter
+      query = query.whereNot('status', 'deleted');
+      countQuery = countQuery.whereNot('status', 'deleted');
     } else if (statusVal && ['active', 'blocked', 'deleted'].includes(statusVal)) {
       query = query.where('status', statusVal);
       countQuery = countQuery.where('status', statusVal);
-    } else if (!statusVal) {
-      query = query.where('status', 'active');
-      countQuery = countQuery.where('status', 'active');
+    } else {
+      query = query.whereNot('status', 'deleted');
+      countQuery = countQuery.whereNot('status', 'deleted');
     }
 
-    ['name', 'email', 'phone'].forEach(field => {
-      if (filters[field] && !['status'].includes(field)) {
-        query = query.where(field, 'like', `%${String(filters[field])}%`);
-        countQuery = countQuery.where(field, 'like', `%${String(filters[field])}%`);
-      }
-    });
+    if (filters.name) {
+      query = query.where('name', 'like', `%${filters.name}%`);
+      countQuery = countQuery.where('name', 'like', `%${filters.name}%`);
+    }
+    if (filters.email) {
+      query = query.where('email', 'like', `%${filters.email}%`);
+      countQuery = countQuery.where('email', 'like', `%${filters.email}%`);
+    }
+    if (filters.username) {
+      query = query.where('username', 'like', `%${filters.username}%`);
+      countQuery = countQuery.where('username', 'like', `%${filters.username}%`);
+    }
+    if (filters.phone) {
+      query = query.where('phone', 'like', `%${filters.phone}%`);
+      countQuery = countQuery.where('phone', 'like', `%${filters.phone}%`);
+    }
 
-    // Handle other arbitrary filters
-    Object.entries(filters).forEach(([field, value]) => {
-      if (!['status', 'name', 'email', 'phone'].includes(field)) {
-        if (field === 'createdAt' && typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
-          // Handle YYYY-MM-DD date filter
-          query = query.whereRaw('DATE(createdAt) = ?', [value]);
-          countQuery = countQuery.whereRaw('DATE(createdAt) = ?', [value]);
-        } else if (value !== undefined && value !== null && value !== '') {
-          query = query.where(field, value);
-          countQuery = countQuery.where(field, value);
-        }
-      }
-    });
+    if (filters.createdAt && typeof filters.createdAt === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(filters.createdAt)) {
+      query = query.whereRaw('DATE(createdAt) = ?', [filters.createdAt]);
+      countQuery = countQuery.whereRaw('DATE(createdAt) = ?', [filters.createdAt]);
+    }
 
-    // Get total count
     const countResult = await countQuery.count('* as total').first();
     const total = Number(countResult?.total || 0);
 
-    // Apply Sorting
-    const allowedSortFields = ['uuid', 'name', 'email', 'phone', 'status', 'createdAt', 'updatedAt'];
+    const allowedSortFields = ['uuid', 'email', 'username', 'name', 'phone', 'status', 'createdAt', 'updatedAt'];
     
     if (params.sort) {
       if (typeof params.sort === 'string') {
         const sortFields = String(params.sort).split(',');
-        sortFields.forEach(sortField => {
-          const desc = sortField.trim().startsWith('-');
-          const field = desc ? sortField.trim().substring(1) : sortField.trim();
-          
+        sortFields.forEach(s => {
+          const desc = s.trim().startsWith('-');
+          const field = desc ? s.trim().substring(1) : s.trim();
           if (allowedSortFields.includes(field)) {
             query = query.orderBy(field, desc ? 'desc' : 'asc');
           }
         });
       } else if (typeof params.sort === 'object') {
-        // Handle sort[field]=... or sort[order]=...
-        const field = params.sort.field || 'createdAt';
-        const order = params.sort.order || 'desc';
-        
+        const sortObj = params.sort as any;
+        const field = sortObj.field || 'createdAt';
+        const order = String(sortObj.order || 'desc').toLowerCase() === 'asc' ? 'asc' : 'desc';
         if (allowedSortFields.includes(field)) {
           query = query.orderBy(field, order);
         }
@@ -110,13 +106,9 @@ export class UserRepository {
       query = query.orderBy('createdAt', 'desc');
     }
 
-    // Get paginated results
-    if (limit !== -1) {
-      query = query.limit(limit).offset(offset);
-    }
-    
-    const users = await query.select('*');
-    
+    const offset = (page - 1) * limit;
+    const users = limit === -1 ? await query : await query.offset(offset).limit(limit);
+
     const sanitizedUsers = users.map((user: any) => {
       const { id, password, ...userWithoutInternalFields } = user;
       return userWithoutInternalFields as User;
@@ -128,7 +120,6 @@ export class UserRepository {
   async findByUuid(uuid: string): Promise<User | null> {
     const user = await db(this.table).where('uuid', uuid).first();
     if (!user) return null;
-    
     const { id, password, ...userWithoutInternalFields } = user as any;
     return userWithoutInternalFields as User;
   }
@@ -136,60 +127,52 @@ export class UserRepository {
   async findByEmail(email: string): Promise<User | null> {
     const user = await db(this.table).where('email', email).first();
     if (!user) return null;
-    
     const { id, password, ...userWithoutInternalFields } = user as any;
     return userWithoutInternalFields as User;
   }
 
-  async findByPhone(phone: string | number): Promise<User | null> {
-    const user = await db(this.table).where('phone', phone).first();
+  async findByUsername(username: string): Promise<User | null> {
+    const user = await db(this.table).where('username', username).first();
     if (!user) return null;
-    
+    const { id, password, ...userWithoutInternalFields } = user as any;
+    return userWithoutInternalFields as User;
+  }
+
+  async findByPhone(phone: string): Promise<User | null> {
+    const user = await db(this.table).where('phone', String(phone)).first();
+    if (!user) return null;
     const { id, password, ...userWithoutInternalFields } = user as any;
     return userWithoutInternalFields as User;
   }
 
   async update(uuid: string, data: UpdateUserDTO): Promise<boolean> {
-    const now = nowDb();
-    const result = await db(this.table)
-      .where('uuid', uuid)
-      .update({
-        ...data,
-        updatedAt: now,
-      });
+    const updateData: any = { ...data, updatedAt: nowDb() };
+    if (updateData.phone) updateData.phone = String(updateData.phone);
+    const result = await db(this.table).where('uuid', uuid).update(updateData);
     return result > 0;
   }
 
   async updateStatus(uuid: string, status: string): Promise<boolean> {
-    const now = nowDb();
-    const result = await db(this.table)
-      .where('uuid', uuid)
-      .update({
-        status,
-        updatedAt: now,
-      });
+    const result = await db(this.table).where('uuid', uuid).update({
+      status,
+      updatedAt: nowDb()
+    });
     return result > 0;
   }
 
   async updatePassword(uuid: string, password: string): Promise<boolean> {
-    const now = nowDb();
-    const result = await db(this.table)
-      .where('uuid', uuid)
-      .update({
-        password,
-        updatedAt: now,
-      });
+    const result = await db(this.table).where('uuid', uuid).update({
+      password,
+      updatedAt: nowDb()
+    });
     return result > 0;
   }
 
   async delete(uuid: string): Promise<boolean> {
-    const now = nowDb();
-    const result = await db(this.table)
-      .where('uuid', uuid)
-      .update({
-        status: 'deleted',
-        updatedAt: now,
-      });
+    const result = await db(this.table).where('uuid', uuid).update({
+      status: 'deleted',
+      updatedAt: nowDb()
+    });
     return result > 0;
   }
 }

@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { UserRepository } from '../repositories/UserRepository.js';
-import { User, UpdateUserDTO } from '../models/User.js';
+import { User, CreateUserDTO, UpdateUserDTO } from '../models/User.js';
 
 export class UserService {
   private repo: UserRepository;
@@ -9,7 +9,12 @@ export class UserService {
     this.repo = repo;
   }
 
-  async createUser(data: { email: string; name: string; phone: string | number; password: string }): Promise<User> {
+  async createUser(data: CreateUserDTO): Promise<User> {
+    if (await this.repo.findByUsername(data.username)) {
+      const error = new Error(`Username '${data.username}' is already taken`);
+      (error as any).status = 409;
+      throw error;
+    }
     if (await this.repo.findByPhone(data.phone)) {
       const error = new Error('Phone number is already registered');
       (error as any).status = 409;
@@ -57,6 +62,13 @@ export class UserService {
       updateData.email = data.email;
     }
 
+    if (data.username && data.username !== user.username) {
+      if (await this.repo.findByUsername(data.username)) {
+        const error = new Error(`Username '${data.username}' is already taken`);
+        (error as any).status = 409;
+        throw error;
+      }
+    }
     if (data.phone && String(data.phone) !== String(user.phone)) {
       if (await this.repo.findByPhone(data.phone)) {
         const error = new Error('Phone number is already registered to another user');

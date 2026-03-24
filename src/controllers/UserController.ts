@@ -3,31 +3,27 @@ import { UserService } from '../services/UserService.js';
 import { nowDb } from '../utils/time.js';
 import { z } from 'zod';
 
-const userSchema = z.object({
-  email: z.string().email(),
-  name: z.string().min(2),
-  phone: z.union([
-    z.string().regex(/^\d{10}$/, 'Phone number must be exactly 10 digits'),
-    z.number().refine(val => String(val).length === 10, 'Phone number must be exactly 10 digits')
-  ]),
+const createUserSchema = z.object({
+  email: z.string().email('Invalid email format'),
+  username: z.string().min(3, 'Username must be at least 3 characters'),
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  phone: z.union([z.string(), z.number()]).transform(val => String(val)).refine(val => /^\d{10}$/.test(val), 'Phone must be exactly 10 digits'),
   password: z.string()
     .min(8, 'Password must be at least 8 characters')
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
     .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
     .regex(/[0-9]/, 'Password must contain at least one number'),
   confirmPassword: z.string()
-}).refine((data) => data.password === data.confirmPassword, {
+}).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
-  path: ["confirmPassword"],
+  path: ["confirmPassword"]
 });
 
-const updateSchema = z.object({
-  email: z.string().email().optional(),
-  name: z.string().min(2).optional(),
-  phone: z.union([
-    z.string().regex(/^\d{10}$/, 'Phone number must be exactly 10 digits'),
-    z.number().refine(val => String(val).length === 10, 'Phone number must be exactly 10 digits')
-  ]).optional(),
+const updateUserSchema = z.object({
+  email: z.string().email('Invalid email format').optional(),
+  username: z.string().min(3, 'Username must be at least 3 characters').optional(),
+  name: z.string().min(2, 'Name must be at least 2 characters').optional(),
+  phone: z.union([z.string(), z.number()]).transform(val => String(val)).refine(val => /^\d{10}$/.test(val), 'Phone must be exactly 10 digits').optional(),
   password: z.string()
     .min(8, 'Password must be at least 8 characters')
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
@@ -35,12 +31,14 @@ const updateSchema = z.object({
     .regex(/[0-9]/, 'Password must contain at least one number')
     .optional(),
   confirmPassword: z.string().optional()
-}).refine((data) => {
-  if (data.password && data.password !== data.confirmPassword) return false;
+}).refine(data => {
+  if (data.password || data.confirmPassword) {
+    return data.password === data.confirmPassword;
+  }
   return true;
 }, {
   message: "Passwords don't match",
-  path: ["confirmPassword"],
+  path: ["confirmPassword"]
 });
 
 export class UserController {
@@ -54,11 +52,17 @@ export class UserController {
    * Transforms a user database object into the new API response format.
    */
   private transformUser = (user: any) => {
-    const { uuid, createdAt, updatedAt, ...attributes } = user;
+    const { uuid, createdAt, updatedAt, email, username, name, phone, status } = user;
     return {
       id: uuid,
       type: 'user',
-      attributes,
+      attributes: {
+        email,
+        username,
+        name,
+        phone,
+        status
+      },
       meta: {
         createdAt,
         updatedAt
@@ -69,9 +73,6 @@ export class UserController {
     };
   };
 
-  /**
-   * Extracts common metadata for the response.
-   */
   /**
    * Extracts common metadata for the response.
    * Accepts explicit filter and sort values already normalized by the caller.
@@ -101,7 +102,7 @@ export class UserController {
     return {
       requestId: (req as any).requestId,
       timestamp: new Date().toISOString(),
-      version: 'v1',
+      version: 'v1.7.0',
       filters: appliedFilters,
       sort,
       ...extra
@@ -201,7 +202,7 @@ export class UserController {
   // POST /api/users
   create = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const body = userSchema.parse(req.body);
+      const body = createUserSchema.parse(req.body);
       const { confirmPassword, ...userData } = body;
       const user = await this.service.createUser(userData);
       res.json({
@@ -233,7 +234,7 @@ export class UserController {
 
   update = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const body = updateSchema.parse(req.body);
+      const body = updateUserSchema.parse(req.body);
       const { confirmPassword, ...updateData } = body;
       const user = await this.service.updateUser(req.params.uuid as string, updateData);
       res.json({
