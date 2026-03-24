@@ -5,6 +5,15 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.3] - 2026-03-24
+### Changed
+- **Messaging**: Updated API to return `No users found matching the criteria` when the result set is empty for better client feedback.
+
+## [1.3.2] - 2026-03-24
+### Added
+- **Filter Param Merging**: Improved robustness by merging both `filter[...]` and `filters[...]` (plural) query parameters into a single filter object.
+- **Link Normalization**: Hypermedia links (`self`, `next`, `prev`) now normalize all filter parameters to the singular `filter[...]` key for consistency.
+
 ## [1.3.1] - 2026-03-24
 ### Added
 - **Robust Filtering**: Added support for both `filter` and `filters` (plural) query parameters for better client-side compatibility.

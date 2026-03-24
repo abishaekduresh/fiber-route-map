@@ -111,20 +111,31 @@ export class UserController {
   /**
    * Helper to build a URL with query parameters.
    * Handles nested filter/filters objects by serializing to bracket notation.
+   * Normalizes both styles to singular 'filter' in produced links.
    */
   private buildLink = (req: Request, params: any) => {
     const url = new URL(req.baseUrl, 'http://localhost');
+    
+    // First, merge any filter/filters from params to normalize output
+    const filters = typeof params.filters === 'object' ? params.filters : {};
+    const filter = typeof params.filter === 'object' ? params.filter : {};
+    const mergedFilter = { ...filters, ...filter };
+
     Object.entries(params).forEach(([key, value]) => {
       if (value === undefined || value === null) return;
-      if (typeof value === 'object' && (key === 'filter' || key === 'filters')) {
-        // Serialize nested filter object back to bracket notation
-        Object.entries(value).forEach(([fKey, fVal]) => {
-          url.searchParams.append(`${key}[${fKey}]`, String(fVal));
-        });
-      } else if (typeof value !== 'object') {
+      // Skip the filter objects; we'll append the normalized one at the end
+      if (key === 'filter' || key === 'filters') return;
+      
+      if (typeof value !== 'object') {
         url.searchParams.append(key, String(value));
       }
     });
+
+    // Append merged filters using singular 'filter' key for consistency
+    Object.entries(mergedFilter).forEach(([fKey, fVal]) => {
+      url.searchParams.append(`filter[${fKey}]`, String(fVal));
+    });
+
     return `${url.pathname}${url.search}`;
   };
 
@@ -134,8 +145,15 @@ export class UserController {
       const page = Number(req.query.page) || 1;
       const limit = Number(req.query.limit) === -1 ? -1 : (Number(req.query.limit) || 10);
 
-      // Normalize: support both filter[...] and filters[...] syntax
-      const filterObj = (req.query.filter as any) || (req.query.filters as any) || {};
+      // Normalize: support both filter[...] and filters[...] syntax and merge them
+      const filters = typeof req.query.filters === 'object' ? req.query.filters as any : {};
+      const filter = typeof req.query.filter === 'object' ? req.query.filter as any : {};
+      
+      const filterObj = {
+        ...filters,
+        ...filter
+      };
+
       const sortParam = req.query.sort;
 
       // Add top-level status to filterObj if provided without bracket syntax
@@ -158,7 +176,7 @@ export class UserController {
       res.json({
         success: true,
         statusCode: 200,
-        message: 'Users retrieved successfully',
+        message: transformedUsers.length > 0 ? 'Users retrieved successfully' : 'No users found matching the criteria',
         data: transformedUsers,
         meta: this.getMeta(req, filterObj, sortParam, {
           pagination: {
