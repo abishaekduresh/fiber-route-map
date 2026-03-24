@@ -40,6 +40,12 @@ export class CountryService {
   async updateCountry(uuid: string, data: UpdateCountryDTO): Promise<Country> {
     const country = await this.getCountryByUuid(uuid);
     
+    if (country.status === 'deleted') {
+      const error = new Error('Cannot update a deleted country');
+      (error as any).status = 400;
+      throw error;
+    }
+
     if (data.code && data.code !== country.code) {
       if (await this.repo.findByCode(data.code)) {
         const error = new Error(`Country code '${data.code}' already exists`);
@@ -53,7 +59,12 @@ export class CountryService {
   }
 
   async deleteCountry(uuid: string): Promise<void> {
-    await this.getCountryByUuid(uuid);
+    const country = await this.getCountryByUuid(uuid);
+    if (country.status === 'deleted') {
+      const error = new Error('Country is already deleted');
+      (error as any).status = 400;
+      throw error;
+    }
     await this.repo.delete(uuid);
   }
 
@@ -61,6 +72,11 @@ export class CountryService {
     const country = await this.getCountryByUuid(uuid);
     if (country.status === 'deleted') {
       const error = new Error('Cannot block a deleted country');
+      (error as any).status = 400;
+      throw error;
+    }
+    if (country.status === 'blocked') {
+      const error = new Error('Country is already blocked');
       (error as any).status = 400;
       throw error;
     }
@@ -72,6 +88,11 @@ export class CountryService {
     const country = await this.getCountryByUuid(uuid);
     if (country.status === 'deleted') {
       const error = new Error('Cannot unblock a deleted country');
+      (error as any).status = 400;
+      throw error;
+    }
+    if (country.status === 'active') {
+      const error = new Error('Country is already active');
       (error as any).status = 400;
       throw error;
     }
