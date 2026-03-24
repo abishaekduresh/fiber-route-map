@@ -123,7 +123,13 @@ Hypermedia links (`self`, `next`, `prev`) must maintain all active `filter` and 
 
 ---
 
-## 5. Development Guidelines
+## 5. Documentation Maintenance (CRITICAL)
+The [API_DOCUMENTATION.md](file:///c:/wamp64/www/fiber_route_map/node_backend/API_DOCUMENTATION.md) file must be maintained as the **single source of truth** for all endpoints:
+- **Automatic Updates**: Whenever a new endpoint is added or an existing one is modified, its request/response payloads and query parameters MUST be updated in `API_DOCUMENTATION.md`.
+- **Examples**: Documentation must include realistic JSON payload examples for both success and error cases.
+- **Standards**: All documented endpoints across the application must follow the nested `attributes` and consistent `meta` structure defined in this SKILL.md.
+
+## 6. Development Guidelines
 - Add descriptive comments to all major code changes.
 - Ensure all controllers wrap logic in `try-catch` and delegate to `next(error)`.
 - Use the centralized `errorHandler.ts` to format all error responses.
