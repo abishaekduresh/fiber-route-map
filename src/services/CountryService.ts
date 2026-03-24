@@ -40,8 +40,8 @@ export class CountryService {
   async updateCountry(uuid: string, data: UpdateCountryDTO): Promise<Country> {
     const country = await this.getCountryByUuid(uuid);
     
-    if (country.status === 'deleted') {
-      const error = new Error('Cannot update a deleted country');
+    if (country.status !== 'active') {
+      const error = new Error(`Cannot update a ${country.status} country`);
       (error as any).status = 400;
       throw error;
     }
@@ -60,8 +60,8 @@ export class CountryService {
 
   async deleteCountry(uuid: string): Promise<void> {
     const country = await this.getCountryByUuid(uuid);
-    if (country.status === 'deleted') {
-      const error = new Error('Country is already deleted');
+    if (country.status !== 'active') {
+      const error = new Error(`Cannot delete a ${country.status} country`);
       (error as any).status = 400;
       throw error;
     }

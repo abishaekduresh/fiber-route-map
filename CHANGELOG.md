@@ -5,6 +5,10 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.2] - 2026-03-24
+### Changed
+- **Status Validation**: Blocked countries can no longer be updated or deleted. They must be active to be modified or removed.
+
 ## [1.6.1] - 2026-03-24
 ### Added
 - **Status Validation**: Implemented strict validation in `CountryService` to prevent redundant or invalid actions (e.g., blocking an already blocked or deleted country) with specific error messages.
