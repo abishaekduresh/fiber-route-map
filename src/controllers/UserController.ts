@@ -81,6 +81,25 @@ export class UserController {
     };
   };
 
+  /**
+   * Helper to build a URL with query parameters.
+   */
+  private buildLink = (path: string, params: any) => {
+    const url = new URL(path, 'http://localhost'); // Base doesn't matter for relative links
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (typeof value === 'object' && key === 'filter') {
+          Object.entries(value).forEach(([fKey, fVal]) => {
+            url.searchParams.append(`filter[${fKey}]`, String(fVal));
+          });
+        } else {
+          url.searchParams.append(key, String(value));
+        }
+      }
+    });
+    return `${url.pathname}${url.search}`;
+  };
+
   // GET /api/users
   index = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -105,13 +124,13 @@ export class UserController {
             currentPage: page,
             totalPages
           },
-          filters: req.query.status ? { status: req.query.status } : {},
-          sort: ['-createdAt']
+          filters: req.query.filter || (req.query.status ? { status: req.query.status } : {}),
+          sort: req.query.sort ? String(req.query.sort).split(',') : ['-createdAt']
         }),
         links: {
-          self: `/api/users?page=${page}&limit=${limit}`,
-          next: page < totalPages ? `/api/users?page=${page + 1}&limit=${limit}` : null,
-          prev: page > 1 ? `/api/users?page=${page - 1}&limit=${limit}` : null
+          self: this.buildLink(req.path, { ...req.query, page, limit }),
+          next: page < totalPages ? this.buildLink(req.path, { ...req.query, page: page + 1, limit }) : null,
+          prev: page > 1 ? this.buildLink(req.path, { ...req.query, page: page - 1, limit }) : null
         }
       });
     } catch (error) {

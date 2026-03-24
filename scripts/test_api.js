@@ -81,6 +81,18 @@ async function test() {
   const deleteResult = await deleteRes.json();
   console.log('Delete Response:', deleteRes.status, JSON.stringify(deleteResult, null, 2));
 
+  // 7. Advanced Filtering and Sorting
+  console.log('7. Testing Advanced Filtering and Sorting (?filter[name]=Node&sort=-name)...');
+  const advancedRes = await fetch(`${baseUrl}?filter[name]=Node&sort=-name`, {
+    headers: { 'X-API-Version': 'v1' }
+  });
+  const advancedResult = await advancedRes.json();
+  console.log('Advanced Query Response:', advancedRes.status, JSON.stringify(advancedResult, null, 2));
+  
+  if (advancedResult.success && advancedResult.meta.pagination.total > 0) {
+    console.log('SUCCESS: Advanced filtering and sorting working correctly.');
+  }
+
   console.log('--- Testing Finished ---');
 }
 

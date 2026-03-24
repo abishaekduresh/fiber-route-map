@@ -5,6 +5,19 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-03-24
+### Added
+- **Advanced Filtering**: Added support for `filter[field]=value` syntax for the `GET /api/users` endpoint.
+- **Multi-Field Sorting**: Added support for the `sort` query parameter (e.g., `?sort=-createdAt,name`).
+- **Query Persistence**: Implemented query parameter persistence in hypermedia links (`self`, `next`, `prev`).
+
+## [1.2.0] - 2026-03-24
+### Changed
+- **Major API Refactor**: Implemented a nested, resource-oriented response format (JSON:API-style).
+- Resources now follow the `{ id, type, attributes, meta, links }` structure.
+- **Request Tracing**: Integrated `requestId` into the top-level metadata for every response.
+- **Enhanced Pagination**: Expanded pagination metadata to include `total`, `count`, `perPage`, `currentPage`, and `totalPages`.
+
 ## [1.1.5] - 2026-03-24
 ### Fixed
 - **Knex Typings**: Fixed "Could not find a declaration file for module 'knex'" error in `database.ts` caused by `NodeNext` resolution rules.

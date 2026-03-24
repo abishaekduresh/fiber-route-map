@@ -28,53 +28,63 @@ export class UserRepository {
     return userWithoutInternalFields as User;
   }
 
-  async getAll(filters: { 
-    status?: string; 
-    name?: string; 
-    email?: string; 
-    phone?: string;
-    page?: number;
-    limit?: number;
-  } = {}): Promise<{ users: User[]; total: number }> {
-    const page = Number(filters.page) || 1;
-    const limit = Number(filters.limit) || 10;
-    const offset = (page - 1) * limit;
+  async getAll(params: any = {}): Promise<{ users: User[]; total: number }> {
+    const page = Number(params.page) || 1;
+    const limit = Number(params.limit) === -1 ? -1 : (Number(params.limit) || 10);
+    const offset = limit === -1 ? 0 : (page - 1) * limit;
 
     let query = db(this.table);
+    let countQuery = db(this.table);
 
-    // Apply filters
+    // Unify Direct filters and filter[...] object
+    const filters = {
+      ...(params.filter || {}),
+      ...(params.status && !params.filter?.status ? { status: params.status } : {}),
+      ...(params.name && !params.filter?.name ? { name: params.name } : {}),
+      ...(params.email && !params.filter?.email ? { email: params.email } : {}),
+      ...(params.phone && !params.filter?.phone ? { phone: params.phone } : {}),
+    };
+
+    // Apply Filters
     if (filters.status === 'all') {
       // No status filter
     } else if (filters.status && ['active', 'blocked', 'deleted'].includes(filters.status)) {
       query = query.where('status', filters.status);
-    } else {
+      countQuery = countQuery.where('status', filters.status);
+    } else if (!filters.status) {
       query = query.where('status', 'active');
+      countQuery = countQuery.where('status', 'active');
     }
 
-    if (filters.name) {
-      query = query.where('name', 'like', `%${filters.name}%`);
-    }
+    ['name', 'email', 'phone'].forEach(field => {
+      if (filters[field]) {
+        query = query.where(field, 'like', `%${filters[field]}%`);
+        countQuery = countQuery.where(field, 'like', `%${filters[field]}%`);
+      }
+    });
 
-    if (filters.email) {
-      query = query.where('email', 'like', `%${filters.email}%`);
-    }
-
-    if (filters.phone) {
-      query = query.where('phone', 'like', `%${filters.phone}%`);
-    }
-
-    // Get total count first
-    const countResult = await query.clone().count('* as total').first();
+    // Get total count
+    const countResult = await countQuery.count('* as total').first();
     const total = Number(countResult?.total || 0);
 
+    // Apply Sorting
+    if (params.sort) {
+      const sortFields = String(params.sort).split(',');
+      sortFields.forEach(sortField => {
+        const desc = sortField.trim().startsWith('-');
+        const field = desc ? sortField.trim().substring(1) : sortField.trim();
+        query = query.orderBy(field, desc ? 'desc' : 'asc');
+      });
+    } else {
+      query = query.orderBy('createdAt', 'desc');
+    }
+
     // Get paginated results
-    let usersQuery = query.select('*').orderBy('createdAt', 'desc');
-    
     if (limit !== -1) {
-      usersQuery = usersQuery.limit(limit).offset(offset);
+      query = query.limit(limit).offset(offset);
     }
     
-    const users = await usersQuery;
+    const users = await query.select('*');
     
     const sanitizedUsers = users.map((user: any) => {
       const { id, password, ...userWithoutInternalFields } = user;
