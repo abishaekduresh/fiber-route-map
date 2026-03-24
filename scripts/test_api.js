@@ -81,16 +81,16 @@ async function test() {
   const deleteResult = await deleteRes.json();
   console.log('Delete Response:', deleteRes.status, JSON.stringify(deleteResult, null, 2));
 
-  // 7. Advanced Filtering and Sorting
-  console.log('7. Testing Advanced Filtering and Sorting (?filter[name]=Node&sort=-name)...');
-  const advancedRes = await fetch(`${baseUrl}?filter[name]=Node&sort=-name`, {
+  // 7. Robust Filtering and Sorting (v1.3.1)
+  console.log('7. Testing Robust Filtering and Sorting (?filters[status]=active&sort[order]=asc)...');
+  const robustRes = await fetch(`${baseUrl}?filters[status]=active&sort[order]=asc&limit=1`, {
     headers: { 'X-API-Version': 'v1' }
   });
-  const advancedResult = await advancedRes.json();
-  console.log('Advanced Query Response:', advancedRes.status, JSON.stringify(advancedResult, null, 2));
+  const robustResult = await robustRes.json();
+  console.log('Robust Query Response:', robustRes.status, JSON.stringify(robustResult, null, 2));
   
-  if (advancedResult.success && advancedResult.meta.pagination.total > 0) {
-    console.log('SUCCESS: Advanced filtering and sorting working correctly.');
+  if (robustResult.success && robustResult.meta.filters.status === 'active' && robustResult.meta.sort[0].order === 'asc') {
+    console.log('SUCCESS: Robust filtering (plural) and object-based sorting working correctly.');
   }
 
   console.log('--- Testing Finished ---');

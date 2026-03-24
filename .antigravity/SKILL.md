@@ -104,16 +104,18 @@ Error responses use `success: false` and `statusCode`.
 
 ## 4. Filtering and Sorting
 
-### 4.1 Advanced Filtering
-Endpoints supporting lists must implement the `filter` object syntax:
-- **Syntax**: `?filter[field]=value`
-- **Example**: `?filter[status]=active&filter[name]=John`
-- **Behavior**: Filters are additive (AND logic). Fields like `name`, `email`, and `phone` should perform a partial match (`LIKE %value%`).
+### 4.1 Robust Filtering
+Endpoints supporting lists must implement the `filter` (singular) or `filters` (plural) object syntax:
+- **Syntax**: `?filter[field]=value` or `?filters[field]=value`
+- **Example**: `?filters[status]=active&filters[name]=John`
+- **Special Cases**:
+    - **Date Filters**: For `createdAt`, providing a `YYYY-MM-DD` string will filter by that exact date (using `DATE(createdAt)` comparison).
+- **Behavior**: Filters are additive (AND logic). Fields like `name`, `email`, and `phone` perform a partial match (`LIKE %value%`).
 
-### 4.2 Multi-Field Sorting
+### 4.2 Flexible Sorting
 Endpoints supporting lists must implement the `sort` query parameter:
-- **Syntax**: `?sort=field1,field2` (prefix with `-` for descending).
-- **Example**: `?sort=-createdAt,name` (sort by created date descending, then by name ascending).
+- **String Syntax**: `?sort=field1,field2` (prefix with `-` for descending).
+- **Object Syntax**: `?sort[field]=createdAt&sort[order]=asc`.
 - **Default**: Default to `-createdAt` if no sort is provided.
 
 ### 4.3 Query Persistence in Links

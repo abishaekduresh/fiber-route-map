@@ -72,23 +72,31 @@ export class UserController {
   /**
    * Extracts common metadata for the response.
    */
-  private getMeta = (req: Request, extra = {}) => {
-    const filter = req.query.filter as any || {};
-    const status = req.query.status as string;
-    const appliedFilters = { ...filter };
-    if (status && !appliedFilters.status) {
-      appliedFilters.status = status;
-    }
+  /**
+   * Extracts common metadata for the response.
+   * Accepts explicit filter and sort values already normalized by the caller.
+   */
+  private getMeta = (req: Request, filterObj: any, sortParam: any, extra = {}) => {
+    // Build filter summary
+    const appliedFilters = { ...filterObj };
 
-    const sortStr = req.query.sort as string || '-createdAt';
-    const sort = sortStr.split(',').map(s => {
-      const desc = s.trim().startsWith('-');
-      const field = desc ? s.trim().substring(1) : s.trim();
-      return {
-        field,
-        order: desc ? 'desc' : 'asc'
-      };
-    });
+    // Build sort summary — handles string or object
+    let sort: { field: string; order: string }[] = [];
+    if (typeof sortParam === 'string') {
+      sort = sortParam.split(',').map((s: string) => {
+        const desc = s.trim().startsWith('-');
+        const field = desc ? s.trim().substring(1) : s.trim();
+        return { field, order: desc ? 'desc' : 'asc' };
+      });
+    } else if (sortParam && typeof sortParam === 'object') {
+      sort = [{
+        field: sortParam.field || 'createdAt',
+        order: String(sortParam.order || 'desc').toLowerCase() === 'asc' ? 'asc' : 'desc'
+      }];
+    } else {
+      // Default
+      sort = [{ field: 'createdAt', order: 'desc' }];
+    }
 
     return {
       requestId: (req as any).requestId,
@@ -102,18 +110,19 @@ export class UserController {
 
   /**
    * Helper to build a URL with query parameters.
+   * Handles nested filter/filters objects by serializing to bracket notation.
    */
   private buildLink = (req: Request, params: any) => {
-    const url = new URL(req.baseUrl, 'http://localhost'); // Use baseUrl instead of leading '/'
+    const url = new URL(req.baseUrl, 'http://localhost');
     Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        if (typeof value === 'object' && key === 'filter') {
-          Object.entries(value).forEach(([fKey, fVal]) => {
-            url.searchParams.append(`filter[${fKey}]`, String(fVal));
-          });
-        } else {
-          url.searchParams.append(key, String(value));
-        }
+      if (value === undefined || value === null) return;
+      if (typeof value === 'object' && (key === 'filter' || key === 'filters')) {
+        // Serialize nested filter object back to bracket notation
+        Object.entries(value).forEach(([fKey, fVal]) => {
+          url.searchParams.append(`${key}[${fKey}]`, String(fVal));
+        });
+      } else if (typeof value !== 'object') {
+        url.searchParams.append(key, String(value));
       }
     });
     return `${url.pathname}${url.search}`;
@@ -124,8 +133,24 @@ export class UserController {
     try {
       const page = Number(req.query.page) || 1;
       const limit = Number(req.query.limit) === -1 ? -1 : (Number(req.query.limit) || 10);
-      
-      const { users, total } = await this.service.getAllUsers({ ...req.query, page, limit });
+
+      // Normalize: support both filter[...] and filters[...] syntax
+      const filterObj = (req.query.filter as any) || (req.query.filters as any) || {};
+      const sortParam = req.query.sort;
+
+      // Add top-level status to filterObj if provided without bracket syntax
+      if (req.query.status && !filterObj.status) {
+        filterObj.status = req.query.status;
+      }
+
+      const serviceParams = {
+        filter: filterObj,
+        sort: sortParam,
+        page,
+        limit,
+      };
+
+      const { users, total } = await this.service.getAllUsers(serviceParams);
       const totalPages = limit === -1 ? 1 : Math.ceil(total / limit);
 
       const transformedUsers = users.map(user => this.transformUser(user));
@@ -135,7 +160,7 @@ export class UserController {
         statusCode: 200,
         message: 'Users retrieved successfully',
         data: transformedUsers,
-        meta: this.getMeta(req, {
+        meta: this.getMeta(req, filterObj, sortParam, {
           pagination: {
             total,
             count: transformedUsers.length,
@@ -166,7 +191,7 @@ export class UserController {
         statusCode: 201,
         message: 'User created successfully',
         data: this.transformUser(user),
-        meta: this.getMeta(req)
+        meta: this.getMeta(req, {}, null)
       });
     } catch (error) {
       next(error);
@@ -181,7 +206,7 @@ export class UserController {
         statusCode: 200,
         message: 'User retrieved successfully',
         data: this.transformUser(user),
-        meta: this.getMeta(req)
+        meta: this.getMeta(req, {}, null)
       });
     } catch (error) {
       next(error);
@@ -198,7 +223,7 @@ export class UserController {
         statusCode: 200,
         message: 'User updated successfully',
         data: this.transformUser(user),
-        meta: this.getMeta(req)
+        meta: this.getMeta(req, {}, null)
       });
     } catch (error) {
       next(error);
@@ -213,7 +238,7 @@ export class UserController {
         success: true,
         statusCode: 200,
         message: 'User deleted successfully',
-        meta: this.getMeta(req)
+        meta: this.getMeta(req, {}, null)
       });
     } catch (error) {
       next(error);
@@ -228,7 +253,7 @@ export class UserController {
         statusCode: 200,
         message: 'User blocked successfully',
         data: this.transformUser(user),
-        meta: this.getMeta(req)
+        meta: this.getMeta(req, {}, null)
       });
     } catch (error) {
       next(error);
@@ -243,7 +268,7 @@ export class UserController {
         statusCode: 200,
         message: 'User activated successfully',
         data: this.transformUser(user),
-        meta: this.getMeta(req)
+        meta: this.getMeta(req, {}, null)
       });
     } catch (error) {
       next(error);

@@ -5,6 +5,12 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-03-24
+### Added
+- **Robust Filtering**: Added support for both `filter` and `filters` (plural) query parameters for better client-side compatibility.
+- **Date Filtering**: Implemented exact date matching for `createdAt` when using a `YYYY-MM-DD` string.
+- **Flexible Sorting**: Added support for object-based sorting (e.g., `?sort[order]=asc`).
+
 ## [1.3.0] - 2026-03-24
 ### Added
 - **Advanced Filtering**: Added support for `filter[field]=value` syntax for the `GET /api/users` endpoint.

@@ -36,30 +36,46 @@ export class UserRepository {
     let query = db(this.table);
     let countQuery = db(this.table);
 
-    // Unify Direct filters and filter[...] object
+    // Unify Direct filters and filter/filters object
+    const filterObj = params.filter || params.filters || {};
     const filters = {
-      ...(params.filter || {}),
-      ...(params.status && !params.filter?.status ? { status: params.status } : {}),
-      ...(params.name && !params.filter?.name ? { name: params.name } : {}),
-      ...(params.email && !params.filter?.email ? { email: params.email } : {}),
-      ...(params.phone && !params.filter?.phone ? { phone: params.phone } : {}),
+      ...filterObj,
+      ...(params.status && !filterObj.status ? { status: params.status } : {}),
+      ...(params.name && !filterObj.name ? { name: params.name } : {}),
+      ...(params.email && !filterObj.email ? { email: params.email } : {}),
+      ...(params.phone && !filterObj.phone ? { phone: params.phone } : {}),
     };
 
     // Apply Filters
-    if (filters.status === 'all') {
+    const statusVal = filters.status ? String(filters.status) : '';
+    if (statusVal === 'all') {
       // No status filter
-    } else if (filters.status && ['active', 'blocked', 'deleted'].includes(filters.status)) {
-      query = query.where('status', filters.status);
-      countQuery = countQuery.where('status', filters.status);
-    } else if (!filters.status) {
+    } else if (statusVal && ['active', 'blocked', 'deleted'].includes(statusVal)) {
+      query = query.where('status', statusVal);
+      countQuery = countQuery.where('status', statusVal);
+    } else if (!statusVal) {
       query = query.where('status', 'active');
       countQuery = countQuery.where('status', 'active');
     }
 
     ['name', 'email', 'phone'].forEach(field => {
-      if (filters[field]) {
-        query = query.where(field, 'like', `%${filters[field]}%`);
-        countQuery = countQuery.where(field, 'like', `%${filters[field]}%`);
+      if (filters[field] && !['status'].includes(field)) {
+        query = query.where(field, 'like', `%${String(filters[field])}%`);
+        countQuery = countQuery.where(field, 'like', `%${String(filters[field])}%`);
+      }
+    });
+
+    // Handle other arbitrary filters
+    Object.entries(filters).forEach(([field, value]) => {
+      if (!['status', 'name', 'email', 'phone'].includes(field)) {
+        if (field === 'createdAt' && typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+          // Handle YYYY-MM-DD date filter
+          query = query.whereRaw('DATE(createdAt) = ?', [value]);
+          countQuery = countQuery.whereRaw('DATE(createdAt) = ?', [value]);
+        } else if (value !== undefined && value !== null && value !== '') {
+          query = query.where(field, value);
+          countQuery = countQuery.where(field, value);
+        }
       }
     });
 
@@ -69,12 +85,19 @@ export class UserRepository {
 
     // Apply Sorting
     if (params.sort) {
-      const sortFields = String(params.sort).split(',');
-      sortFields.forEach(sortField => {
-        const desc = sortField.trim().startsWith('-');
-        const field = desc ? sortField.trim().substring(1) : sortField.trim();
-        query = query.orderBy(field, desc ? 'desc' : 'asc');
-      });
+      if (typeof params.sort === 'string') {
+        const sortFields = String(params.sort).split(',');
+        sortFields.forEach(sortField => {
+          const desc = sortField.trim().startsWith('-');
+          const field = desc ? sortField.trim().substring(1) : sortField.trim();
+          query = query.orderBy(field, desc ? 'desc' : 'asc');
+        });
+      } else if (typeof params.sort === 'object') {
+        // Handle sort[field]=... or sort[order]=...
+        const field = params.sort.field || 'createdAt';
+        const order = params.sort.order || 'desc';
+        query = query.orderBy(field, order);
+      }
     } else {
       query = query.orderBy('createdAt', 'desc');
     }

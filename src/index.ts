@@ -12,6 +12,9 @@ import logger from './utils/logger.js';
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Use extended query parser (qs) to support nested bracket notation like filter[status]=active
+app.set('query parser', 'extended');
+
 // Middleware
 app.use(helmet());
 app.use(cors());
