@@ -1,15 +1,18 @@
 import bcrypt from 'bcryptjs';
 import { UserRepository } from '../repositories/UserRepository.js';
 import { CountryRepository } from '../repositories/CountryRepository.js';
+import { RoleRepository } from '../repositories/RoleRepository.js';
 import { User, CreateUserDTO, UpdateUserDTO } from '../models/User.js';
 
 export class UserService {
   private repo: UserRepository;
   private countryRepo: CountryRepository;
+  private roleRepo: RoleRepository;
 
-  constructor(repo: UserRepository, countryRepo: CountryRepository) {
+  constructor(repo: UserRepository, countryRepo: CountryRepository, roleRepo: RoleRepository) {
     this.repo = repo;
     this.countryRepo = countryRepo;
+    this.roleRepo = roleRepo;
   }
 
   async createUser(data: CreateUserDTO): Promise<User> {
@@ -47,11 +50,21 @@ export class UserService {
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    return this.repo.create({
+    const user = await this.repo.create({
       ...data,
       password: hashedPassword,
       countryId, // Injected for repository
     } as any);
+
+    if (data.roleUuids && data.roleUuids.length > 0) {
+      const roleIds = await this.roleRepo.findIdsByUuids(data.roleUuids);
+      const internalId = await this.repo.getInternalIdByUuid(user.uuid);
+      if (internalId) {
+        await this.repo.syncRoles(internalId, roleIds);
+      }
+    }
+
+    return this.getUserByUuid(user.uuid);
   }
 
   async getAllUsers(filters: any = {}): Promise<{ users: User[]; total: number }> {
@@ -118,6 +131,14 @@ export class UserService {
 
     if (Object.keys(updateData).length > 0) {
       await this.repo.update(uuid, updateData);
+    }
+
+    if (data.roleUuids) {
+      const roleIds = await this.roleRepo.findIdsByUuids(data.roleUuids);
+      const internalId = await this.repo.getInternalIdByUuid(uuid);
+      if (internalId) {
+        await this.repo.syncRoles(internalId, roleIds);
+      }
     }
 
     return this.getUserByUuid(uuid);

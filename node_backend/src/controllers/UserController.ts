@@ -16,6 +16,7 @@ const createUserSchema = z.object({
     .regex(/[0-9]/, 'Password must contain at least one number'),
   confirmPassword: z.string(),
   countryUuid: z.string().uuid('Invalid country selection'),
+  roleUuids: z.array(z.string().uuid()).optional(),
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"]
@@ -34,6 +35,7 @@ const updateUserSchema = z.object({
     .optional(),
   confirmPassword: z.string().optional(),
   countryUuid: z.string().uuid('Invalid country selection').optional(),
+  roleUuids: z.array(z.string().uuid()).optional(),
 }).refine(data => {
   if (data.password || data.confirmPassword) {
     return data.password === data.confirmPassword;
@@ -55,7 +57,7 @@ export class UserController {
    * Transforms a user database object into the new API response format.
    */
   private transformUser = (user: User) => {
-    const { uuid, createdAt, updatedAt, email, username, name, phone, status, country } = user;
+    const { uuid, createdAt, updatedAt, email, username, name, phone, status, country, roles } = user;
     return {
       id: uuid,
       type: 'user',
@@ -65,7 +67,8 @@ export class UserController {
         name,
         phone,
         status,
-        country
+        country,
+        roles
       },
       meta: {
         createdAt,

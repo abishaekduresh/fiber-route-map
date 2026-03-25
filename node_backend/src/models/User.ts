@@ -14,7 +14,16 @@ export interface User {
     code: string;
     phoneCode: string;
   } | null;
+  roles?: {
+    uuid: string;
+    name: string;
+    slug: string;
+  }[];
 }
 
-export type CreateUserDTO = Pick<User, 'email' | 'username' | 'name' | 'phone'> & { password: string, countryUuid: string };
+export type CreateUserDTO = Pick<User, 'email' | 'username' | 'name' | 'phone'> & { 
+  password: string; 
+  countryUuid: string;
+  roleUuids?: string[];
+};
 export type UpdateUserDTO = Partial<CreateUserDTO>;

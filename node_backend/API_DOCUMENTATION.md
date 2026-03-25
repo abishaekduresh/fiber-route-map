@@ -1,4 +1,4 @@
-# API Documentation (v1.9.0)
+# API Documentation (v1.10.0)
 
 This document provides a comprehensive reference for all Node.js backend API endpoints. All timestamps are in **UTC ISO-8601** format.
 
@@ -46,7 +46,14 @@ This document provides a comprehensive reference for all Node.js backend API end
           "name": "India",
           "code": "IN",
           "phoneCode": "+91"
-        }
+        },
+        "roles": [
+          {
+            "uuid": "uuid-of-role",
+            "name": "Administrator",
+            "slug": "admin"
+          }
+        ]
       },
       "meta": {
         "createdAt": "2026-03-24T06:44:05.000Z",
@@ -88,7 +95,8 @@ This document provides a comprehensive reference for all Node.js backend API end
   "phone": "9876543210",
   "password": "SecretPassword123",
   "confirmPassword": "SecretPassword123",
-  "countryUuid": "uuid-of-active-country"
+  "countryUuid": "uuid-of-active-country",
+  "roleUuids": ["uuid-of-role-1", "uuid-of-role-2"]
 }
 ```
 
@@ -132,7 +140,8 @@ This document provides a comprehensive reference for all Node.js backend API end
   "username": "updated_jane",
   "name": "Updated Name",
   "phone": "1234567890",
-  "countryUuid": "uuid-of-active-country"
+  "countryUuid": "uuid-of-active-country",
+  "roleUuids": ["uuid-of-role-3"]
 }
 ```
 
@@ -231,7 +240,74 @@ This document provides a comprehensive reference for all Node.js backend API end
 
 ---
 
-## 3. Global Response Standard
+## 3. Roles
+
+### 3.1 List Roles
+**Endpoint**: `GET /api/roles`  
+**Description**: Retrieve a list of roles.
+
+#### Query Parameters
+| Parameter | Type | Description | Example |
+| :--- | :--- | :--- | :--- |
+| `page` | `number` | Page number | `?page=1` |
+| `limit` | `number` | Items per page | `?limit=10` |
+| `status` | `string` | Filter by `active` or `inactive` | `?status=active` |
+| `name` | `string` | Search by name | `?name=Admin` |
+
+#### Example Response
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Roles retrieved successfully",
+  "data": [
+    {
+      "id": "uuid",
+      "type": "role",
+      "attributes": {
+        "name": "Administrator",
+        "slug": "admin",
+        "description": "Full system access",
+        "status": "active"
+      },
+      "meta": {
+        "createdAt": "2026-03-25T17:38:56.000Z",
+        "updatedAt": "2026-03-25T17:38:56.000Z"
+      }
+    }
+  ]
+}
+```
+
+### 3.2 Create Role
+**Endpoint**: `POST /api/roles`  
+**Description**: Create a new role.
+
+#### Request Body
+```json
+{
+  "name": "Manager",
+  "slug": "manager",
+  "description": "Can manage certain modules",
+  "status": "active"
+}
+```
+
+### 3.3 Update Role
+**Endpoint**: `PUT /api/roles/:uuid`  
+**Description**: Update an existing role.
+
+### 3.4 Restore Role
+**Endpoint**: `PUT /api/roles/:uuid/restore`  
+**Description**: Restores a soft-deleted role and sets its status to `active`.
+
+### 3.5 Delete Role (Soft Delete)
+**Endpoint**: `DELETE /api/roles/:uuid`  
+**Description**: Marks a role as `inactive` and sets `deletedAt`.
+
+---
+
+## 4. Global Response Standard
 
 All endpoints follow this structure:
 - **`success`**: `boolean` indicating business logic success.
@@ -240,3 +316,6 @@ All endpoints follow this structure:
 - **`data`**: `object` or `array` of resources.
 - **`meta`**: Includes `requestId`, `timestamp`, and `version`.
 - **`links`**: Hypermedia links for resource navigation.
+
+> [!IMPORTANT]
+> **Universal 200 OK**: The API always returns an HTTP 200 OK status code at the protocol level. The actual response status is communicated through the `statusCode` field in the JSON body.

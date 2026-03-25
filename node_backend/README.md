@@ -4,7 +4,7 @@ The authoritative backend REST API for the Fiber Route Map system, replicated in
 Built using [Express](https://expressjs.com/) and [TypeScript](https://www.typescriptlang.org/), leveraging [Knex.js](https://knexjs.org/) for database interaction.
 
 ## Version
-**Current Version:** 1.9.0 (Country Requirement)
+**Current Version:** 1.10.0 (Multi-Role RBAC & Restore)
 
 ## Requirements
 - Node.js 18+
@@ -51,21 +51,38 @@ The API always returns an HTTP 200 OK status code. The actual logic status is in
 ### JSON Responses
 The API outputs consistent **camelCase** JSON payloads.
 
-#### Success (200/201)
+#### Success (200)
 ```json
 {
-  "error": false,
-  "code": 201,
+  "success": true,
+  "statusCode": 201,
   "message": "User created successfully",
   "data": {
-    "uuid": "019d1eb5-...",
-    "email": "user@example.com",
-    "name": "User Name",
-    "phone": "1234567890",
-    "status": "active",
-    "countryUuid": "uuid-of-country",
-    "createdAt": "2026-03-24T12:00:00Z",
-    "updatedAt": "2026-03-24T12:00:00Z"
+    "id": "019d1eb5-...",
+    "type": "user",
+    "attributes": {
+      "email": "user@example.com",
+      "name": "User Name",
+      "phone": "1234567890",
+      "status": "active",
+      "country": {
+        "id": "uuid-of-country",
+        "name": "India",
+        "code": "IN",
+        "phoneCode": "+91"
+      },
+      "roles": [
+        {
+          "uuid": "uuid-of-role",
+          "name": "User",
+          "slug": "user"
+        }
+      ]
+    },
+    "meta": {
+      "createdAt": "2026-03-24T12:00:00Z",
+      "updatedAt": "2026-03-24T12:00:00Z"
+    }
   },
   "meta": {
     "timestamp": "2026-03-24T12:00:00.000Z",
@@ -74,14 +91,15 @@ The API outputs consistent **camelCase** JSON payloads.
 }
 ```
 
-#### Error (400/404/409/500)
+#### Error (Always 200 HTTP)
 ```json
 {
-  "error": true,
-  "errorCode": 409,
+  "success": false,
+  "statusCode": 409,
   "message": "Phone number is already registered",
   "help": "This phone number is already in use. Please use a different number or recover your account.",
   "meta": {
+    "requestId": "req_...",
     "timestamp": "...",
     "version": "v1"
   }

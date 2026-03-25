@@ -12,6 +12,13 @@ dist/
 build/
 **/build/
 
+# Antigravity / AI tools
+# .antigravity/
+
+# Scripts
+# Only ignore temporary/test scripts if any, but keep migrations
+scripts/
+
 # Logs
 *.log
 npm-debug.log*

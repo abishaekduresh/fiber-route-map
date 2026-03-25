@@ -123,6 +123,22 @@ export class UserRepository {
     const offset = (page - 1) * limit;
     const users = limit === -1 ? await query : await query.offset(offset).limit(limit);
 
+    // Fetch roles for all retrieved users
+    const userIds = users.map((u: any) => u.id);
+    const roles = userIds.length > 0 
+      ? await db('user_roles')
+          .join('roles', 'user_roles.roleId', 'roles.id')
+          .select('user_roles.userId', 'roles.uuid', 'roles.name', 'roles.slug')
+          .whereIn('user_roles.userId', userIds)
+      : [];
+
+    const rolesByUserId = roles.reduce((acc: any, role: any) => {
+      const { userId, ...roleData } = role;
+      if (!acc[userId]) acc[userId] = [];
+      acc[userId].push(roleData);
+      return acc;
+    }, {});
+
     const sanitizedUsers = users.map((user: any) => {
       const { id, countryId, password, countryName, countryCode, countryPhoneCode, countryUuid, ...userWithoutInternalFields } = user;
       return {
@@ -132,7 +148,8 @@ export class UserRepository {
           name: countryName,
           code: countryCode,
           phoneCode: countryPhoneCode
-        } : null
+        } : null,
+        roles: rolesByUserId[id] || []
       } as User;
     });
 
@@ -152,6 +169,12 @@ export class UserRepository {
       .where('users.uuid', uuid)
       .first();
     if (!user) return null;
+
+    const roles = await db('user_roles')
+      .join('roles', 'user_roles.roleId', 'roles.id')
+      .select('roles.uuid', 'roles.name', 'roles.slug')
+      .where('user_roles.userId', user.id);
+
     const { id, countryId, password, ...userWithoutInternalFields } = user as any;
     return {
       ...userWithoutInternalFields,
@@ -160,7 +183,8 @@ export class UserRepository {
         name: user.countryName,
         code: user.countryCode,
         phoneCode: user.countryPhoneCode
-      } : null
+      } : null,
+      roles
     } as any;
   }
 
@@ -177,6 +201,12 @@ export class UserRepository {
       .where('email', email)
       .first();
     if (!user) return null;
+    
+    const roles = await db('user_roles')
+      .join('roles', 'user_roles.roleId', 'roles.id')
+      .select('roles.uuid', 'roles.name', 'roles.slug')
+      .where('user_roles.userId', user.id);
+
     const { id, countryId, password, ...userWithoutInternalFields } = user as any;
     return {
       ...userWithoutInternalFields,
@@ -185,7 +215,8 @@ export class UserRepository {
         name: user.countryName,
         code: user.countryCode,
         phoneCode: user.countryPhoneCode
-      } : null
+      } : null,
+      roles
     } as any;
   }
 
@@ -202,6 +233,12 @@ export class UserRepository {
       .where('username', username)
       .first();
     if (!user) return null;
+
+    const roles = await db('user_roles')
+      .join('roles', 'user_roles.roleId', 'roles.id')
+      .select('roles.uuid', 'roles.name', 'roles.slug')
+      .where('user_roles.userId', user.id);
+
     const { id, countryId, password, ...userWithoutInternalFields } = user as any;
     return {
       ...userWithoutInternalFields,
@@ -210,7 +247,8 @@ export class UserRepository {
         name: user.countryName,
         code: user.countryCode,
         phoneCode: user.countryPhoneCode
-      } : null
+      } : null,
+      roles
     } as any;
   }
 
@@ -227,6 +265,12 @@ export class UserRepository {
       .where('phone', String(phone))
       .first();
     if (!user) return null;
+
+    const roles = await db('user_roles')
+      .join('roles', 'user_roles.roleId', 'roles.id')
+      .select('roles.uuid', 'roles.name', 'roles.slug')
+      .where('user_roles.userId', user.id);
+
     const { id, countryId, password, ...userWithoutInternalFields } = user as any;
     return {
       ...userWithoutInternalFields,
@@ -235,7 +279,8 @@ export class UserRepository {
         name: user.countryName,
         code: user.countryCode,
         phoneCode: user.countryPhoneCode
-      } : null
+      } : null,
+      roles
     } as any;
   }
 
@@ -271,5 +316,23 @@ export class UserRepository {
       deletedAt: now
     });
     return result > 0;
+  }
+
+  async syncRoles(userId: number, roleIds: number[]): Promise<void> {
+    await db.transaction(async (trx: any) => {
+      // Remove existing roles
+      await trx('user_roles').where('userId', userId).del();
+      
+      // Add new roles
+      if (roleIds.length > 0) {
+        const userRoles = roleIds.map(roleId => ({ userId, roleId }));
+        await trx('user_roles').insert(userRoles);
+      }
+    });
+  }
+
+  async getInternalIdByUuid(uuid: string): Promise<number | null> {
+    const user = await db(this.table).select('id').where('uuid', uuid).first();
+    return user ? user.id : null;
   }
 }
