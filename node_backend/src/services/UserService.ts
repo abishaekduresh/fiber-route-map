@@ -98,6 +98,22 @@ export class UserService {
     }
 
     if (data.name) updateData.name = data.name;
+
+    if (data.countryUuid) {
+      const country = await this.countryRepo.findByUuid(data.countryUuid);
+      if (!country) {
+        const error = new Error('Selected country does not exist');
+        (error as any).status = 404;
+        throw error;
+      }
+      if (country.status !== 'active') {
+        const error = new Error('Selected country is not active');
+        (error as any).status = 400;
+        throw error;
+      }
+      updateData.countryId = await this.countryRepo.findIdByUuid(data.countryUuid);
+    }
+
     if (data.password) updateData.password = await bcrypt.hash(data.password, 10);
 
     if (Object.keys(updateData).length > 0) {

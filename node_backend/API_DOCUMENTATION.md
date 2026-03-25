@@ -131,7 +131,8 @@ This document provides a comprehensive reference for all Node.js backend API end
 {
   "username": "updated_jane",
   "name": "Updated Name",
-  "phone": "1234567890"
+  "phone": "1234567890",
+  "countryUuid": "uuid-of-active-country"
 }
 ```
 

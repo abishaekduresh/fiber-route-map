@@ -240,7 +240,8 @@ export class UserRepository {
   }
 
   async update(uuid: string, data: UpdateUserDTO): Promise<boolean> {
-    const updateData: any = { ...data, updatedAt: nowDb() };
+    const { countryUuid, ...rest } = data as any;
+    const updateData: any = { ...rest, updatedAt: nowDb() };
     if (updateData.phone) updateData.phone = String(updateData.phone);
     const result = await db(this.table).where('uuid', uuid).update(updateData);
     return result > 0;
