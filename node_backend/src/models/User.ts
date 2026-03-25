@@ -8,7 +8,13 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;
+  country?: {
+    id: string;
+    name: string;
+    code: string;
+    phoneCode: string;
+  } | null;
 }
 
-export type CreateUserDTO = Pick<User, 'email' | 'username' | 'name' | 'phone'> & { password: string };
+export type CreateUserDTO = Pick<User, 'email' | 'username' | 'name' | 'phone'> & { password: string, countryUuid: string };
 export type UpdateUserDTO = Partial<CreateUserDTO>;

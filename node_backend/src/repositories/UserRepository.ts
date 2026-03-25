@@ -18,21 +18,29 @@ export class UserRepository {
       phone: String(data.phone),
       password: data.password,
       status: 'active',
+      countryId: (data as any).countryId,
       createdAt: now,
       updatedAt: now,
     };
 
     await db(this.table).insert(newUser);
     
-    const { id, password, ...userWithoutInternalFields } = newUser;
-    return userWithoutInternalFields as User;
+    return this.findByUuid(uuid) as Promise<User>;
   }
 
   async getAll(params: any = {}): Promise<{ users: User[]; total: number }> {
     const page = Number(params.page) || 1;
     const limit = Number(params.limit) === -1 ? -1 : (Number(params.limit) || 10);
 
-    let query = db(this.table);
+    let query = db(this.table)
+      .leftJoin('countries', 'users.countryId', 'countries.id')
+      .select(
+        'users.*', 
+        'countries.uuid as countryUuid',
+        'countries.name as countryName',
+        'countries.code as countryCode',
+        'countries.phoneCode as countryPhoneCode'
+      );
     let countQuery = db(this.table);
 
     const filterObj = params.filter || params.filters || {};
@@ -47,18 +55,18 @@ export class UserRepository {
 
     const statusVal = filters.status ? String(filters.status) : '';
     if (statusVal === 'all') {
-      query = query.whereNot('status', 'deleted');
+      query = query.whereNot('users.status', 'deleted');
       countQuery = countQuery.whereNot('status', 'deleted');
     } else if (statusVal && ['active', 'blocked', 'deleted'].includes(statusVal)) {
-      query = query.where('status', statusVal);
+      query = query.where('users.status', statusVal);
       countQuery = countQuery.where('status', statusVal);
     } else {
-      query = query.whereNot('status', 'deleted');
+      query = query.whereNot('users.status', 'deleted');
       countQuery = countQuery.whereNot('status', 'deleted');
     }
 
     if (filters.name) {
-      query = query.where('name', 'like', `%${filters.name}%`);
+      query = query.where('users.name', 'like', `%${filters.name}%`);
       countQuery = countQuery.where('name', 'like', `%${filters.name}%`);
     }
     if (filters.email) {
@@ -75,7 +83,7 @@ export class UserRepository {
     }
 
     if (filters.createdAt && typeof filters.createdAt === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(filters.createdAt)) {
-      query = query.whereRaw('DATE(createdAt) = ?', [filters.createdAt]);
+      query = query.whereRaw('DATE(users.createdAt) = ?', [filters.createdAt]);
       countQuery = countQuery.whereRaw('DATE(createdAt) = ?', [filters.createdAt]);
     }
 
@@ -91,7 +99,10 @@ export class UserRepository {
           const desc = s.trim().startsWith('-');
           const field = desc ? s.trim().substring(1) : s.trim();
           if (allowedSortFields.includes(field)) {
-            query = query.orderBy(field, desc ? 'desc' : 'asc');
+            const qualifiedField = ['uuid', 'name', 'status', 'createdAt', 'updatedAt'].includes(field) 
+              ? `users.${field}` 
+              : field;
+            query = query.orderBy(qualifiedField, desc ? 'desc' : 'asc');
           }
         });
       } else if (typeof params.sort === 'object') {
@@ -99,50 +110,133 @@ export class UserRepository {
         const field = sortObj.field || 'createdAt';
         const order = String(sortObj.order || 'desc').toLowerCase() === 'asc' ? 'asc' : 'desc';
         if (allowedSortFields.includes(field)) {
-          query = query.orderBy(field, order);
+          const qualifiedField = ['uuid', 'name', 'status', 'createdAt', 'updatedAt'].includes(field) 
+            ? `users.${field}` 
+            : field;
+          query = query.orderBy(qualifiedField, order);
         }
       }
     } else {
-      query = query.orderBy('createdAt', 'desc');
+      query = query.orderBy('users.createdAt', 'desc');
     }
 
     const offset = (page - 1) * limit;
     const users = limit === -1 ? await query : await query.offset(offset).limit(limit);
 
     const sanitizedUsers = users.map((user: any) => {
-      const { id, password, ...userWithoutInternalFields } = user;
-      return userWithoutInternalFields as User;
+      const { id, countryId, password, countryName, countryCode, countryPhoneCode, countryUuid, ...userWithoutInternalFields } = user;
+      return {
+        ...userWithoutInternalFields,
+        country: countryUuid ? {
+          id: countryUuid,
+          name: countryName,
+          code: countryCode,
+          phoneCode: countryPhoneCode
+        } : null
+      } as User;
     });
 
     return { users: sanitizedUsers, total };
   }
 
   async findByUuid(uuid: string): Promise<User | null> {
-    const user = await db(this.table).where('uuid', uuid).first();
+    const user = await db(this.table)
+      .leftJoin('countries', 'users.countryId', 'countries.id')
+      .select(
+        'users.*', 
+        'countries.uuid as countryUuid',
+        'countries.name as countryName',
+        'countries.code as countryCode',
+        'countries.phoneCode as countryPhoneCode'
+      )
+      .where('users.uuid', uuid)
+      .first();
     if (!user) return null;
-    const { id, password, ...userWithoutInternalFields } = user as any;
-    return userWithoutInternalFields as User;
+    const { id, countryId, password, ...userWithoutInternalFields } = user as any;
+    return {
+      ...userWithoutInternalFields,
+      country: user.countryUuid ? {
+        id: user.countryUuid,
+        name: user.countryName,
+        code: user.countryCode,
+        phoneCode: user.countryPhoneCode
+      } : null
+    } as any;
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const user = await db(this.table).where('email', email).first();
+    const user = await db(this.table)
+      .leftJoin('countries', 'users.countryId', 'countries.id')
+      .select(
+        'users.*', 
+        'countries.uuid as countryUuid',
+        'countries.name as countryName',
+        'countries.code as countryCode',
+        'countries.phoneCode as countryPhoneCode'
+      )
+      .where('email', email)
+      .first();
     if (!user) return null;
-    const { id, password, ...userWithoutInternalFields } = user as any;
-    return userWithoutInternalFields as User;
+    const { id, countryId, password, ...userWithoutInternalFields } = user as any;
+    return {
+      ...userWithoutInternalFields,
+      country: user.countryUuid ? {
+        id: user.countryUuid,
+        name: user.countryName,
+        code: user.countryCode,
+        phoneCode: user.countryPhoneCode
+      } : null
+    } as any;
   }
 
   async findByUsername(username: string): Promise<User | null> {
-    const user = await db(this.table).where('username', username).first();
+    const user = await db(this.table)
+      .leftJoin('countries', 'users.countryId', 'countries.id')
+      .select(
+        'users.*', 
+        'countries.uuid as countryUuid',
+        'countries.name as countryName',
+        'countries.code as countryCode',
+        'countries.phoneCode as countryPhoneCode'
+      )
+      .where('username', username)
+      .first();
     if (!user) return null;
-    const { id, password, ...userWithoutInternalFields } = user as any;
-    return userWithoutInternalFields as User;
+    const { id, countryId, password, ...userWithoutInternalFields } = user as any;
+    return {
+      ...userWithoutInternalFields,
+      country: user.countryUuid ? {
+        id: user.countryUuid,
+        name: user.countryName,
+        code: user.countryCode,
+        phoneCode: user.countryPhoneCode
+      } : null
+    } as any;
   }
 
   async findByPhone(phone: string): Promise<User | null> {
-    const user = await db(this.table).where('phone', String(phone)).first();
+    const user = await db(this.table)
+      .leftJoin('countries', 'users.countryId', 'countries.id')
+      .select(
+        'users.*', 
+        'countries.uuid as countryUuid',
+        'countries.name as countryName',
+        'countries.code as countryCode',
+        'countries.phoneCode as countryPhoneCode'
+      )
+      .where('phone', String(phone))
+      .first();
     if (!user) return null;
-    const { id, password, ...userWithoutInternalFields } = user as any;
-    return userWithoutInternalFields as User;
+    const { id, countryId, password, ...userWithoutInternalFields } = user as any;
+    return {
+      ...userWithoutInternalFields,
+      country: user.countryUuid ? {
+        id: user.countryUuid,
+        name: user.countryName,
+        code: user.countryCode,
+        phoneCode: user.countryPhoneCode
+      } : null
+    } as any;
   }
 
   async update(uuid: string, data: UpdateUserDTO): Promise<boolean> {

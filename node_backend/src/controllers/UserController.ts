@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { UserService } from '../services/UserService.js';
 import { nowDb } from '../utils/time.js';
 import { z } from 'zod';
+import { User } from '../models/User.js';
 
 const createUserSchema = z.object({
   email: z.string().email('Invalid email format'),
@@ -13,7 +14,8 @@ const createUserSchema = z.object({
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
     .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
     .regex(/[0-9]/, 'Password must contain at least one number'),
-  confirmPassword: z.string()
+  confirmPassword: z.string(),
+  countryUuid: z.string().uuid('Invalid country selection'),
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"]
@@ -51,8 +53,8 @@ export class UserController {
   /**
    * Transforms a user database object into the new API response format.
    */
-  private transformUser = (user: any) => {
-    const { uuid, createdAt, updatedAt, email, username, name, phone, status } = user;
+  private transformUser = (user: User) => {
+    const { uuid, createdAt, updatedAt, email, username, name, phone, status, country } = user;
     return {
       id: uuid,
       type: 'user',
@@ -61,7 +63,8 @@ export class UserController {
         username,
         name,
         phone,
-        status
+        status,
+        country
       },
       meta: {
         createdAt,

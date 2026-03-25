@@ -108,6 +108,11 @@ export class CountryRepository {
     return rest as Country;
   }
 
+  async findIdByUuid(uuid: string): Promise<number | null> {
+    const country = await db(this.table).where('uuid', uuid).select('id').first();
+    return country ? country.id : null;
+  }
+
   async findByCode(code: string): Promise<Country | null> {
     const country = await db(this.table).where('code', code).first();
     if (!country) return null;

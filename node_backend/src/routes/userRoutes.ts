@@ -2,11 +2,13 @@ import { Router } from 'express';
 import { UserController } from '../controllers/UserController.js';
 import { UserService } from '../services/UserService.js';
 import { UserRepository } from '../repositories/UserRepository.js';
+import { CountryRepository } from '../repositories/CountryRepository.js';
 
 const router = Router();
 
 const userRepository = new UserRepository();
-const userService = new UserService(userRepository);
+const countryRepository = new CountryRepository();
+const userService = new UserService(userRepository, countryRepository);
 const userController = new UserController(userService);
 
 router.get('/', userController.index);

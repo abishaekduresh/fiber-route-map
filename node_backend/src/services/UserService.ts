@@ -1,12 +1,15 @@
 import bcrypt from 'bcryptjs';
 import { UserRepository } from '../repositories/UserRepository.js';
+import { CountryRepository } from '../repositories/CountryRepository.js';
 import { User, CreateUserDTO, UpdateUserDTO } from '../models/User.js';
 
 export class UserService {
   private repo: UserRepository;
+  private countryRepo: CountryRepository;
 
-  constructor(repo: UserRepository) {
+  constructor(repo: UserRepository, countryRepo: CountryRepository) {
     this.repo = repo;
+    this.countryRepo = countryRepo;
   }
 
   async createUser(data: CreateUserDTO): Promise<User> {
@@ -27,12 +30,28 @@ export class UserService {
       throw error;
     }
 
+    // Validate country
+    const country = await this.countryRepo.findByUuid(data.countryUuid);
+    if (!country) {
+      const error = new Error('Selected country does not exist');
+      (error as any).status = 404;
+      throw error;
+    }
+    if (country.status !== 'active') {
+      const error = new Error('Selected country is not active');
+      (error as any).status = 400;
+      throw error;
+    }
+
+    const countryId = await this.countryRepo.findIdByUuid(data.countryUuid);
+
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
     return this.repo.create({
       ...data,
       password: hashedPassword,
-    });
+      countryId, // Injected for repository
+    } as any);
   }
 
   async getAllUsers(filters: any = {}): Promise<{ users: User[]; total: number }> {

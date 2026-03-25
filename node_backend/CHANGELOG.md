@@ -5,6 +5,18 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-03-25
+### Added
+- **User Registration Requirement**: Updated user registration to require a `countryUuid` parameter.
+- **Database Architecture**: Added `countryId` (camelCase) as a foreign key to the `users` table.
+- **Validation**: Implemented server-side validation to ensure only `active` countries can be selected during registration.
+- **Documentation**: Updated root and backend documentation to reflect recent changes.
+
+## [1.8.1] - 2026-03-24
+### Changed
+- **Repository Structure**: Moved the `.git` directory and `.gitignore` file from `node_backend/` to the project root directory.
+- **Git Config**: Updated the root `.gitignore` with recursive patterns (`**/`) to correctly manage dependencies and environment files across all project subdirectories.
+
 ## [1.8.0] - 2026-03-24
 ### Added
 - **Timestamp Standardization**: Standardized `createdAt`, `updatedAt`, and `deletedAt` across all database tables. Added `deletedAt` to the `users` table.

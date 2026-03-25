@@ -4,7 +4,7 @@ The authoritative backend REST API for the Fiber Route Map system, replicated in
 Built using [Express](https://expressjs.com/) and [TypeScript](https://www.typescriptlang.org/), leveraging [Knex.js](https://knexjs.org/) for database interaction.
 
 ## Version
-**Current Version:** 1.1.0 (Refactored to camelCase)
+**Current Version:** 1.9.0 (Country Requirement)
 
 ## Requirements
 - Node.js 18+
@@ -63,6 +63,7 @@ The API outputs consistent **camelCase** JSON payloads.
     "name": "User Name",
     "phone": "1234567890",
     "status": "active",
+    "countryUuid": "uuid-of-country",
     "createdAt": "2026-03-24T12:00:00Z",
     "updatedAt": "2026-03-24T12:00:00Z"
   },

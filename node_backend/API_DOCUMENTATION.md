@@ -1,4 +1,4 @@
-# API Documentation (v1.3.4)
+# API Documentation (v1.9.0)
 
 This document provides a comprehensive reference for all Node.js backend API endpoints. All timestamps are in **UTC ISO-8601** format.
 
@@ -40,7 +40,13 @@ This document provides a comprehensive reference for all Node.js backend API end
         "username": "jane_doe",
         "name": "Jane Doe",
         "phone": "9876543210",
-        "status": "active"
+        "status": "active",
+        "country": {
+          "id": "uuid-of-country",
+          "name": "India",
+          "code": "IN",
+          "phoneCode": "+91"
+        }
       },
       "meta": {
         "createdAt": "2026-03-24T06:44:05.000Z",
@@ -81,7 +87,8 @@ This document provides a comprehensive reference for all Node.js backend API end
   "name": "Jane Doe",
   "phone": "9876543210",
   "password": "SecretPassword123",
-  "confirmPassword": "SecretPassword123"
+  "confirmPassword": "SecretPassword123",
+  "countryUuid": "uuid-of-active-country"
 }
 ```
 
@@ -94,7 +101,19 @@ This document provides a comprehensive reference for all Node.js backend API end
   "data": {
     "id": "uuid",
     "type": "user",
-    "attributes": { "email": "...", "username": "...", "name": "...", "phone": "...", "status": "active" },
+    "attributes": { 
+      "email": "...", 
+      "username": "...", 
+      "name": "...", 
+      "phone": "...", 
+      "status": "active", 
+      "country": {
+        "id": "...",
+        "name": "...",
+        "code": "...",
+        "phoneCode": "..."
+      } 
+    },
     "meta": { "createdAt": "...", "updatedAt": "..." },
     "links": { "self": "/api/users/uuid" }
   }
