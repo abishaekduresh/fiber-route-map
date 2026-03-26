@@ -44,8 +44,28 @@ export class AuthService {
 
     // Check session limit
     const activeSessionsCount = await this.authRepo.countActiveSessions(userWithPassword.id);
-    if (activeSessionsCount >= this.MAX_SESSIONS) {
+    const sessionLimit = userWithPassword.sessionLimit || this.MAX_SESSIONS;
+    
+    if (activeSessionsCount >= sessionLimit) {
       const activeSessions = await this.authRepo.getSessionsByUserId(userWithPassword.id);
+      
+      // Generate a short-lived management token
+      const mgmtToken = crypto.randomBytes(32).toString('hex');
+      const mgmtExpiresAt = new Date();
+      mgmtExpiresAt.setMinutes(mgmtExpiresAt.getMinutes() + 10); // 10 minutes limit
+
+      console.log(`[AuthService] Session limit reached for user ${userWithPassword.id}. Limit: ${sessionLimit}. Creating mgmt token.`);
+
+      // Store in a temporary session that only allows management
+      await this.authRepo.createSession({
+        ...deviceInfo,
+        userId: userWithPassword.id,
+        sessionToken: mgmtToken,
+        expiresAt: mgmtExpiresAt,
+        deviceName: 'Session Management',
+        deviceId: 'mgmt-only'
+      });
+
       const error = new Error('Session limit reached. Please logout from another device.');
       (error as any).status = 403;
       (error as any).code = 'SESSION_LIMIT_REACHED';
@@ -54,6 +74,8 @@ export class AuthService {
         deviceName: s.deviceName || 'Unknown Device',
         lastActive: s.createdAt
       }));
+      (error as any).mgmtToken = mgmtToken;
+      (error as any).sessionLimit = sessionLimit;
       throw error;
     }
 
@@ -65,7 +87,7 @@ export class AuthService {
     const session = await this.authRepo.createSession({
       userId: userWithPassword.id,
       sessionToken,
-      expiresAt: expiresAt.toISOString().slice(0, 19).replace('T', ' '), // Format for MySQL
+      expiresAt: expiresAt,
       ...deviceInfo
     });
 
@@ -89,10 +111,37 @@ export class AuthService {
     const session = await this.authRepo.findSessionByToken(token);
     if (!session) return null;
 
-    // Use internal ID if possible, but findByUuid is what we have for public objects
-    // Actually, findByUuid is best for consistency
+    // Check expiration
+    if (new Date(session.expiresAt) < new Date()) {
+      return null;
+    }
+
     const userIdInternal = session.userId;
-    // We need a findById method in UserRepository
     return this.userRepo.findById(userIdInternal);
+  }
+
+  /**
+   * Validate a management token (short-lived, mgmt-only).
+   * Unlike validateSession, this one is specifically for tokens used during session management flows.
+   */
+  async validateMgmtToken(token: string): Promise<User | null> {
+    const session = await this.authRepo.findSessionByToken(token);
+    if (!session) {
+      console.log(`[AuthService] Mgmt token not found or expired in DB.`);
+      return null;
+    }
+    
+    if (session.deviceId !== 'mgmt-only') {
+      console.log(`[AuthService] Mgmt token rejected: Incorrect deviceId ${session.deviceId}.`);
+      return null;
+    }
+
+    // Check expiration manually as fallback
+    if (new Date(session.expiresAt) < new Date()) {
+      console.log(`[AuthService] Mgmt token rejected: Manual expiration check failed. DB: ${session.expiresAt}, Now: ${new Date().toISOString()}`);
+      return null;
+    }
+
+    return this.userRepo.findById(session.userId);
   }
 }

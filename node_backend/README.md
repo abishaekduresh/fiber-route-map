@@ -4,7 +4,7 @@ The authoritative backend REST API for the Fiber Route Map system, replicated in
 Built using [Express](https://expressjs.com/) and [TypeScript](https://www.typescriptlang.org/), leveraging [Knex.js](https://knexjs.org/) for database interaction.
 
 ## Version
-**Current Version:** 1.11.1 (Secure Auth, Device Limits & Session Management)
+**Current Version:** 1.12.0 (Per-User Session Limits & Enhanced Mgmt)
 
 ## Requirements
 - Node.js 18+
@@ -51,8 +51,8 @@ All requests to `/api` must include:
 ### Authentication & Session Management
 The API uses a secure, database-backed session system:
 - **Identifier**: Log in via `POST /api/auth/login` using **email**, **username**, or **phone number**.
-- **Device Limits**: Each user is limited to **3 concurrent active sessions**.
-- **Management**: Users can list their active devices via `GET /api/auth/sessions` and remotely terminate sessions via `DELETE /api/auth/sessions/:uuid`.
+- **Per-User Limits**: Authentication respects individual `sessionLimit` configured per account (defaulting to 1).
+- **Management**: Users can list active devices via `GET /api/auth/sessions` and terminate sessions via `DELETE /api/auth/sessions/:uuid` using a short-lived `X-Mgmt-Token`.
 - **Profile Integration**: The `/api/auth/me` endpoint returns both user attributes and the list of active sessions.
 
 ### Universal 200 OK

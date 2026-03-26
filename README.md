@@ -3,7 +3,8 @@
 A comprehensive system for mapping and managing fiber optic routes.
 
 ## Project Structure
-- `node_backend/`: Node.js based REST API (Express, TypeScript, Knex) with Secure Authentication & Multi-Role RBAC.
+- `website/`: Futuristic Next.js 16 Frontend (Glassmorphism, Auth Integration).
+- `node_backend/`: Node.js based REST API (Express, TypeScript, Knex) with Per-User Session Limits & RBAC.
 - `(Other components will be listed here as they are developed)`
 
 ## Prerequisites
@@ -11,4 +12,5 @@ A comprehensive system for mapping and managing fiber optic routes.
 - MySQL / MariaDB
 
 ## Getting Started
-See the [node_backend README](node_backend/README.md) for instructions on setting up the API.
+1. Setup the backend: See [node_backend README](node_backend/README.md).
+2. Setup the frontend: See [website README](website/README.md).

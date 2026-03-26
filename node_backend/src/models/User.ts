@@ -5,6 +5,7 @@ export interface User {
   name: string;
   phone: string;
   status: 'active' | 'blocked' | 'deleted';
+  sessionLimit: number;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;

@@ -5,6 +5,16 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.0] - 2026-03-26
+### Added
+- **Per-User Session Limits**: Migrated from a global session limit to a user-configurable `sessionLimit` (defaulting to 1). Added `sessionLimit` column to the `users` table.
+- **Enhanced Session Management**: Integrated specific management token support for secure session termination during the "Limit Reached" state.
+### Fixed
+- **Session Termination**: Resolved a critical bug where management sessions were incorrectly counting towards the active limit, causing an "infinite block".
+- **Internal Logic**: Fixed a regression where `deviceId` was being overwritten during session creation.
+### Improved
+- **Time Consistency**: Standardized all backend internal time handling to use `Date` objects, ensuring reliable database driver conversions and timezone consistency.
+
 ## [1.11.1] - 2026-03-26
 ### Fixed
 - **Type Safety**: Resolved a TypeScript compilation error in `AuthController.ts` where `req.params.uuid` was incorrectly typed, ensuring robust session termination.

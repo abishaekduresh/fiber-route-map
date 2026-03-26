@@ -7,7 +7,7 @@ export class AuthRepository {
   private readonly sessionsTable = 'sessions';
   private readonly identitiesTable = 'user_identities';
 
-  async createSession(data: { userId: number; sessionToken: string; expiresAt: string; ipAddress?: string; userAgent?: string; deviceId?: string; deviceName?: string }): Promise<Session> {
+  async createSession(data: { userId: number; sessionToken: string; expiresAt: Date; ipAddress?: string; userAgent?: string; deviceId?: string; deviceName?: string }): Promise<Session> {
     const uuid = generateUuidV7();
     const now = nowDb();
     
@@ -34,6 +34,7 @@ export class AuthRepository {
     const result = await db(this.sessionsTable)
       .where('userId', userId)
       .andWhere('expiresAt', '>', nowDb())
+      .andWhereNot('deviceId', 'mgmt-only')
       .count('* as total')
       .first();
     return Number(result?.total || 0);
@@ -43,6 +44,7 @@ export class AuthRepository {
     return db(this.sessionsTable)
       .where('userId', userId)
       .andWhere('expiresAt', '>', nowDb())
+      .andWhereNot('deviceId', 'mgmt-only')
       .orderBy('createdAt', 'desc');
   }
 

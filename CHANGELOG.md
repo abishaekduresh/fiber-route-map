@@ -2,6 +2,14 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.12.0] - 2026-03-26
+### Added
+- **Frontend Launch**: Bootstrapped and developed a futuristic Next.js 16 website with localized authentication and session management.
+- **Per-User Session Limits**: Migrated backend to a flexible per-user session constraint system (defaulting to 1).
+### Fixed
+- **Session Termination Flow**: Resolved critical errors in the termination logic (401 Unauthorized fix) and management token authentication.
+- **Data Integrity**: Unified backend timestamp handling to `Date` objects for consistent database synchronization.
+
 ## [1.11.1] - 2026-03-26
 ### Fixed
 - **Type Safety**: Resolved a TypeScript compilation error in `AuthController.ts` where `req.params.uuid` was incorrectly typed, ensuring robust session termination.

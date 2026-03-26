@@ -6,17 +6,22 @@ export const auth = (authService: AuthService) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        const error = new Error('Authentication token is required');
-        (error as any).status = 401;
-        throw error;
+      const mgmtTokenHeader = req.headers['x-mgmt-token'];
+      
+      let user = null;
+
+      if (mgmtTokenHeader) {
+        // Try validating as a management token
+        const token = Array.isArray(mgmtTokenHeader) ? mgmtTokenHeader[0] : mgmtTokenHeader;
+        user = await authService.validateMgmtToken(token);
+      } else if (authHeader && authHeader.startsWith('Bearer ')) {
+        // Normal session token validation
+        const token = authHeader.split(' ')[1];
+        user = await authService.validateSession(token);
       }
 
-      const token = authHeader.split(' ')[1];
-      const user = await authService.validateSession(token);
-
       if (!user) {
-        const error = new Error('Invalid or expired session');
+        const error = new Error('Authentication token is required or invalid');
         (error as any).status = 401;
         throw error;
       }

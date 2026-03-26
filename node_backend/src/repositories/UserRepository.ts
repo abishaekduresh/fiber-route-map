@@ -140,9 +140,10 @@ export class UserRepository {
     }, {});
 
     const sanitizedUsers = users.map((user: any) => {
-      const { id, countryId, password, countryName, countryCode, countryPhoneCode, countryUuid, ...userWithoutInternalFields } = user;
+      const { id, countryId, password, countryName, countryCode, countryPhoneCode, countryUuid, sessionLimit, ...userWithoutInternalFields } = user;
       return {
         ...userWithoutInternalFields,
+        sessionLimit: Number(user.sessionLimit || 1),
         country: countryUuid ? {
           id: countryUuid,
           name: countryName,
@@ -178,6 +179,7 @@ export class UserRepository {
     const { id, countryId, password, ...userWithoutInternalFields } = user as any;
     return {
       ...userWithoutInternalFields,
+      sessionLimit: Number(user.sessionLimit || 1),
       country: user.countryUuid ? {
         id: user.countryUuid,
         name: user.countryName,
@@ -210,6 +212,7 @@ export class UserRepository {
     const { id, countryId, password, ...userWithoutInternalFields } = user as any;
     return {
       ...userWithoutInternalFields,
+      sessionLimit: Number(user.sessionLimit || 1),
       country: user.countryUuid ? {
         id: user.countryUuid,
         name: user.countryName,
@@ -254,6 +257,7 @@ export class UserRepository {
     const { countryId, password, ...userWithoutInternalFields } = user as any;
     return {
       ...userWithoutInternalFields,
+      sessionLimit: Number(user.sessionLimit || 1),
       country: user.countryUuid ? {
         id: user.countryUuid,
         name: user.countryName,
@@ -286,6 +290,7 @@ export class UserRepository {
     const { id, countryId, password, ...userWithoutInternalFields } = user as any;
     return {
       ...userWithoutInternalFields,
+      sessionLimit: Number(user.sessionLimit || 1),
       country: user.countryUuid ? {
         id: user.countryUuid,
         name: user.countryName,
@@ -318,6 +323,7 @@ export class UserRepository {
     const { id, countryId, password, ...userWithoutInternalFields } = user as any;
     return {
       ...userWithoutInternalFields,
+      sessionLimit: Number(user.sessionLimit || 1),
       country: user.countryUuid ? {
         id: user.countryUuid,
         name: user.countryName,
