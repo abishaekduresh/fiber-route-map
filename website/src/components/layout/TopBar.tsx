@@ -1,8 +1,7 @@
-'use client';
-
 import { useEffect, useState } from 'react';
 import { getCurrentUser } from '@/lib/api';
 import styles from './DashboardLayout.module.css';
+import Link from 'next/link';
 
 /**
  * TopBar Component
@@ -50,7 +49,7 @@ export default function TopBar({ title }: { title: string }) {
     <header className={styles.topBar}>
       <h2 className={styles.topBarTitle}>{title}</h2>
       
-      <div className={styles.userMenu}>
+      <Link href="/profile" className={styles.userMenu}>
         <div className={styles.userInfo}>
           <span className={styles.userName}>{user?.name || 'Loading...'}</span>
           <span className={styles.userRole}>
@@ -60,7 +59,7 @@ export default function TopBar({ title }: { title: string }) {
         <div className={styles.avatar}>
           {user?.name?.charAt(0) || 'U'}
         </div>
-      </div>
+      </Link>
     </header>
   );
 }
