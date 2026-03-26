@@ -14,6 +14,8 @@ import roleRoutes from './routes/roleRoutes.js';
 import { authRoutes } from './routes/authRoutes.js';
 import logger from './utils/logger.js';
 import db from './config/database.js';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './docs/swaggerConfig.js';
 import { AuthService } from './services/AuthService.js';
 import { AuthRepository } from './repositories/AuthRepository.js';
 import { UserRepository } from './repositories/UserRepository.js';
@@ -42,6 +44,7 @@ app.use('/api/auth', authRoutes(authService));
 app.use('/api/users', auth(authService), userRoutes);
 app.use('/api/countries', auth(authService), countryRoutes);
 app.use('/api/roles', auth(authService), roleRoutes);
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Root route
 app.get('/', (req: express.Request, res: express.Response) => {

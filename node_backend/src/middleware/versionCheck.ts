@@ -6,8 +6,8 @@ const REQUIRED_VERSION = process.env.API_VERSION || null;
  * Middleware to enforce X-API-Version header and validate it against the current API version.
  */
 export const versionCheck = (req: Request, res: Response, next: NextFunction) => {
-  // Only enforce on /api routes, excluding root or other paths if necessary
-  if (!req.path.startsWith('/api')) {
+  // Only enforce on /api routes, excluding docs or other paths if necessary
+  if (!req.path.startsWith('/api') || req.path.startsWith('/api/docs')) {
     return next();
   }
 
