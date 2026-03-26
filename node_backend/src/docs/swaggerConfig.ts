@@ -38,7 +38,7 @@ const options: swaggerJSDoc.Options = {
       },
       parameters: {
         ApiVersionHeader: {
-          name: 'X-API-Version',
+          name: 'X-Api-Version',
           in: 'header',
           required: true,
           schema: {

@@ -60,6 +60,7 @@
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - $ref: '#/components/parameters/ApiVersionHeader'
  *       - in: path
  *         name: uuid
  *         required: true
@@ -75,6 +76,7 @@
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - $ref: '#/components/parameters/ApiVersionHeader'
  *       - in: path
  *         name: uuid
  *         required: true
@@ -99,6 +101,7 @@
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - $ref: '#/components/parameters/ApiVersionHeader'
  *       - in: path
  *         name: uuid
  *         required: true

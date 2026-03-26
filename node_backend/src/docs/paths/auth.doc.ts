@@ -68,6 +68,8 @@
  *     summary: User Logout
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/ApiVersionHeader'
  *     responses:
  *       200:
  *         description: Successfully logged out
@@ -80,6 +82,8 @@
  *     description: Retrieve details of the currently authenticated user.
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/ApiVersionHeader'
  *     responses:
  *       200:
  *         description: User profile retrieved
@@ -91,6 +95,8 @@
  *     summary: List Active Sessions
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/ApiVersionHeader'
  *     responses:
  *       200:
  *         description: List of active sessions
@@ -104,6 +110,7 @@
  *       - bearerAuth: []
  *       - mgmtAuth: []
  *     parameters:
+ *       - $ref: '#/components/parameters/ApiVersionHeader'
  *       - in: path
  *         name: uuid
  *         required: true
