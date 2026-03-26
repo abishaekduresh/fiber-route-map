@@ -34,7 +34,6 @@ export class AuthRepository {
     const result = await db(this.sessionsTable)
       .where('userId', userId)
       .andWhere('expiresAt', '>', nowDb())
-      .andWhereNot('deviceId', 'mgmt-only')
       .count('* as total')
       .first();
     return Number(result?.total || 0);
@@ -44,7 +43,6 @@ export class AuthRepository {
     return db(this.sessionsTable)
       .where('userId', userId)
       .andWhere('expiresAt', '>', nowDb())
-      .andWhereNot('deviceId', 'mgmt-only')
       .orderBy('createdAt', 'desc');
   }
 

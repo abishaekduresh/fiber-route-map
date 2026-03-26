@@ -5,5 +5,5 @@ import { redirect } from "next/navigation";
  * This will be updated to redirect to a dashboard once authenticated.
  */
 export default function Home() {
-  redirect("/login");
+  redirect("/dashboard");
 }

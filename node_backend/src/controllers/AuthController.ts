@@ -46,11 +46,16 @@ export class AuthController {
           statusCode: 403,
           message: error.message,
           data: {
-            activeSessions: error.activeSessions
+            activeSessions: error.activeSessions.map((s: any) => ({
+              ...s,
+              links: {
+                terminate: `/api/auth/sessions/${s.uuid}`
+              }
+            })),
+            mgmtToken: error.mgmtToken
           },
           links: {
-            sessions: '/api/auth/sessions',
-            terminate: '/api/auth/sessions/{uuid}'
+            sessions: '/api/auth/sessions'
           },
           meta: this.getMeta(req)
         });
@@ -192,7 +197,7 @@ export class AuthController {
     return {
       requestId: (req as any).requestId,
       timestamp: new Date().toISOString(),
-      version: 'v1.11.1'
+      version: 'v1.12.0'
     };
   };
 }

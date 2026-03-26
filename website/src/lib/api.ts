@@ -208,4 +208,24 @@ export function isAuthenticated(): boolean {
   return !!getAuthToken();
 }
 
+/**
+ * Fetch the currently authenticated user's full profile.
+ */
+export async function getCurrentUser(): Promise<ApiResponse<LoginData['user']>> {
+  return apiFetch('/api/auth/me');
+}
+
+/**
+ * Fetch a list of all users (for management).
+ */
+export async function getUsers(): Promise<ApiResponse<{ 
+  id: string; 
+  type: string; 
+  attributes: LoginData['user']['attributes'] & { sessionLimit: number };
+  meta: any;
+  links: any;
+}[]>> {
+  return apiFetch('/api/users');
+}
+
 export { apiFetch };

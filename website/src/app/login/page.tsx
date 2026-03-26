@@ -41,7 +41,7 @@ export default function LoginPage() {
         setIsModalOpen(false);
         setMgmtToken(null);
         setTimeout(() => {
-          window.location.href = '/';
+          window.location.href = '/dashboard';
         }, 1500);
       } else {
         // Handle specific error codes from the backend
@@ -226,7 +226,7 @@ export default function LoginPage() {
           <p className={styles.footerText}>Fiber Route Map Control Center</p>
           <div className={styles.version}>
             <span className={styles.versionDot} />
-            <span>v1.11.1 • System Online</span>
+            <span>v1.12.0 • System Online</span>
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-# API Documentation (v1.11.0)
+# API Documentation (v1.12.0)
 
 This document provides a comprehensive reference for all Node.js backend API endpoints. All timestamps are in **UTC ISO-8601** format.
 
@@ -41,12 +41,13 @@ Most API endpoints (except for login) require a valid authentication token. The 
     "token": "fd90b9...",
     "expiresAt": "2026-04-26 12:00:00"
   },
-  "meta": { "requestId": "req_...", "timestamp": "...", "version": "v1.11.0" }
+  "meta": { "requestId": "req_...", "timestamp": "...", "version": "v1.12.0" }
 }
 ```
 
 #### Example Response (Session Limit Reached - 403)
-If the user is logged into 3 devices already, login will fail.
+If the user's session limit is reached, login will fail. A **stateless** `mgmtToken` is returned to authorize session termination.
+
 ```json
 {
   "success": false,
@@ -55,20 +56,24 @@ If the user is logged into 3 devices already, login will fail.
   "data": {
     "activeSessions": [
       {
-        "uuid": "session-uuid-1",
-        "deviceName": "My Laptop",
-        "lastActive": "2026-03-25T10:00:00Z"
-      },
-      ...
-    ]
+        "uuid": "019d2a5b-88ac-772d-b30c-816140772535",
+        "deviceName": "Chrome on Windows",
+        "lastActive": "2026-03-26T13:35:35.000Z",
+        "links": {
+          "terminate": "/api/auth/sessions/019d2a5b-88ac-772d-b30c-816140772535"
+        }
+      }
+    ],
+    "mgmtToken": "base64-encoded-hmac-signed-payload",
+    "sessionLimit": 1
   },
   "links": {
-    "sessions": "/api/auth/sessions",
-    "terminate": "/api/auth/sessions/{uuid}"
+    "sessions": "/api/auth/sessions"
   },
   "meta": { ... }
 }
 ```
+*Note: Include the `mgmtToken` in the `X-Mgmt-Token` header when calling the terminate endpoint.*
 ### 0.2 Logout
 **Endpoint**: `POST /api/auth/logout`  
 **Description**: Invalidates the current session token.
@@ -183,7 +188,8 @@ fetch('http://localhost:3000/api/users', {
             "name": "Administrator",
             "slug": "admin"
           }
-        ]
+        ],
+        "sessionLimit": 1
       },
       "meta": {
         "createdAt": "2026-03-24T06:44:05.000Z",
@@ -199,8 +205,8 @@ fetch('http://localhost:3000/api/users', {
     "filters": { "status": "active" },
     "sort": [{ "field": "createdAt", "order": "desc" }],
     "requestId": "req_...",
-    "timestamp": "2026-03-24T13:41:04.840Z",
-    "version": "v1"
+    "timestamp": "2026-03-26T13:41:04.840Z",
+    "version": "v1.12.0"
   },
   "links": {
     "self": "/api/users?filter[status]=active&limit=10&page=1",

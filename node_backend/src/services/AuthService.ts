@@ -49,22 +49,14 @@ export class AuthService {
     if (activeSessionsCount >= sessionLimit) {
       const activeSessions = await this.authRepo.getSessionsByUserId(userWithPassword.id);
       
-      // Generate a short-lived management token
-      const mgmtToken = crypto.randomBytes(32).toString('hex');
-      const mgmtExpiresAt = new Date();
-      mgmtExpiresAt.setMinutes(mgmtExpiresAt.getMinutes() + 10); // 10 minutes limit
+      // Generate a short-lived STATELESS management token
+      const expiresAt = Math.floor(Date.now() / 1000) + (10 * 60); // 10 minutes from now
+      const payload = `${userWithPassword.id}:${expiresAt}`;
+      const secret = process.env.MGMT_TOKEN_SECRET || 'fallback-secret-for-dev-only';
+      const signature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+      const mgmtToken = Buffer.from(`${payload}:${signature}`).toString('base64');
 
-      console.log(`[AuthService] Session limit reached for user ${userWithPassword.id}. Limit: ${sessionLimit}. Creating mgmt token.`);
-
-      // Store in a temporary session that only allows management
-      await this.authRepo.createSession({
-        ...deviceInfo,
-        userId: userWithPassword.id,
-        sessionToken: mgmtToken,
-        expiresAt: mgmtExpiresAt,
-        deviceName: 'Session Management',
-        deviceId: 'mgmt-only'
-      });
+      console.log(`[AuthService] Session limit reached for user ${userWithPassword.id}. Limit: ${sessionLimit}. Generated stateless mgmt token.`);
 
       const error = new Error('Session limit reached. Please logout from another device.');
       (error as any).status = 403;
@@ -121,27 +113,37 @@ export class AuthService {
   }
 
   /**
-   * Validate a management token (short-lived, mgmt-only).
-   * Unlike validateSession, this one is specifically for tokens used during session management flows.
+   * Validate a management token (short-lived, stateless).
    */
   async validateMgmtToken(token: string): Promise<User | null> {
-    const session = await this.authRepo.findSessionByToken(token);
-    if (!session) {
-      console.log(`[AuthService] Mgmt token not found or expired in DB.`);
-      return null;
-    }
-    
-    if (session.deviceId !== 'mgmt-only') {
-      console.log(`[AuthService] Mgmt token rejected: Incorrect deviceId ${session.deviceId}.`);
-      return null;
-    }
+    try {
+      const decoded = Buffer.from(token, 'base64').toString('utf8');
+      const [userId, expiresAt, signature] = decoded.split(':');
+      
+      if (!userId || !expiresAt || !signature) {
+        console.log(`[AuthService] Mgmt token rejected: Invalid format.`);
+        return null;
+      }
 
-    // Check expiration manually as fallback
-    if (new Date(session.expiresAt) < new Date()) {
-      console.log(`[AuthService] Mgmt token rejected: Manual expiration check failed. DB: ${session.expiresAt}, Now: ${new Date().toISOString()}`);
+      const payload = `${userId}:${expiresAt}`;
+      const secret = process.env.MGMT_TOKEN_SECRET || 'fallback-secret-for-dev-only';
+      const expectedSignature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+
+      if (signature !== expectedSignature) {
+        console.log(`[AuthService] Mgmt token rejected: Invalid signature.`);
+        return null;
+      }
+
+      const expiryTime = parseInt(expiresAt, 10);
+      if (expiryTime < Math.floor(Date.now() / 1000)) {
+        console.log(`[AuthService] Mgmt token rejected: Expired.`);
+        return null;
+      }
+
+      return this.userRepo.findById(parseInt(userId, 10));
+    } catch (e) {
+      console.error(`[AuthService] Error validating mgmt token:`, e);
       return null;
     }
-
-    return this.userRepo.findById(session.userId);
   }
 }

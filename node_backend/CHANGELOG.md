@@ -10,8 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Per-User Session Limits**: Migrated from a global session limit to a user-configurable `sessionLimit` (defaulting to 1). Added `sessionLimit` column to the `users` table.
 - **Enhanced Session Management**: Integrated specific management token support for secure session termination during the "Limit Reached" state.
 ### Fixed
-- **Session Termination**: Resolved a critical bug where management sessions were incorrectly counting towards the active limit, causing an "infinite block".
+- **Session Termination**: Resolved a critical bug where management sessions were incorrectly counting towards the active limit and implemented dynamic, per-session URLs in the 403 response.
 - **Internal Logic**: Fixed a regression where `deviceId` was being overwritten during session creation.
+- **Documentation**: Updated `API_DOCUMENTATION.md` to v1.12.0 with full coverage of the stateless management token flow.
 ### Improved
 - **Time Consistency**: Standardized all backend internal time handling to use `Date` objects, ensuring reliable database driver conversions and timezone consistency.
 
