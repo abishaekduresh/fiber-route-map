@@ -11,38 +11,25 @@
  *     parameters:
  *       - in: query
  *         name: page
- *         schema:
- *           type: integer
- *           default: 1
+ *         schema: { type: integer, default: 1 }
  *       - in: query
  *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
+ *         schema: { type: integer, default: 10 }
  *       - in: query
  *         name: filter[status]
- *         schema:
- *           type: string
- *           enum: [active, blocked, deleted]
+ *         schema: { type: string, enum: [active, blocked, deleted] }
+ *       - in: query
+ *         name: filter[name]
+ *         schema: { type: string }
+ *       - in: query
+ *         name: filter[email]
+ *         schema: { type: string }
  *       - in: query
  *         name: sort
- *         schema:
- *           type: string
- *           example: "-createdAt"
+ *         schema: { type: string, example: "-createdAt" }
  *     responses:
  *       200:
  *         description: Success
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/User'
  *
  *   post:
  *     tags:
@@ -56,11 +43,16 @@
  *         application/json:
  *           schema:
  *             type: object
- *             required: [email, username, password]
+ *             required: [email, username, name, phone, password, confirmPassword]
  *             properties:
  *               email: { type: string }
  *               username: { type: string }
+ *               name: { type: string }
+ *               phone: { type: string }
  *               password: { type: string }
+ *               confirmPassword: { type: string }
+ *               countryUuid: { type: string, format: uuid }
+ *               roleUuids: { type: array, items: { type: string, format: uuid } }
  *     responses:
  *       201:
  *         description: User created
@@ -69,7 +61,7 @@
  *   get:
  *     tags:
  *       - Users
- *     summary: Get User Profile
+ *     summary: Get User Detail
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -80,5 +72,104 @@
  *     responses:
  *       200:
  *         description: Success
+ *
+ *   put:
+ *     tags:
+ *       - Users
+ *     summary: Update User
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: uuid
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name: { type: string }
+ *               username: { type: string }
+ *               phone: { type: string }
+ *               countryUuid: { type: string, format: uuid }
+ *               roleUuids: { type: array, items: { type: string, format: uuid } }
+ *     responses:
+ *       200:
+ *         description: User updated
+ *
+ *   delete:
+ *     tags:
+ *       - Users
+ *     summary: Delete User (Soft Delete)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: uuid
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: User deleted
+ *
+ * /users/{uuid}/block:
+ *   post:
+ *     tags:
+ *       - Users
+ *     summary: Block User
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: uuid
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: User blocked
+ *
+ * /users/{uuid}/unblock:
+ *   put:
+ *     tags:
+ *       - Users
+ *     summary: Unblock User
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: uuid
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: User unblocked
+ *
+ * /users/{uuid}/reset-password:
+ *   post:
+ *     tags:
+ *       - Users
+ *     summary: Reset Password
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: uuid
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [password, confirmPassword]
+ *             properties:
+ *               password: { type: string }
+ *               confirmPassword: { type: string }
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
  */
 export const UserPathDoc = {};
