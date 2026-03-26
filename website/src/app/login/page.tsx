@@ -226,7 +226,7 @@ export default function LoginPage() {
           <p className={styles.footerText}>Fiber Route Map Control Center</p>
           <div className={styles.version}>
             <span className={styles.versionDot} />
-            <span>v1.12.0 • System Online</span>
+            <span>v1.13.0 • System Online</span>
           </div>
         </div>
       </div>

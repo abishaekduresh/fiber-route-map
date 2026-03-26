@@ -2,6 +2,11 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
+## [1.13.0] - 2026-03-26
+### Changed
+- **API Integration**: Re-aligned the centralized API client with the refactored `/api/auth/users/` backend endpoints.
+- **Version Sync**: Synchronized project versioning to v1.13.0.
+
 ## [1.12.0] - 2026-03-26
 ### Added
 - **Profile Page**: Implemented a comprehensive account management view with real-time session tracking.

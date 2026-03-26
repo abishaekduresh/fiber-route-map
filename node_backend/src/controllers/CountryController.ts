@@ -135,6 +135,7 @@ export class CountryController {
       if (!req.body || Object.keys(req.body).length === 0) {
         const error = new Error('Country data is required in request body');
         (error as any).status = 400;
+        (error as any).errorType = 'BAD_REQUEST';
         throw error;
       }
       const country = await this.service.createCountry(req.body);

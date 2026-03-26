@@ -1,4 +1,4 @@
-# API Documentation (v1.12.0)
+# API Documentation (v1.13.0)
 
 This document provides a comprehensive reference for all Node.js backend API endpoints. All timestamps are in **UTC ISO-8601** format.
 
@@ -11,7 +11,7 @@ Most API endpoints (except for login) require a valid authentication token. The 
 **Header Format**: `Authorization: Bearer <your_session_token>`
 
 ### 0.1 Login
-**Endpoint**: `POST /api/auth/login`  
+**Endpoint**: `POST /api/auth/users/login`  
 **Description**: Authenticate with email, username, or phone and password to receive a session token.
 
 #### Request Headers
@@ -41,7 +41,27 @@ Most API endpoints (except for login) require a valid authentication token. The 
     "token": "fd90b9...",
     "expiresAt": "2026-04-26 12:00:00"
   },
-  "meta": { "requestId": "req_...", "timestamp": "...", "version": "v1.12.0" }
+  "meta": {
+    "requestId": "req_...",
+    "timestamp": "2026-03-26T21:42:00.000Z",
+    "version": "v1.13.0"
+  }
+}
+```
+
+#### Example Response (Invalid Credentials - 401)
+```json
+{
+  "success": false,
+  "statusCode": 401,
+  "errorType": "UNAUTHORIZED",
+  "message": "Invalid email or password",
+  "help": "Authentication is required to access this resource. Please provide a valid token.",
+  "meta": {
+    "requestId": "req_...",
+    "timestamp": "2026-03-26T21:42:00.000Z",
+    "version": "v1.13.0"
+  }
 }
 ```
 
@@ -60,7 +80,7 @@ If the user's session limit is reached, login will fail. A **stateless** `mgmtTo
         "deviceName": "Chrome on Windows",
         "lastActive": "2026-03-26T13:35:35.000Z",
         "links": {
-          "terminate": "/api/auth/sessions/019d2a5b-88ac-772d-b30c-816140772535"
+          "terminate": "/api/auth/users/sessions/019d2a5b-88ac-772d-b30c-816140772535"
         }
       }
     ],
@@ -68,14 +88,19 @@ If the user's session limit is reached, login will fail. A **stateless** `mgmtTo
     "sessionLimit": 1
   },
   "links": {
-    "sessions": "/api/auth/sessions"
+    "sessions": "/api/auth/users/sessions"
   },
-  "meta": { ... }
+  "errorType": "SESSION_LIMIT_REACHED",
+  "meta": {
+    "requestId": "req_...",
+    "timestamp": "2026-03-26T21:42:00.000Z",
+    "version": "v1.13.0"
+  }
 }
 ```
 *Note: Include the `mgmtToken` in the `X-Mgmt-Token` header when calling the terminate endpoint.*
 ### 0.2 Logout
-**Endpoint**: `POST /api/auth/logout`  
+**Endpoint**: `POST /api/auth/users/logout`  
 **Description**: Invalidates the current session token.
 
 ### 0.3 Get Current Profile (Me)
@@ -101,7 +126,11 @@ If the user's session limit is reached, login will fail. A **stateless** `mgmtTo
       }
     ]
   },
-  "meta": { ... }
+  "meta": {
+    "requestId": "req_...",
+    "timestamp": "2026-03-26T21:42:00.000Z",
+    "version": "v1.13.0"
+  }
 }
 ```
 
@@ -111,11 +140,11 @@ If the user's session limit is reached, login will fail. A **stateless** `mgmtTo
 Manage active sessions and devices.
 
 #### 0.4.1 List Active Sessions
-**Endpoint**: `GET /api/auth/sessions`  
+**Endpoint**: `GET /api/auth/users/sessions`  
 **Description**: Retrieve a list of all active sessions/devices for the current user.
 
 #### 0.4.2 Terminate Session
-**Endpoint**: `DELETE /api/auth/sessions/:uuid`  
+**Endpoint**: `DELETE /api/auth/users/sessions/:uuid`  
 **Description**: Remotely logout of a device by terminating its session.
 
 ---
@@ -160,7 +189,7 @@ fetch('http://localhost:3000/api/users', {
 | `sort[field]` | `string` | Single field for object-style sorting | `?sort[field]=name` |
 | `sort[order]` | `string` | Order for object-style sorting (`asc`/`desc`) | `?sort[order]=asc` |
 
-#### Example Response (v1.7.0)
+#### Example Response (v1.13.0)
 ```json
 {
   "success": true,
@@ -206,7 +235,7 @@ fetch('http://localhost:3000/api/users', {
     "sort": [{ "field": "createdAt", "order": "desc" }],
     "requestId": "req_...",
     "timestamp": "2026-03-26T13:41:04.840Z",
-    "version": "v1.12.0"
+    "version": "v1.13.0"
   },
   "links": {
     "self": "/api/users?filter[status]=active&limit=10&page=1",
@@ -260,6 +289,27 @@ fetch('http://localhost:3000/api/users', {
     },
     "meta": { "createdAt": "...", "updatedAt": "..." },
     "links": { "self": "/api/users/uuid" }
+  },
+  "meta": {
+    "requestId": "req_...",
+    "timestamp": "2026-03-26T21:42:00.000Z",
+    "version": "v1.13.0"
+  }
+}
+```
+
+#### Example Response (Validation Error - 400)
+```json
+{
+  "success": false,
+  "statusCode": 400,
+  "errorType": "VALIDATION_ERROR",
+  "message": "Validation failed: email: Invalid email format, username: Username must be at least 3 characters",
+  "help": "The request could not be understood or was missing required parameters. Please check your input.",
+  "meta": {
+    "requestId": "req_...",
+    "timestamp": "2026-03-26T21:42:00.000Z",
+    "version": "v1.13.0"
   }
 }
 ```
@@ -278,6 +328,22 @@ fetch('http://localhost:3000/api/users', {
   "phone": "1234567890",
   "countryUuid": "uuid-of-active-country",
   "roleUuids": ["uuid-of-role-3"]
+}
+```
+
+#### Example Response (User Not Found - 404)
+```json
+{
+  "success": false,
+  "statusCode": 404,
+  "errorType": "NOT_FOUND",
+  "message": "User not found",
+  "help": "The requested resource could not be found. Verify the ID or URL.",
+  "meta": {
+    "requestId": "req_...",
+    "timestamp": "2026-03-26T21:42:00.000Z",
+    "version": "v1.13.0"
+  }
 }
 ```
 
@@ -324,7 +390,7 @@ fetch('http://localhost:3000/api/users', {
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-24T12:00:00.000Z",
-    "version": "v1",
+    "version": "v1.13.0",
     "action": "reset-password"
   }
 }
@@ -371,7 +437,27 @@ fetch('http://localhost:3000/api/users', {
         "self": "/api/countries/uuid"
       }
     }
-  ]
+  ],
+  "meta": {
+    "requestId": "req_...",
+    "timestamp": "2026-03-26T21:42:00.000Z",
+    "version": "v1.13.0"
+  }
+}
+```
+
+#### Example Response (Validation Error - 400)
+```json
+{
+  "success": false,
+  "statusCode": 400,
+  "errorType": "BAD_REQUEST",
+  "message": "Country data is required in request body",
+  "meta": {
+    "requestId": "req_...",
+    "timestamp": "2026-03-26T21:42:00.000Z",
+    "version": "v1.13.0"
+  }
 }
 ```
 
@@ -423,7 +509,7 @@ fetch('http://localhost:3000/api/users', {
     "pagination": { "total": 3, "count": 3, "perPage": 10, "currentPage": 1, "totalPages": 1 },
     "requestId": "req_...",
     "timestamp": "...",
-    "version": "v1.7.0"
+    "version": "v1.13.0"
   },
   "links": {
     "self": "/api/roles?limit=10&page=1",
@@ -460,6 +546,21 @@ fetch('http://localhost:3000/api/users', {
 **Endpoint**: `DELETE /api/roles/:uuid`  
 **Description**: Marks a role as `inactive` and sets `deletedAt`.
 
+#### Example Response (Role Not Found - 404)
+```json
+{
+  "success": false,
+  "statusCode": 404,
+  "errorType": "NOT_FOUND",
+  "message": "Role not found",
+  "meta": {
+    "requestId": "req_...",
+    "timestamp": "2026-03-26T21:42:00.000Z",
+    "version": "v1.13.0"
+  }
+}
+```
+
 ---
 
 ## 4. Error Handling
@@ -472,9 +573,14 @@ If the database server is unreachable, the API returns a `503 Service Unavailabl
 {
   "success": false,
   "statusCode": 503,
+  "errorType": "SERVICE_UNAVAILABLE",
   "message": "Database connection failed. Please ensure the database server is running.",
   "help": "The database service is currently unavailable. Please ensure the database server is running and try again.",
-  "meta": { ... }
+  "meta": {
+    "requestId": "req_...",
+    "timestamp": "2026-03-26T21:42:00.000Z",
+    "version": "v1.13.0"
+  }
 }
 ```
 
@@ -485,6 +591,7 @@ If the database server is unreachable, the API returns a `503 Service Unavailabl
 All endpoints follow this structure:
 - **`success`**: `boolean` indicating business logic success.
 - **`statusCode`**: `number` (200, 201, 400, 404, etc.)
+- **`errorType`**: `string` (Only present if `success` is `false`). One of: `BAD_REQUEST`, `VALIDATION_ERROR`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`, `RATE_LIMIT_EXCEEDED`, `SESSION_LIMIT_REACHED`, `SERVER_ERROR`, `SERVICE_UNAVAILABLE`.
 - **`message`**: `string` human-readable summary.
 - **`data`**: `object` or `array` of resources.
 - **`meta`**: Includes `requestId`, `timestamp`, and `version`.

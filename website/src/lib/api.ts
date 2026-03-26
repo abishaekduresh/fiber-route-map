@@ -153,7 +153,7 @@ export async function login(
   identifier: string,
   password: string
 ): Promise<ApiResponse<LoginData | SessionLimitData>> {
-  const result = await apiFetch<LoginData | SessionLimitData>('/api/auth/login', {
+  const result = await apiFetch<LoginData | SessionLimitData>('/api/auth/users/login', {
     method: 'POST',
     body: JSON.stringify({ identifier, password }),
   });
@@ -171,7 +171,7 @@ export async function login(
  * Log out the current user by invalidating the session token.
  */
 export async function logout(): Promise<ApiResponse> {
-  const result = await apiFetch('/api/auth/logout', {
+  const result = await apiFetch('/api/auth/users/logout', {
     method: 'POST',
   });
 
@@ -189,7 +189,7 @@ export async function logout(): Promise<ApiResponse> {
  * This is used to free up space when the session limit is reached.
  */
 export async function terminateSession(uuid: string, mgmtToken?: string): Promise<ApiResponse> {
-  return apiFetch(`/api/auth/sessions/${uuid}`, {
+  return apiFetch(`/api/auth/users/sessions/${uuid}`, {
     method: 'DELETE',
   }, mgmtToken);
 }

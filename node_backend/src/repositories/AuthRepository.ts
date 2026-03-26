@@ -4,7 +4,7 @@ import { generateUuidV7 } from '../utils/uuid.js';
 import { nowDb } from '../utils/time.js';
 
 export class AuthRepository {
-  private readonly sessionsTable = 'sessions';
+  private readonly sessionsTable = 'user_sessions';
   private readonly identitiesTable = 'user_identities';
 
   async createSession(data: { userId: number; sessionToken: string; expiresAt: Date; ipAddress?: string; userAgent?: string; deviceId?: string; deviceName?: string }): Promise<Session> {

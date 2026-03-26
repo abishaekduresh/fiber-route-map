@@ -44,18 +44,19 @@ export class AuthController {
         return res.status(200).json({
           success: false,
           statusCode: 403,
+          errorType: 'SESSION_LIMIT_REACHED',
           message: error.message,
           data: {
             activeSessions: error.activeSessions.map((s: any) => ({
               ...s,
               links: {
-                terminate: `/api/auth/sessions/${s.uuid}`
+                terminate: `/api/auth/users/sessions/${s.uuid}`
               }
             })),
             mgmtToken: error.mgmtToken
           },
           links: {
-            sessions: '/api/auth/sessions'
+            sessions: '/api/auth/users/sessions'
           },
           meta: this.getMeta(req)
         });
@@ -112,6 +113,7 @@ export class AuthController {
         return res.status(200).json({
           success: false,
           statusCode: 404,
+          errorType: 'NOT_FOUND',
           message: 'Session not found or already terminated',
           meta: this.getMeta(req)
         });
@@ -191,7 +193,7 @@ export class AuthController {
         updatedAt: session.updatedAt
       },
       links: {
-        self: `/api/auth/sessions/${session.uuid}`
+        self: `/api/auth/users/sessions/${session.uuid}`
       }
     };
   };
@@ -200,7 +202,7 @@ export class AuthController {
     return {
       requestId: (req as any).requestId,
       timestamp: new Date().toISOString(),
-      version: 'v1.12.0'
+      version: 'v1.13.0'
     };
   };
 }

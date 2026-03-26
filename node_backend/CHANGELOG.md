@@ -5,6 +5,15 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0] - 2026-03-26
+### Added
+- **Standardized Error Responses**: Implemented a universal `errorType` field in all failed API responses (e.g., `VALIDATION_ERROR`, `SESSION_LIMIT_REACHED`, `NOT_FOUND`).
+### Changed
+- **Route Refactoring**: Migrated all authentication and session endpoints to the `/api/auth/users/` prefix for consistency.
+- **Table Rename**: Renamed the database `sessions` table to `user_sessions` and updated all repository references.
+- **API Documentation**: Fully synchronized `API_DOCUMENTATION.md` with v1.13.0 standards, including comprehensive error examples.
+- **Internal Versioning**: Unified project versioning to v1.13.0 across all components and responses.
+
 ## [1.12.0] - 2026-03-26
 ### Added
 - **Per-User Session Limits**: Migrated from a global session limit to a user-configurable `sessionLimit` (defaulting to 1). Added `sessionLimit` column to the `users` table.

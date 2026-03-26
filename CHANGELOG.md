@@ -2,6 +2,14 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.13.0] - 2026-03-26
+### Added
+- **Standardized Error System**: Introduced universal `errorType` identifiers across the entire backend for programmatic error handling in the frontend.
+### Changed
+- **API Refactoring**: Consolidated all authentication and session management endpoints under the consistent `/api/auth/users/` resource hierarchy.
+- **Database Schema**: Migrated the `sessions` table to `user_sessions` as part of the core authentication refactor.
+- **Documentation**: Fully audited and updated all project documentation to the v1.13.0 technical standard.
+
 ## [1.12.0] - 2026-03-26
 ### Added
 - **Profile & Account Management**: Implemented a dedicated profile page (`/profile`) and TopBar integration for viewing account details and managing active sessions.

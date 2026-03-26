@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { nowDb } from '../utils/time.js';
 import logger from '../utils/logger.js';
+import { ErrorType } from '../utils/errorTypes.js';
 
 const getHelpMessage = (status: number, message: string): string => {
   switch (status) {
@@ -29,6 +29,27 @@ const getHelpMessage = (status: number, message: string): string => {
   }
 };
 
+const getErrorType = (status: number, err: any): string => {
+  // Use explicit errorType or code if provided
+  if (err.errorType) return err.errorType;
+  if (err.code === 'SESSION_LIMIT_REACHED') return ErrorType.SESSION_LIMIT_REACHED;
+
+  // Handle specific error names
+  if (err.name === 'ZodError') return ErrorType.VALIDATION_ERROR;
+
+  // Map status codes to default types
+  switch (status) {
+    case 400: return ErrorType.BAD_REQUEST;
+    case 401: return ErrorType.UNAUTHORIZED;
+    case 403: return ErrorType.FORBIDDEN;
+    case 404: return ErrorType.NOT_FOUND;
+    case 409: return ErrorType.CONFLICT;
+    case 429: return ErrorType.RATE_LIMIT_EXCEEDED;
+    case 503: return ErrorType.SERVICE_UNAVAILABLE;
+    default: return ErrorType.INTERNAL_SERVER_ERROR;
+  }
+};
+
 export const errorHandler = (
   err: any,
   req: Request,
@@ -42,15 +63,11 @@ export const errorHandler = (
   if (err.name === 'ZodError') {
     status = 400;
     const issues = err.issues || err.errors || [];
-    // Include the field name (path) in the error message for better clarity
     message = 'Validation failed: ' + issues.map((e: any) => {
       const field = e.path.join('.');
       return field ? `${field}: ${e.message}` : e.message;
     }).join(', ');
   }
-
-  // Always maintain HTTP 200 status for all API responses as per requirements.
-  // The actual error status is included in the JSON body as errorCode.
 
   if (status >= 500) {
     logger.error(`${req.method} ${req.url} - ${message}`, { stack: err.stack });
@@ -61,12 +78,13 @@ export const errorHandler = (
   res.status(200).json({
     success: false,
     statusCode: status,
+    errorType: getErrorType(status, err),
     message,
     help: getHelpMessage(status, message),
     meta: {
       requestId: (req as any).requestId,
       timestamp: new Date().toISOString(),
-      version: 'v1'
+      version: 'v1.13.0'
     },
     ...(process.env.NODE_ENV === 'development' && status >= 500 && { stack: err.stack }),
   });

@@ -4,7 +4,7 @@ The authoritative backend REST API for the Fiber Route Map system, replicated in
 Built using [Express](https://expressjs.com/) and [TypeScript](https://www.typescriptlang.org/), leveraging [Knex.js](https://knexjs.org/) for database interaction.
 
 ## Version
-**Current Version:** 1.12.0 (Per-User Session Limits & Enhanced Mgmt)
+**Current Version:** 1.13.0 (Standardized Errors & Auth Refactor)
 
 ## Requirements
 - Node.js 18+
@@ -50,9 +50,9 @@ All requests to `/api` must include:
 
 ### Authentication & Session Management
 The API uses a secure, database-backed session system:
-- **Identifier**: Log in via `POST /api/auth/login` using **email**, **username**, or **phone number**.
+- **Identifier**: Log in via `POST /api/auth/users/login` using **email**, **username**, or **phone number**.
 - **Per-User Limits**: Authentication respects individual `sessionLimit` configured per account (defaulting to 1).
-- **Management**: Users can list active devices via `GET /api/auth/sessions` and terminate sessions via `DELETE /api/auth/sessions/:uuid` using a short-lived `X-Mgmt-Token`.
+- **Management**: Users can list active devices via `GET /api/auth/users/sessions` and terminate sessions via `DELETE /api/auth/users/sessions/:uuid` using a short-lived `X-Mgmt-Token`.
 - **Profile Integration**: The `/api/auth/me` endpoint returns both user attributes and the list of active sessions.
 
 ### Universal 200 OK
@@ -95,8 +95,9 @@ The API outputs consistent **camelCase** JSON payloads.
     }
   },
   "meta": {
-    "timestamp": "2026-03-24T12:00:00.000Z",
-    "version": "v1"
+    "requestId": "req_...",
+    "timestamp": "2026-03-26T21:42:00.000Z",
+    "version": "v1.13.0"
   }
 }
 ```
@@ -106,12 +107,13 @@ The API outputs consistent **camelCase** JSON payloads.
 {
   "success": false,
   "statusCode": 409,
+  "errorType": "CONFLICT",
   "message": "Phone number is already registered",
   "help": "This phone number is already in use. Please use a different number or recover your account.",
   "meta": {
     "requestId": "req_...",
-    "timestamp": "...",
-    "version": "v1"
+    "timestamp": "2026-03-26T21:42:00.000Z",
+    "version": "v1.13.0"
   }
 }
 ```

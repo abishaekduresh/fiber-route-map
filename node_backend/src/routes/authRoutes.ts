@@ -7,13 +7,16 @@ export const authRoutes = (authService: AuthService) => {
   const router = Router();
   const controller = new AuthController(authService);
 
-  router.post('/login', controller.login);
-  router.post('/logout', controller.logout);
-  router.get('/me', auth(authService), controller.me);
+  const userRouter = Router();
+  userRouter.post('/login', controller.login);
+  userRouter.post('/logout', controller.logout);
   
   // Session management
-  router.get('/sessions', auth(authService), controller.sessions);
-  router.delete('/sessions/:uuid', auth(authService), controller.terminateSession);
+  userRouter.get('/sessions', auth(authService), controller.sessions);
+  userRouter.delete('/sessions/:uuid', auth(authService), controller.terminateSession);
+
+  router.use('/users', userRouter);
+  router.get('/me', auth(authService), controller.me);
 
   return router;
 };
