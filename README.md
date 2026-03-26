@@ -3,7 +3,7 @@
 A comprehensive system for mapping and managing fiber optic routes.
 
 ## Project Structure
-- `node_backend/`: Node.js based REST API (Express, TypeScript, Knex).
+- `node_backend/`: Node.js based REST API (Express, TypeScript, Knex) with Secure Authentication & Multi-Role RBAC.
 - `(Other components will be listed here as they are developed)`
 
 ## Prerequisites

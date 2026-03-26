@@ -5,6 +5,17 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0] - 2026-03-26
+### Added
+- **Secure Authentication System**: Implemented a robust login/logout system with database-backed session management.
+- **Multi-Identifier Login**: Users can authenticate using **email**, **username**, or **phone number** via the new `identifier` field.
+- **Session Management**: Automatic 30-day session expiration and secure token generation.
+- **Database Connectivity Middleware**: Added `dbCheck` middleware to the request lifecycle to ensure database reachability and return `503` errors gracefully.
+- **Role response Enhancement**: Integrated `links` and `meta.pagination` into role retrieval endpoints.
+### Improved
+- **Security**: Implemented a global `auth` middleware, mandating `Authorization: Bearer <token>` for all `users`, `countries`, and `roles` API calls.
+- **Documentation**: Updated `API_DOCUMENTATION.md` to reflect the multi-identifier login and header requirements.
+
 ## [1.10.0] - 2026-03-25
 ### Added
 - **Multi-Role Based Access Control (RBAC)**: Implemented full RBAC infrastructure (`roles` and `user_roles` tables).

@@ -220,6 +220,50 @@ export class UserRepository {
     } as any;
   }
 
+  async findByEmailWithPassword(email: string): Promise<any | null> {
+    return db(this.table).where('email', email).first();
+  }
+
+  async findByIdentifierWithPassword(identifier: string): Promise<any | null> {
+    return db(this.table)
+      .where('email', identifier)
+      .orWhere('username', identifier)
+      .orWhere('phone', identifier)
+      .first();
+  }
+
+  async findById(id: number): Promise<User | null> {
+    const user = await db(this.table)
+      .leftJoin('countries', 'users.countryId', 'countries.id')
+      .select(
+        'users.*', 
+        'countries.uuid as countryUuid',
+        'countries.name as countryName',
+        'countries.code as countryCode',
+        'countries.phoneCode as countryPhoneCode'
+      )
+      .where('users.id', id)
+      .first();
+    if (!user) return null;
+
+    const roles = await db('user_roles')
+      .join('roles', 'user_roles.roleId', 'roles.id')
+      .select('roles.uuid', 'roles.name', 'roles.slug')
+      .where('user_roles.userId', user.id);
+
+    const { countryId, password, ...userWithoutInternalFields } = user as any;
+    return {
+      ...userWithoutInternalFields,
+      country: user.countryUuid ? {
+        id: user.countryUuid,
+        name: user.countryName,
+        code: user.countryCode,
+        phoneCode: user.countryPhoneCode
+      } : null,
+      roles
+    } as any;
+  }
+
   async findByUsername(username: string): Promise<User | null> {
     const user = await db(this.table)
       .leftJoin('countries', 'users.countryId', 'countries.id')

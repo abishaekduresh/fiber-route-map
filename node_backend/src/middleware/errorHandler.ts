@@ -22,6 +22,8 @@ const getHelpMessage = (status: number, message: string): string => {
       return 'A conflict occurred with the current state of the resource.';
     case 500:
       return 'An internal server error occurred. Our team has been notified. Please try again later.';
+    case 503:
+      return 'The database service is currently unavailable. Please ensure the database server is running and try again.';
     default:
       return 'Please verify the request parameters or refer to the API documentation.';
   }

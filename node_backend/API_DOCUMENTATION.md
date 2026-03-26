@@ -1,14 +1,67 @@
-# API Documentation (v1.10.0)
+# API Documentation (v1.11.0)
 
 This document provides a comprehensive reference for all Node.js backend API endpoints. All timestamps are in **UTC ISO-8601** format.
 
 ---
 
-## 1. Users
+## 0. Authentication
+
+Most API endpoints (except for login) require a valid authentication token. The token must be provided in the `Authorization` header as a Bearer token.
+
+**Header Format**: `Authorization: Bearer <your_session_token>`
+
+### 0.1 Login
+**Endpoint**: `POST /api/auth/login`  
+**Description**: Authenticate with email, username, or phone and password to receive a session token.
+
+#### Request Body
+```json
+{
+  "identifier": "test@example.com",
+  "password": "Password123"
+}
+```
+*Note: `identifier` can be the user's **email**, **username**, or **phone number**.*
+
+#### Example Response
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Login successful",
+  "data": {
+    "user": { ... },
+    "token": "fd90b9...",
+    "expiresAt": "2026-04-26 12:00:00"
+  },
+  "meta": { "requestId": "req_...", "timestamp": "...", "version": "v1.7.0" }
+}
+```
+
+### 0.2 How to use the token
+After logging in, include the `token` in the `Authorization` header for subsequent requests.
+
+#### Fetch Example
+```javascript
+const token = "fd90b9..."; // Token from login response
+
+fetch('http://localhost:3000/api/users', {
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+.then(response => response.json())
+.then(data => console.log(data));
+```
+
+---
+
+## 1. Users (Protected)
 
 ### 1.1 List Users
 **Endpoint**: `GET /api/users`  
-**Description**: Retrieve a paginated list of users with advanced filtering and sorting.
+**Description**: Retrieve a paginated list of users.
+**Required Header**: `Authorization: Bearer <token>`
 
 #### Query Parameters
 | Parameter | Type | Description | Example |
@@ -196,11 +249,12 @@ This document provides a comprehensive reference for all Node.js backend API end
 
 ---
 
-## 2. Countries
+## 2. Countries (Protected)
 
 ### 2.1 List Countries
 **Endpoint**: `GET /api/countries`  
 **Description**: Retrieve a list of countries with filtering and sorting.
+**Required Header**: `Authorization: Bearer <token>`
 
 #### Query Parameters
 | Parameter | Type | Description | Example |
@@ -240,11 +294,14 @@ This document provides a comprehensive reference for all Node.js backend API end
 
 ---
 
-## 3. Roles
+---
+
+## 3. Roles (Protected)
 
 ### 3.1 List Roles
 **Endpoint**: `GET /api/roles`  
 **Description**: Retrieve a list of roles.
+**Required Header**: `Authorization: Bearer <token>`
 
 #### Query Parameters
 | Parameter | Type | Description | Example |
@@ -273,9 +330,23 @@ This document provides a comprehensive reference for all Node.js backend API end
       "meta": {
         "createdAt": "2026-03-25T17:38:56.000Z",
         "updatedAt": "2026-03-25T17:38:56.000Z"
+      },
+      "links": {
+        "self": "/api/roles/uuid"
       }
     }
-  ]
+  ],
+  "meta": {
+    "pagination": { "total": 3, "count": 3, "perPage": 10, "currentPage": 1, "totalPages": 1 },
+    "requestId": "req_...",
+    "timestamp": "...",
+    "version": "v1.7.0"
+  },
+  "links": {
+    "self": "/api/roles?limit=10&page=1",
+    "next": null,
+    "prev": null
+  }
 }
 ```
 
@@ -307,7 +378,25 @@ This document provides a comprehensive reference for all Node.js backend API end
 
 ---
 
-## 4. Global Response Standard
+## 4. Error Handling
+
+### 4.1 Database Connectivity
+If the database server is unreachable, the API returns a `503 Service Unavailable` status in the JSON body.
+
+#### Example 503 Response
+```json
+{
+  "success": false,
+  "statusCode": 503,
+  "message": "Database connection failed. Please ensure the database server is running.",
+  "help": "The database service is currently unavailable. Please ensure the database server is running and try again.",
+  "meta": { ... }
+}
+```
+
+---
+
+## 5. Global Response Standard
 
 All endpoints follow this structure:
 - **`success`**: `boolean` indicating business logic success.

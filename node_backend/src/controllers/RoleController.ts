@@ -14,105 +14,6 @@ const updateRoleSchema = createRoleSchema.partial();
 export class RoleController {
   constructor(private readonly service: RoleService) {}
 
-  getAll = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const params = {
-        page: req.query.page as string,
-        limit: req.query.limit as string,
-        status: req.query.status as string,
-        name: req.query.name as string,
-      };
-      const result = await this.service.getAllRoles(params);
-      res.json({
-        success: true,
-        statusCode: 200,
-        message: 'Roles retrieved successfully',
-        data: result.roles.map(this.transformRole),
-        meta: {
-          pagination: {
-            total: result.total,
-            count: result.roles.length,
-            perPage: Number(params.limit) || 10,
-            currentPage: Number(params.page) || 1,
-            totalPages: Math.ceil(result.total / (Number(params.limit) || 10))
-          }
-        }
-      });
-    } catch (error: any) {
-      next(error);
-    }
-  };
-
-  getByUuid = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const role = await this.service.getRoleByUuid(req.params.uuid as string);
-      res.json({
-        success: true,
-        statusCode: 200,
-        data: this.transformRole(role)
-      });
-    } catch (error: any) {
-      next(error);
-    }
-  };
-
-  create = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const data = createRoleSchema.parse(req.body);
-      const role = await this.service.createRole(data as any);
-      res.json({
-        success: true,
-        statusCode: 201,
-        message: 'Role created successfully',
-        data: this.transformRole(role)
-      });
-    } catch (error: any) {
-      next(error);
-    }
-  };
-
-  update = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const data = updateRoleSchema.parse(req.body);
-      const role = await this.service.updateRole(req.params.uuid as string, data as any);
-      res.json({
-        success: true,
-        statusCode: 200,
-        message: 'Role updated successfully',
-        data: this.transformRole(role)
-      });
-    } catch (error: any) {
-      next(error);
-    }
-  };
-
-  delete = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      await this.service.deleteRole(req.params.uuid as string);
-      res.json({
-        success: true,
-        statusCode: 200,
-        message: 'Role deleted successfully'
-      });
-    } catch (error: any) {
-      next(error);
-    }
-  };
-
-  restore = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const role = await this.service.restoreRole(req.params.uuid as string);
-      res.json({
-        success: true,
-        statusCode: 200,
-        message: 'Role restored successfully',
-        data: this.transformRole(role)
-      });
-    } catch (error: any) {
-      next(error);
-    }
-  };
-
   private transformRole = (role: any) => {
     const { uuid, name, slug, description, status, createdAt, updatedAt } = role;
     return {
@@ -127,7 +28,186 @@ export class RoleController {
       meta: {
         createdAt,
         updatedAt
+      },
+      links: {
+        self: `/api/roles/${uuid}`
       }
     };
+  };
+
+  private getMeta = (req: Request, filterObj: any, sortParam: any, extra = {}) => {
+    const appliedFilters = { ...filterObj };
+    let sort: { field: string; order: string }[] = [];
+    if (typeof sortParam === 'string') {
+      sort = sortParam.split(',').map((s: string) => {
+        const desc = s.trim().startsWith('-');
+        const field = desc ? s.trim().substring(1) : s.trim();
+        return { field, order: desc ? 'desc' : 'asc' };
+      });
+    } else if (sortParam && typeof sortParam === 'object') {
+      sort = [{
+        field: sortParam.field || 'createdAt',
+        order: String(sortParam.order || 'desc').toLowerCase() === 'asc' ? 'asc' : 'desc'
+      }];
+    } else {
+      sort = [{ field: 'createdAt', order: 'desc' }];
+    }
+
+    return {
+      requestId: (req as any).requestId,
+      timestamp: new Date().toISOString(),
+      version: 'v1.7.0',
+      filters: appliedFilters,
+      sort,
+      ...extra
+    };
+  };
+
+  private buildLink = (req: Request, params: any) => {
+    const url = new URL(req.baseUrl, 'http://localhost');
+    const filters = typeof params.filters === 'object' ? params.filters : {};
+    const filter = typeof params.filter === 'object' ? params.filter : {};
+    const mergedFilter = { ...filters, ...filter };
+
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === undefined || value === null || key === 'filter' || key === 'filters') return;
+      if (typeof value !== 'object') {
+        url.searchParams.append(key, String(value));
+      }
+    });
+
+    Object.entries(mergedFilter).forEach(([fKey, fVal]) => {
+      url.searchParams.append(`filter[${fKey}]`, String(fVal));
+    });
+
+    return `${url.pathname}${url.search}`;
+  };
+
+  getAll = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) === -1 ? -1 : (Number(req.query.limit) || 10);
+      
+      const filtersParam = typeof req.query.filters === 'object' ? req.query.filters as any : {};
+      const filterParam = typeof req.query.filter === 'object' ? req.query.filter as any : {};
+      const filterObj = {
+        ...filtersParam,
+        ...filterParam,
+        name: req.query.name || (filterParam.name || filtersParam.name),
+        status: req.query.status || (filterParam.status || filtersParam.status)
+      };
+
+      const sortParam = req.query.sort;
+
+      const params = {
+        page: String(page),
+        limit: String(limit),
+        status: filterObj.status,
+        name: filterObj.name,
+      };
+
+      const result = await this.service.getAllRoles(params);
+      const totalPages = limit === -1 ? 1 : Math.ceil(result.total / limit);
+      const transformedRoles = result.roles.map(role => this.transformRole(role));
+
+      res.json({
+        success: true,
+        statusCode: 200,
+        message: transformedRoles.length > 0 ? 'Roles retrieved successfully' : 'No roles found matching the criteria',
+        data: transformedRoles,
+        meta: this.getMeta(req, filterObj, sortParam, {
+          pagination: {
+            total: result.total,
+            count: transformedRoles.length,
+            perPage: limit === -1 ? result.total : limit,
+            currentPage: page,
+            totalPages
+          }
+        }),
+        links: {
+          self: this.buildLink(req, { ...req.query, page, limit }),
+          next: page < totalPages ? this.buildLink(req, { ...req.query, page: page + 1, limit }) : null,
+          prev: page > 1 ? this.buildLink(req, { ...req.query, page: page - 1, limit }) : null
+        }
+      });
+    } catch (error: any) {
+      next(error);
+    }
+  };
+
+  getByUuid = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const role = await this.service.getRoleByUuid(req.params.uuid as string);
+      res.json({
+        success: true,
+        statusCode: 200,
+        message: 'Role retrieved successfully',
+        data: this.transformRole(role),
+        meta: this.getMeta(req, {}, null)
+      });
+    } catch (error: any) {
+      next(error);
+    }
+  };
+
+  create = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const data = createRoleSchema.parse(req.body);
+      const role = await this.service.createRole(data as any);
+      res.json({
+        success: true,
+        statusCode: 201,
+        message: 'Role created successfully',
+        data: this.transformRole(role),
+        meta: this.getMeta(req, {}, null)
+      });
+    } catch (error: any) {
+      next(error);
+    }
+  };
+
+  update = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const data = updateRoleSchema.parse(req.body);
+      const role = await this.service.updateRole(req.params.uuid as string, data as any);
+      res.json({
+        success: true,
+        statusCode: 200,
+        message: 'Role updated successfully',
+        data: this.transformRole(role),
+        meta: this.getMeta(req, {}, null)
+      });
+    } catch (error: any) {
+      next(error);
+    }
+  };
+
+  delete = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await this.service.deleteRole(req.params.uuid as string);
+      res.json({
+        success: true,
+        statusCode: 200,
+        message: 'Role deleted successfully',
+        meta: this.getMeta(req, {}, null)
+      });
+    } catch (error: any) {
+      next(error);
+    }
+  };
+
+  restore = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const role = await this.service.restoreRole(req.params.uuid as string);
+      res.json({
+        success: true,
+        statusCode: 200,
+        message: 'Role restored successfully',
+        data: this.transformRole(role),
+        meta: this.getMeta(req, {}, null)
+      });
+    } catch (error: any) {
+      next(error);
+    }
   };
 }
