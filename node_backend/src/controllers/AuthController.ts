@@ -93,7 +93,7 @@ export class AuthController {
         success: true,
         statusCode: 200,
         message: 'Active sessions retrieved successfully',
-        data: sessions.map(this.transformSession),
+        data: sessions.map((s) => this.transformSession(s)),
         meta: this.getMeta(req)
       });
     } catch (error) {
@@ -133,13 +133,15 @@ export class AuthController {
       const user = (req as any).user;
       const sessions = await this.authService.getUserSessions(user.id);
       
+      const currentSessionUuid = (req as any).session?.uuid;
+      
       res.status(200).json({
         success: true,
         statusCode: 200,
         message: 'User profile retrieved successfully',
         data: {
           user: this.transformUser(user),
-          sessions: sessions.map(this.transformSession)
+          sessions: sessions.map((s) => this.transformSession(s, currentSessionUuid))
         },
         meta: this.getMeta(req)
       });
@@ -172,7 +174,7 @@ export class AuthController {
     };
   };
 
-  private transformSession = (session: any) => {
+  private transformSession = (session: any, currentUuid?: string) => {
     return {
       id: session.uuid,
       type: 'session',
@@ -181,7 +183,8 @@ export class AuthController {
         deviceId: session.deviceId,
         ipAddress: session.ipAddress,
         userAgent: session.userAgent,
-        expiresAt: session.expiresAt
+        expiresAt: session.expiresAt,
+        isCurrent: currentUuid ? session.uuid === currentUuid : false
       },
       meta: {
         createdAt: session.createdAt,

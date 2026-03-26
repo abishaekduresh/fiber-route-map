@@ -27,11 +27,12 @@ export default function ProfilePage() {
           // result.data is { user, sessions } based on AuthController.me
           const data = result.data as any;
           setUser(data.user);
-          // sessions are returned in JSON:API format: { id, type, attributes: { deviceName, lastActive } }
+          // sessions are returned in JSON:API format: { id, type, attributes: { deviceName, lastActive, isCurrent } }
           const mappedSessions = data.sessions.map((s: any) => ({
             uuid: s.id,
             deviceName: s.attributes.deviceName,
-            lastActive: s.attributes.lastActive
+            lastActive: s.attributes.lastActive,
+            isCurrent: s.attributes.isCurrent
           }));
           setSessions(mappedSessions);
         } else {
@@ -48,11 +49,19 @@ export default function ProfilePage() {
     fetchData();
   }, []);
 
-  const handleTerminateSession = async (uuid: string) => {
+  const handleTerminateSession = async (session: ActiveSession) => {
+    const { uuid, isCurrent } = session;
     setTerminatingUuid(uuid);
     try {
       const result = await terminateSession(uuid);
       if (result.success) {
+        if (isCurrent) {
+          // If the current session was terminated, logout
+          localStorage.removeItem('fiber_auth_token');
+          localStorage.removeItem('fiber_auth_user');
+          window.location.href = '/login';
+          return;
+        }
         setSessions(prev => prev.filter(s => s.uuid !== uuid));
       } else {
         alert(result.message);
@@ -168,16 +177,33 @@ export default function ProfilePage() {
                     </svg>
                   </div>
                   <div className={styles.sessionInfo}>
-                    <div className={styles.deviceName}>{session.deviceName}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div className={styles.deviceName}>{session.deviceName}</div>
+                      {session.isCurrent && (
+                        <span style={{ 
+                          fontSize: '0.65rem', 
+                          background: 'rgba(59, 130, 246, 0.2)', 
+                          color: '#60a5fa', 
+                          padding: '2px 6px', 
+                          borderRadius: '10px',
+                          border: '1px solid rgba(59, 130, 246, 0.3)',
+                          textTransform: 'uppercase',
+                          fontWeight: 700,
+                          letterSpacing: '0.05em'
+                        }}>
+                          Current
+                        </span>
+                      )}
+                    </div>
                     <div className={styles.lastActive}>
                       Last seen {session.lastActive ? new Date(session.lastActive.replace(' ', 'T')).toLocaleString() : 'Just now'}
                     </div>
                   </div>
                   <button 
                     className={styles.terminateBtn}
-                    onClick={() => handleTerminateSession(session.uuid)}
+                    onClick={() => handleTerminateSession(session)}
                     disabled={terminatingUuid !== null}
-                    title="Terminate Session"
+                    title={session.isCurrent ? "Logout" : "Terminate Session"}
                   >
                     {terminatingUuid === session.uuid ? (
                       <div className={styles.miniSpinner} />

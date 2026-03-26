@@ -4,7 +4,10 @@ All notable changes to the Fiber Route Map Website will be documented in this fi
 
 ## [1.12.0] - 2026-03-26
 ### Added
-- **Session Management UI**: Developed a sophisticated modal to handle session limit conflicts, enabling users to manage active devices directly from the login screen.
+- **Profile Page**: Implemented a comprehensive account management view with real-time session tracking.
+- **Auto-Logout Redirection**: Developed logic to automatically redirect users to the login page if their current session is terminated.
+- **Current Session Badge**: Added visual indicators to identify the active device among multiple sessions.
+- **Session Management UI**: Developed a sophisticated modal to handle session limit conflicts directly from the login screen.
 - **Localized Authentication**: Built a secure, multi-identifier login system (Email/Username/Phone).
 ### Fixed
 - **TopBar TypeError**: Corrected the data access path for user profile information.

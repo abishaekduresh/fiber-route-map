@@ -99,7 +99,7 @@ export class AuthService {
     return this.authRepo.deleteSessionByUuid(uuid, userId);
   }
 
-  async validateSession(token: string): Promise<User | null> {
+  async validateSession(token: string): Promise<{ user: User; session: Session } | null> {
     const session = await this.authRepo.findSessionByToken(token);
     if (!session) return null;
 
@@ -108,8 +108,10 @@ export class AuthService {
       return null;
     }
 
-    const userIdInternal = session.userId;
-    return this.userRepo.findById(userIdInternal);
+    const user = await this.userRepo.findById(session.userId);
+    if (!user) return null;
+
+    return { user, session };
   }
 
   /**

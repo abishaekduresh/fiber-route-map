@@ -17,7 +17,11 @@ export const auth = (authService: AuthService) => {
       } else if (authHeader && authHeader.startsWith('Bearer ')) {
         // Normal session token validation
         const token = authHeader.split(' ')[1];
-        user = await authService.validateSession(token);
+        const result = await authService.validateSession(token);
+        if (result) {
+          user = result.user;
+          (req as any).session = result.session;
+        }
       }
 
       if (!user) {
@@ -38,8 +42,12 @@ export const auth = (authService: AuthService) => {
         throw error;
       }
 
-      // Attach user to request
+      // Attach user and session to request
       (req as any).user = user;
+      // Do not overwrite session if it was already set (e.g. during validateSession)
+      if (!(req as any).session && (user as any).session) {
+        (req as any).session = (user as any).session;
+      }
       next();
     } catch (error) {
       next(error);

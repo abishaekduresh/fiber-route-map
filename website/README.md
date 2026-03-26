@@ -4,7 +4,7 @@ A futuristic, high-performance web dashboard for managing fiber optic networks.
 Built with **Next.js 16 (Turbopack)** and **TypeScript**, featuring a stunning **Glassmorphism Design System**.
 
 ## Version
-**Current Version:** 0.1.0 (Initial Beta - Registration & Secure Login)
+**Current Version:** 1.12.0 (Account Settings & Auto-Logout)
 
 ## Features
 - **Dynamic Glassmorphism UI**: High-end aesthetic with animated background orbs and frosty transparency effects.

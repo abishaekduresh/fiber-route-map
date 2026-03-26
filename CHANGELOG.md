@@ -4,10 +4,12 @@ All notable changes to the Fiber Route Map project will be documented in this fi
 
 ## [1.12.0] - 2026-03-26
 ### Added
-- **Frontend Launch**: Bootstrapped and developed a futuristic Next.js 16 website with localized authentication and session management.
+- **Profile & Account Management**: Implemented a dedicated profile page (`/profile`) and TopBar integration for viewing account details and managing active sessions.
+- **Auto-Logout Security**: Developed an automatic logout mechanism that triggers immediately when the user's active session is terminated from the profile view.
+- **Current Session Flagging**: Enhanced the `/api/auth/me` endpoint to identify and flag the user's active session with a `isCurrent: true` attribute.
+- **Frontend Launch**: Developed a futuristic Next.js 16 website with localized authentication and session management.
 - **Per-User Session Limits**: Migrated backend to a flexible per-user session constraint system (defaulting to 1).
 ### Fixed
-- **Profile & Account Management**: Implemented a new profile page and TopBar integration for viewing account details and managing active sessions.
 - **Frontend Refinements**: Resolved hydration mismatches caused by browser extensions and fixed the user data path in the TopBar.
 
 ## [1.11.1] - 2026-03-26

@@ -97,6 +97,7 @@ export interface ActiveSession {
   uuid: string;
   deviceName: string;
   lastActive: string;
+  isCurrent?: boolean;
 }
 
 /** Login failure data shape (session limit scenario) */

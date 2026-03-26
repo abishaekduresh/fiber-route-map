@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.12.0] - 2026-03-26
 ### Added
 - **Per-User Session Limits**: Migrated from a global session limit to a user-configurable `sessionLimit` (defaulting to 1). Added `sessionLimit` column to the `users` table.
+- **Current Session Flagging**: Enhanced the `/api/auth/me` endpoint and `auth` middleware to identify and flag the user's active session with `isCurrent: true`.
 - **Enhanced Session Management**: Integrated specific management token support for secure session termination during the "Limit Reached" state.
 ### Fixed
 - **Session Termination**: Resolved a critical bug where management sessions were incorrectly counting towards the active limit and implemented dynamic, per-session URLs in the 403 response.
