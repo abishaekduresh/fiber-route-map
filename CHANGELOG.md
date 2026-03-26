@@ -4,11 +4,13 @@ All notable changes to the Fiber Route Map project will be documented in this fi
 
 ## [1.13.0] - 2026-03-26
 ### Added
+- **Interactive API Documentation**: Launched a fully interactive Swagger/OpenAPI 3.0 UI at `/api/docs` with universal coverage.
+- **Public User Registration**: Enabled simplified `POST /api/users` registration without requiring an initial authentication token.
 - **Standardized Error System**: Introduced universal `errorType` identifiers across the entire backend for programmatic error handling in the frontend.
 ### Changed
-- **API Refactoring**: Consolidated all authentication and session management endpoints under the consistent `/api/auth/users/` resource hierarchy.
-- **Database Schema**: Migrated the `sessions` table to `user_sessions` as part of the core authentication refactor.
-- **Documentation**: Fully audited and updated all project documentation to the v1.13.0 technical standard.
+- **API Versioning**: Standardized on the `X-Api-Version` header naming across all interactive documentation.
+- **API Refactoring**: Consolidated authentication and selective route protection into modular resource hierarchies.
+- **Documentation Migration**: Migrated legacy `API_DOCUMENTATION.md` to a scalable, modular JSDoc-based architecture in `src/docs/`.
 
 ## [1.12.0] - 2026-03-26
 ### Added

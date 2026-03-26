@@ -7,11 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.13.0] - 2026-03-26
 ### Added
+- **Interactive Swagger Documentation**: Integrated `swagger-jsdoc` and `swagger-ui-express` to provide an interactive API reference at `/api/docs`.
+- **Public User Registration**: Refactored `src/index.ts` and `userRoutes.ts` to support unauthenticated registration via `POST /api/users`.
 - **Standardized Error Responses**: Implemented a universal `errorType` field in all failed API responses (e.g., `VALIDATION_ERROR`, `SESSION_LIMIT_REACHED`, `NOT_FOUND`).
 ### Changed
-- **Route Refactoring**: Migrated all authentication and session endpoints to the `/api/auth/users/` prefix for consistency.
-- **Table Rename**: Renamed the database `sessions` table to `user_sessions` and updated all repository references.
-- **API Documentation**: Fully synchronized `API_DOCUMENTATION.md` with v1.13.0 standards, including comprehensive error examples.
+- **Documentation Modularization**: Transitioned from a single `API_DOCUMENTATION.md` to a modular architecture in `src/docs/paths/` and `src/docs/schemas/`.
+- **Header Harmonization**: Integrated the mandatory `X-Api-Version` header parameter into all documented Swagger endpoints.
 - **Internal Versioning**: Unified project versioning to v1.13.0 across all components and responses.
 
 ## [1.12.0] - 2026-03-26

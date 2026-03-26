@@ -18,9 +18,6 @@
  *       - in: query
  *         name: name
  *         schema: { type: string }
- *       - in: query
- *         name: sort
- *         schema: { type: string, example: "name" }
  *     responses:
  *       200:
  *         description: Success
@@ -46,32 +43,17 @@
  *         application/json:
  *           schema:
  *             type: object
- *             required: [name, slug]
+ *             required: [name, slug, description]
  *             properties:
  *               name: { type: string }
  *               slug: { type: string }
  *               description: { type: string }
+ *               status: { type: string, enum: [active, inactive] }
  *     responses:
  *       201:
  *         description: Role created
  *
  * /roles/{uuid}:
- *   get:
- *     tags:
- *       - Roles
- *     summary: Get Role Detail
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - $ref: '#/components/parameters/ApiVersionHeader'
- *       - in: path
- *         name: uuid
- *         required: true
- *         schema: { type: string, format: uuid }
- *     responses:
- *       200:
- *         description: Success
- *
  *   put:
  *     tags:
  *       - Roles
@@ -79,13 +61,11 @@
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - $ref: '#/components/parameters/ApiVersionHeader'
  *       - in: path
  *         name: uuid
  *         required: true
  *         schema: { type: string, format: uuid }
  *     requestBody:
- *       required: true
  *       content:
  *         application/json:
  *           schema:
@@ -93,6 +73,7 @@
  *             properties:
  *               name: { type: string }
  *               description: { type: string }
+ *               status: { type: string, enum: [active, inactive] }
  *     responses:
  *       200:
  *         description: Role updated
@@ -100,11 +81,10 @@
  *   delete:
  *     tags:
  *       - Roles
- *     summary: Delete Role
+ *     summary: Delete Role (Soft Delete)
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - $ref: '#/components/parameters/ApiVersionHeader'
  *       - in: path
  *         name: uuid
  *         required: true
@@ -114,14 +94,13 @@
  *         description: Role deleted
  *
  * /roles/{uuid}/restore:
- *   post:
+ *   put:
  *     tags:
  *       - Roles
  *     summary: Restore Role
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - $ref: '#/components/parameters/ApiVersionHeader'
  *       - in: path
  *         name: uuid
  *         required: true

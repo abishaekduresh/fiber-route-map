@@ -4,7 +4,12 @@ The authoritative backend REST API for the Fiber Route Map system, replicated in
 Built using [Express](https://expressjs.com/) and [TypeScript](https://www.typescriptlang.org/), leveraging [Knex.js](https://knexjs.org/) for database interaction.
 
 ## Version
-**Current Version:** 1.13.0 (Standardized Errors & Auth Refactor)
+**Current Version:** 1.13.0 (Interactive Docs & Public Registration)
+
+## Interactive Documentation
+The API is fully documented using Swagger/OpenAPI 3.0.
+- **URL**: `http://localhost:3000/api/docs`
+- **Features**: Direct endpoint testing, schema exploration, and version-aware requests.
 
 ## Requirements
 - Node.js 18+
@@ -42,18 +47,18 @@ npm start
 ## API Standards
 
 ### Mandatory Headers
-All requests to `/api` must include:
-- `X-API-Version: v1`
+All requests to `/api` (except documentation) must include:
+- `X-Api-Version: v1`
 - `Authorization: Bearer <your_session_token>` (for protected routes)
 - `X-Device-Id` (Optional, unique device identifier)
 - `X-Device-Name` (Recommended, e.g., "Chrome on Windows", "iPhone 15")
 
 ### Authentication & Session Management
 The API uses a secure, database-backed session system:
+- **Registration**: Publicly available via `POST /api/users`.
 - **Identifier**: Log in via `POST /api/auth/users/login` using **email**, **username**, or **phone number**.
 - **Per-User Limits**: Authentication respects individual `sessionLimit` configured per account (defaulting to 1).
-- **Management**: Users can list active devices via `GET /api/auth/users/sessions` and terminate sessions via `DELETE /api/auth/users/sessions/:uuid` using a short-lived `X-Mgmt-Token`.
-- **Profile Integration**: The `/api/auth/me` endpoint returns both user attributes and the list of active sessions.
+- **Management**: Users can list active devices via `GET /api/auth/users/sessions` and terminate sessions via `DELETE /api/auth/users/sessions/:uuid`.
 
 ### Universal 200 OK
 The API always returns an HTTP 200 OK status code at the protocol level. The actual response status (e.g., 201, 401, 503) is communicated through the `statusCode` field in the JSON body.
