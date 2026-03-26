@@ -5,6 +5,8 @@
  *     tags:
  *       - Authentication
  *     summary: User Login
+ *     parameters:
+ *       - $ref: '#/components/parameters/ApiVersionHeader'
  *     description: Authenticate using email, username, or phone number.
  *     requestBody:
  *       required: true

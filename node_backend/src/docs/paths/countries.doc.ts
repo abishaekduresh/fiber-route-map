@@ -8,6 +8,7 @@
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - $ref: '#/components/parameters/ApiVersionHeader'
  *       - in: query
  *         name: filter[name]
  *         schema: { type: string }
@@ -34,6 +35,8 @@
  *     summary: Create Country
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/ApiVersionHeader'
  *     requestBody:
  *       required: true
  *       content:

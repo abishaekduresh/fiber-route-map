@@ -9,6 +9,7 @@
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - $ref: '#/components/parameters/ApiVersionHeader'
  *       - in: query
  *         name: page
  *         schema: { type: integer, default: 1 }
@@ -34,9 +35,12 @@
  *   post:
  *     tags:
  *       - Users
- *     summary: Create User
+ *     summary: Create User (Public)
+ *     description: Register a new user. This endpoint does not require authentication.
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/ApiVersionHeader'
  *     requestBody:
  *       required: true
  *       content:

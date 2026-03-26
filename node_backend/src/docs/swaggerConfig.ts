@@ -36,6 +36,18 @@ const options: swaggerJSDoc.Options = {
           description: 'Short-lived Management Token for session termination',
         },
       },
+      parameters: {
+        ApiVersionHeader: {
+          name: 'X-API-Version',
+          in: 'header',
+          required: true,
+          schema: {
+            type: 'string',
+            default: 'v1',
+          },
+          description: 'API Version (e.g., v1)',
+        },
+      },
     },
   },
   // Path to the API docs using absolute paths for reliability

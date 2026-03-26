@@ -8,6 +8,7 @@
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - $ref: '#/components/parameters/ApiVersionHeader'
  *       - in: query
  *         name: page
  *         schema: { type: integer, default: 1 }
@@ -34,6 +35,8 @@
  *     summary: Create Role
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/ApiVersionHeader'
  *     requestBody:
  *       required: true
  *       content:
