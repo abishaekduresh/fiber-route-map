@@ -5,16 +5,24 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.1] - 2026-03-26
+### Fixed
+- **Type Safety**: Resolved a TypeScript compilation error in `AuthController.ts` where `req.params.uuid` was incorrectly typed, ensuring robust session termination.
+
 ## [1.11.0] - 2026-03-26
 ### Added
 - **Secure Authentication System**: Implemented a robust login/logout system with database-backed session management.
 - **Multi-Identifier Login**: Users can authenticate using **email**, **username**, or **phone number** via the new `identifier` field.
-- **Session Management**: Automatic 30-day session expiration and secure token generation.
+- **Device Identification**: Integrated hardware/device tracking via `X-Device-Id` and `X-Device-Name` headers.
+- **Session Management**: Automatic 30-day session expiration and secure token generation. Added a strict **3-device login limit** per user.
+- **Session API**: New endpoints for device list and remote logout (`GET /api/auth/sessions`, `DELETE /api/auth/sessions/:uuid`).
+- **Enhanced Profile**: Updated `GET /api/auth/me` to return active sessions alongside user attributes.
 - **Database Connectivity Middleware**: Added `dbCheck` middleware to the request lifecycle to ensure database reachability and return `503` errors gracefully.
 - **Role response Enhancement**: Integrated `links` and `meta.pagination` into role retrieval endpoints.
 ### Improved
 - **Security**: Implemented a global `auth` middleware, mandating `Authorization: Bearer <token>` for all `users`, `countries`, and `roles` API calls.
-- **Documentation**: Updated `API_DOCUMENTATION.md` to reflect the multi-identifier login and header requirements.
+- **Error Handling**: Implemented a specialized `403 Forbidden` logic status for session limit breaches, including recovery links.
+- **Documentation**: Updated `API_DOCUMENTATION.md` to reflect the multi-identifier login, device headers, and session management.
 
 ## [1.10.0] - 2026-03-25
 ### Added

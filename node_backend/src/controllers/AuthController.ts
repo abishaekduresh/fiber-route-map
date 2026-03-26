@@ -18,8 +18,15 @@ export class AuthController {
         body.identifier = body.email;
       }
 
+      const deviceInfo = {
+        deviceId: (Array.isArray(req.headers['x-device-id']) ? req.headers['x-device-id'][0] : req.headers['x-device-id'] as string) || undefined,
+        deviceName: (Array.isArray(req.headers['x-device-name']) ? req.headers['x-device-name'][0] : req.headers['x-device-name'] as string) || undefined,
+        ipAddress: req.ip || undefined,
+        userAgent: (Array.isArray(req.headers['user-agent']) ? req.headers['user-agent'][0] : req.headers['user-agent'] as string) || undefined
+      };
+
       const { identifier, password } = loginSchema.parse(body);
-      const { user, session } = await this.authService.login(identifier, password);
+      const { user, session } = await this.authService.login(identifier, password, deviceInfo);
 
       res.status(200).json({
         success: true,
@@ -32,7 +39,22 @@ export class AuthController {
         },
         meta: this.getMeta(req)
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.code === 'SESSION_LIMIT_REACHED') {
+        return res.status(200).json({
+          success: false,
+          statusCode: 403,
+          message: error.message,
+          data: {
+            activeSessions: error.activeSessions
+          },
+          links: {
+            sessions: '/api/auth/sessions',
+            terminate: '/api/auth/sessions/{uuid}'
+          },
+          meta: this.getMeta(req)
+        });
+      }
       next(error);
     }
   };
@@ -57,14 +79,63 @@ export class AuthController {
     }
   };
 
+  sessions = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = (req as any).user;
+      const sessions = await this.authService.getUserSessions(user.id);
+      
+      res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: 'Active sessions retrieved successfully',
+        data: sessions.map(this.transformSession),
+        meta: this.getMeta(req)
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  terminateSession = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = (req as any).user;
+      const { uuid } = req.params;
+      
+      const success = await this.authService.terminateSession(uuid as string, user.id);
+      
+      if (!success) {
+        return res.status(200).json({
+          success: false,
+          statusCode: 404,
+          message: 'Session not found or already terminated',
+          meta: this.getMeta(req)
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: 'Session terminated successfully',
+        meta: this.getMeta(req)
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   me = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const user = (req as any).user;
+      const sessions = await this.authService.getUserSessions(user.id);
+      
       res.status(200).json({
         success: true,
         statusCode: 200,
         message: 'User profile retrieved successfully',
-        data: this.transformUser(user),
+        data: {
+          user: this.transformUser(user),
+          sessions: sessions.map(this.transformSession)
+        },
         meta: this.getMeta(req)
       });
     } catch (error) {
@@ -96,11 +167,32 @@ export class AuthController {
     };
   };
 
+  private transformSession = (session: any) => {
+    return {
+      id: session.uuid,
+      type: 'session',
+      attributes: {
+        deviceName: session.deviceName || 'Unknown Device',
+        deviceId: session.deviceId,
+        ipAddress: session.ipAddress,
+        userAgent: session.userAgent,
+        expiresAt: session.expiresAt
+      },
+      meta: {
+        createdAt: session.createdAt,
+        updatedAt: session.updatedAt
+      },
+      links: {
+        self: `/api/auth/sessions/${session.uuid}`
+      }
+    };
+  };
+
   private getMeta = (req: Request) => {
     return {
       requestId: (req as any).requestId,
       timestamp: new Date().toISOString(),
-      version: 'v1.7.0'
+      version: 'v1.11.1'
     };
   };
 }

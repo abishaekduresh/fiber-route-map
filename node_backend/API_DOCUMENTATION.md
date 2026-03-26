@@ -14,6 +14,13 @@ Most API endpoints (except for login) require a valid authentication token. The 
 **Endpoint**: `POST /api/auth/login`  
 **Description**: Authenticate with email, username, or phone and password to receive a session token.
 
+#### Request Headers
+| Header | Type | Description |
+| :--- | :--- | :--- |
+| `X-API-Version` | `string` | `v1` |
+| `X-Device-Id` | `string` | Unique identifier for the device (optional) |
+| `X-Device-Name` | `string` | Human-readable name for the device (e.g., "iPhone 15") |
+
 #### Request Body
 ```json
 {
@@ -23,7 +30,7 @@ Most API endpoints (except for login) require a valid authentication token. The 
 ```
 *Note: `identifier` can be the user's **email**, **username**, or **phone number**.*
 
-#### Example Response
+#### Example Response (Success)
 ```json
 {
   "success": true,
@@ -34,11 +41,81 @@ Most API endpoints (except for login) require a valid authentication token. The 
     "token": "fd90b9...",
     "expiresAt": "2026-04-26 12:00:00"
   },
-  "meta": { "requestId": "req_...", "timestamp": "...", "version": "v1.7.0" }
+  "meta": { "requestId": "req_...", "timestamp": "...", "version": "v1.11.0" }
 }
 ```
 
-### 0.2 How to use the token
+#### Example Response (Session Limit Reached - 403)
+If the user is logged into 3 devices already, login will fail.
+```json
+{
+  "success": false,
+  "statusCode": 403,
+  "message": "Session limit reached. Please logout from another device.",
+  "data": {
+    "activeSessions": [
+      {
+        "uuid": "session-uuid-1",
+        "deviceName": "My Laptop",
+        "lastActive": "2026-03-25T10:00:00Z"
+      },
+      ...
+    ]
+  },
+  "links": {
+    "sessions": "/api/auth/sessions",
+    "terminate": "/api/auth/sessions/{uuid}"
+  },
+  "meta": { ... }
+}
+```
+### 0.2 Logout
+**Endpoint**: `POST /api/auth/logout`  
+**Description**: Invalidates the current session token.
+
+### 0.3 Get Current Profile (Me)
+**Endpoint**: `GET /api/auth/me`  
+**Description**: Retrieve the profile and active sessions of the currently authenticated user.
+
+#### Example Response
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "User profile retrieved successfully",
+  "data": {
+    "user": { ... },
+    "sessions": [
+      {
+        "id": "session-uuid",
+        "type": "session",
+        "attributes": {
+          "deviceName": "My Phone",
+          "lastActive": "..."
+        }
+      }
+    ]
+  },
+  "meta": { ... }
+}
+```
+
+---
+
+### 0.4 Session Management (Protected)
+Manage active sessions and devices.
+
+#### 0.4.1 List Active Sessions
+**Endpoint**: `GET /api/auth/sessions`  
+**Description**: Retrieve a list of all active sessions/devices for the current user.
+
+#### 0.4.2 Terminate Session
+**Endpoint**: `DELETE /api/auth/sessions/:uuid`  
+**Description**: Remotely logout of a device by terminating its session.
+
+---
+
+### 0.5 How to use the token
 After logging in, include the `token` in the `Authorization` header for subsequent requests.
 
 #### Fetch Example
@@ -363,6 +440,7 @@ fetch('http://localhost:3000/api/users', {
   "status": "active"
 }
 ```
+
 
 ### 3.3 Update Role
 **Endpoint**: `PUT /api/roles/:uuid`  

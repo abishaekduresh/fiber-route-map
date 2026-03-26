@@ -2,6 +2,8 @@ export interface Session {
   uuid: string;
   userId: number;
   sessionToken: string;
+  deviceId?: string;
+  deviceName?: string;
   ipAddress?: string;
   userAgent?: string;
   expiresAt: string;

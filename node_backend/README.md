@@ -4,7 +4,7 @@ The authoritative backend REST API for the Fiber Route Map system, replicated in
 Built using [Express](https://expressjs.com/) and [TypeScript](https://www.typescriptlang.org/), leveraging [Knex.js](https://knexjs.org/) for database interaction.
 
 ## Version
-**Current Version:** 1.11.0 (Secure Auth & Multi-Identifier Login)
+**Current Version:** 1.11.1 (Secure Auth, Device Limits & Session Management)
 
 ## Requirements
 - Node.js 18+
@@ -45,9 +45,15 @@ npm start
 All requests to `/api` must include:
 - `X-API-Version: v1`
 - `Authorization: Bearer <your_session_token>` (for protected routes)
+- `X-Device-Id` (Optional, unique device identifier)
+- `X-Device-Name` (Recommended, e.g., "Chrome on Windows", "iPhone 15")
 
-### Authentication
-The API uses a session-based authentication system. Log in via `POST /api/auth/login` using your **email**, **username**, or **phone number** as the `identifier`.
+### Authentication & Session Management
+The API uses a secure, database-backed session system:
+- **Identifier**: Log in via `POST /api/auth/login` using **email**, **username**, or **phone number**.
+- **Device Limits**: Each user is limited to **3 concurrent active sessions**.
+- **Management**: Users can list their active devices via `GET /api/auth/sessions` and remotely terminate sessions via `DELETE /api/auth/sessions/:uuid`.
+- **Profile Integration**: The `/api/auth/me` endpoint returns both user attributes and the list of active sessions.
 
 ### Universal 200 OK
 The API always returns an HTTP 200 OK status code at the protocol level. The actual response status (e.g., 201, 401, 503) is communicated through the `statusCode` field in the JSON body.

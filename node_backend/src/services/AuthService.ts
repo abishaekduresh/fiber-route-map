@@ -6,12 +6,14 @@ import { User } from '../models/User.js';
 import { Session } from '../models/Session.js';
 
 export class AuthService {
+  private readonly MAX_SESSIONS = 3;
+
   constructor(
     private authRepo: AuthRepository,
     private userRepo: UserRepository
   ) {}
 
-  async login(identifier: string, password: string): Promise<{ user: User; session: Session }> {
+  async login(identifier: string, password: string, deviceInfo?: { deviceId?: string; deviceName?: string; ipAddress?: string; userAgent?: string }): Promise<{ user: User; session: Session }> {
     const userWithPassword = await this.userRepo.findByIdentifierWithPassword(identifier);
 
     if (!userWithPassword) {
@@ -40,6 +42,21 @@ export class AuthService {
       throw error;
     }
 
+    // Check session limit
+    const activeSessionsCount = await this.authRepo.countActiveSessions(userWithPassword.id);
+    if (activeSessionsCount >= this.MAX_SESSIONS) {
+      const activeSessions = await this.authRepo.getSessionsByUserId(userWithPassword.id);
+      const error = new Error('Session limit reached. Please logout from another device.');
+      (error as any).status = 403;
+      (error as any).code = 'SESSION_LIMIT_REACHED';
+      (error as any).activeSessions = activeSessions.map(s => ({
+        uuid: s.uuid,
+        deviceName: s.deviceName || 'Unknown Device',
+        lastActive: s.createdAt
+      }));
+      throw error;
+    }
+
     // Create session
     const sessionToken = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date();
@@ -48,7 +65,8 @@ export class AuthService {
     const session = await this.authRepo.createSession({
       userId: userWithPassword.id,
       sessionToken,
-      expiresAt: expiresAt.toISOString().slice(0, 19).replace('T', ' ') // Format for MySQL
+      expiresAt: expiresAt.toISOString().slice(0, 19).replace('T', ' '), // Format for MySQL
+      ...deviceInfo
     });
 
     const user = await this.userRepo.findByUuid(userWithPassword.uuid);
@@ -57,6 +75,14 @@ export class AuthService {
 
   async logout(token: string): Promise<void> {
     await this.authRepo.deleteSessionByToken(token);
+  }
+
+  async getUserSessions(userId: number): Promise<Session[]> {
+    return this.authRepo.getSessionsByUserId(userId);
+  }
+
+  async terminateSession(uuid: string, userId: number): Promise<boolean> {
+    return this.authRepo.deleteSessionByUuid(uuid, userId);
   }
 
   async validateSession(token: string): Promise<User | null> {
