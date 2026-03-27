@@ -59,7 +59,7 @@ export class UserController {
    * Transforms a user database object into the new API response format.
    */
   private transformUser = (user: User) => {
-    const { uuid, createdAt, updatedAt, email, username, name, phone, status, country, roles } = user;
+    const { uuid, createdAt, updatedAt, email, username, name, phone, status, sessionLimit, country, roles } = user;
     return {
       id: uuid,
       type: 'user',
