@@ -22,7 +22,7 @@ export interface User {
   }[];
 }
 
-export type CreateUserDTO = Pick<User, 'email' | 'username' | 'name' | 'phone'> & { 
+export type CreateUserDTO = Pick<User, 'email' | 'username' | 'name' | 'phone' | 'sessionLimit'> & { 
   password: string; 
   countryUuid: string;
   roleUuids?: string[];

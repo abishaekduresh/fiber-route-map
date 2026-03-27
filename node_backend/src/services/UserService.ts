@@ -53,7 +53,8 @@ export class UserService {
     const user = await this.repo.create({
       ...data,
       password: hashedPassword,
-      countryId, // Injected for repository
+      countryId,
+      sessionLimit: data.sessionLimit || 1
     } as any);
 
     if (data.roleUuids && data.roleUuids.length > 0) {
@@ -128,6 +129,10 @@ export class UserService {
     }
 
     if (data.password) updateData.password = await bcrypt.hash(data.password, 10);
+    
+    if (data.sessionLimit !== undefined) {
+      updateData.sessionLimit = Number(data.sessionLimit);
+    }
 
     if (Object.keys(updateData).length > 0) {
       await this.repo.update(uuid, updateData);

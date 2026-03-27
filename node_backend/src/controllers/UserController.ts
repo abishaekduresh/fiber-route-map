@@ -17,6 +17,7 @@ const createUserSchema = z.object({
   confirmPassword: z.string(),
   countryUuid: z.string().uuid('Invalid country selection'),
   roleUuids: z.array(z.string().uuid()).optional(),
+  sessionLimit: z.number().min(1).max(10).optional().default(1),
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"]
@@ -36,6 +37,7 @@ const updateUserSchema = z.object({
   confirmPassword: z.string().optional(),
   countryUuid: z.string().uuid('Invalid country selection').optional(),
   roleUuids: z.array(z.string().uuid()).optional(),
+  sessionLimit: z.number().min(1).max(10).optional(),
 }).refine(data => {
   if (data.password || data.confirmPassword) {
     return data.password === data.confirmPassword;
@@ -67,6 +69,7 @@ export class UserController {
         name,
         phone,
         status,
+        sessionLimit,
         country,
         roles
       },

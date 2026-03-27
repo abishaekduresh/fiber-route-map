@@ -27,7 +27,8 @@ export default function UserModal({ isOpen, onClose, onSuccess, user }: UserModa
     password: '',
     confirmPassword: '',
     countryUuid: '',
-    roleUuids: [] as string[]
+    roleUuids: [] as string[],
+    sessionLimit: 1
   });
 
   useEffect(() => {
@@ -55,10 +56,11 @@ export default function UserModal({ isOpen, onClose, onSuccess, user }: UserModa
           username: user.attributes?.username || '',
           email: user.attributes?.email || '',
           phone: user.attributes?.phone || '',
-          password: '', // Don't populate password
+          password: '',
           confirmPassword: '',
           countryUuid: user.attributes?.country?.id || '',
-          roleUuids: user.attributes?.roles?.map((r: any) => r.uuid) || []
+          roleUuids: user.attributes?.roles?.map((r: any) => r.uuid) || [],
+          sessionLimit: user.attributes?.sessionLimit ?? 1
         });
       } else {
         setFormData({
@@ -69,7 +71,8 @@ export default function UserModal({ isOpen, onClose, onSuccess, user }: UserModa
           password: '',
           confirmPassword: '',
           countryUuid: '',
-          roleUuids: []
+          roleUuids: [],
+          sessionLimit: 1
         });
       }
     }
@@ -83,9 +86,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, user }: UserModa
   const handleRoleChange = (roleUuid: string) => {
     setFormData(prev => ({
       ...prev,
-      roleUuids: prev.roleUuids.includes(roleUuid)
-        ? prev.roleUuids.filter(id => id !== roleUuid)
-        : [...prev.roleUuids, roleUuid]
+      roleUuids: [roleUuid] // Only allow one role
     }));
   };
 
@@ -105,14 +106,20 @@ export default function UserModal({ isOpen, onClose, onSuccess, user }: UserModa
       let result: ApiResponse;
       if (isEdit) {
         // Prepare update data (password optional)
-        const updateData: any = { ...formData };
+        const updateData: any = { 
+          ...formData,
+          sessionLimit: Number(formData.sessionLimit)
+        };
         if (!formData.password) {
           delete updateData.password;
           delete updateData.confirmPassword;
         }
         result = await updateUser(user.id, updateData);
       } else {
-        result = await createUser(formData);
+        result = await createUser({
+          ...formData,
+          sessionLimit: Number(formData.sessionLimit)
+        });
       }
 
       if (result.success) {
@@ -195,6 +202,14 @@ export default function UserModal({ isOpen, onClose, onSuccess, user }: UserModa
                 />
               </div>
 
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>Max Session Limit</label>
+                <input 
+                  type="number" name="sessionLimit" className={styles.input} required min="1" max="10"
+                  value={formData.sessionLimit} onChange={handleChange} 
+                />
+              </div>
+
               <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
                 <label className={styles.label}>Country</label>
                 <select 
@@ -210,14 +225,19 @@ export default function UserModal({ isOpen, onClose, onSuccess, user }: UserModa
 
               <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
                 <label className={styles.label}>System Roles</label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.75rem' }}>
                   {roles.map(role => (
                     <button
                       key={role.id}
                       type="button"
                       onClick={() => handleRoleChange(role.id)}
                       className={`${styles.statusBadge} ${formData.roleUuids.includes(role.id) ? styles['status-active'] : ''}`}
-                      style={{ cursor: 'pointer', border: '1px solid rgba(255,255,255,0.05)' }}
+                      style={{ 
+                        cursor: 'pointer', 
+                        border: '1px solid rgba(255,255,255,0.05)',
+                        padding: '0.5rem 1rem',
+                        fontSize: '0.8rem'
+                      }}
                     >
                       {role.attributes?.name}
                     </button>
