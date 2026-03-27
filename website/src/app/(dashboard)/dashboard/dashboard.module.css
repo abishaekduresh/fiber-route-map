@@ -554,18 +554,19 @@
   }
   
   .filterControls {
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-    gap: 0.75rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
     width: 100% !important;
   }
   
-  .filterSelect {
+  .filterSelect, .searchInputWrapper {
     width: 100% !important;
+    min-width: 0 !important;
   }
   
   .tableHeader {
-    padding: 1.25rem !important;
+    padding: 1.25rem 1rem !important;
   }
   
   .paginationContainer {

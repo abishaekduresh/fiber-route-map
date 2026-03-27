@@ -373,16 +373,41 @@
 }
 
 @media (max-width: 640px) {
-  .topBarTitle {
-    font-size: 1rem;
+  .topBar {
+    padding: 0 0.75rem;
+    height: 60px;
+    gap: 0.5rem;
   }
 
-  .userName {
+  .topBarTitle {
+    font-size: 1rem;
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .userInfo {
     display: none;
+  }
+
+  .userMenu {
+    padding: 0.25rem;
+    gap: 0.5rem;
   }
 
   .avatar {
     width: 32px;
     height: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .topBarTitle {
+    max-width: 100px;
+  }
+  
+  .menuBtn {
+    padding: 0.25rem;
   }
 }
