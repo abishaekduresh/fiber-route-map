@@ -259,6 +259,24 @@ export async function deleteUser(uuid: string): Promise<ApiResponse> {
 }
 
 /**
+ * Block a user.
+ */
+export async function blockUser(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/users/${uuid}/block`, {
+    method: 'POST',
+  });
+}
+
+/**
+ * Unblock a user.
+ */
+export async function unblockUser(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/users/${uuid}/unblock`, {
+    method: 'PUT',
+  });
+}
+
+/**
  * Fetch list of countries.
  */
 export async function getCountries(): Promise<ApiResponse<any[]>> {

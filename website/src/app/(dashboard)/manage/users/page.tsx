@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { getUsers, deleteUser } from '@/lib/api';
+import { getUsers, deleteUser, blockUser, unblockUser } from '@/lib/api';
 import UserModal from '@/components/users/UserModal';
 import UserCard from '@/components/users/UserCard';
 import { toast } from 'sonner';
@@ -108,6 +108,34 @@ export default function ManageUsersPage() {
       }
     } catch (err) {
       toast.error('Network error during deletion');
+    }
+  };
+
+  const handleBlock = async (user: any) => {
+    try {
+      const result = await blockUser(user.id);
+      if (result.success) {
+        toast.success(`User "${user.attributes?.name}" blocked`);
+        fetchUsers();
+      } else {
+        toast.error(result.message || 'Block failed');
+      }
+    } catch (err) {
+      toast.error('Network error during blocking');
+    }
+  };
+
+  const handleUnblock = async (user: any) => {
+    try {
+      const result = await unblockUser(user.id);
+      if (result.success) {
+        toast.success(`User "${user.attributes?.name}" unblocked`);
+        fetchUsers();
+      } else {
+        toast.error(result.message || 'Unblock failed');
+      }
+    } catch (err) {
+      toast.error('Network error during unblocking');
     }
   };
 
@@ -235,6 +263,8 @@ export default function ManageUsersPage() {
                   user={user} 
                   onEdit={handleEdit} 
                   onDelete={handleDelete} 
+                  onBlock={handleBlock}
+                  onUnblock={handleUnblock}
                 />
               ))
             ) : (

@@ -7,9 +7,11 @@ interface UserCardProps {
   user: any;
   onEdit: (user: any) => void;
   onDelete: (user: any) => void;
+  onBlock: (user: any) => void;
+  onUnblock: (user: any) => void;
 }
 
-export default function UserCard({ user, onEdit, onDelete }: UserCardProps) {
+export default function UserCard({ user, onEdit, onDelete, onBlock, onUnblock }: UserCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   
   const attributes = user.attributes || {};
@@ -81,6 +83,31 @@ export default function UserCard({ user, onEdit, onDelete }: UserCardProps) {
             <polyline points="6 9 12 15 18 9" />
           </svg>
         </button>
+
+        {status === 'active' ? (
+          <button 
+            className={styles.actionBtn} 
+            onClick={() => onBlock(user)}
+            title="Block User"
+            style={{ color: '#f59e0b', borderColor: 'rgba(245, 158, 11, 0.2)' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0110 0v4" />
+            </svg>
+          </button>
+        ) : (
+          <button 
+            className={styles.actionBtn} 
+            onClick={() => onUnblock(user)}
+            title="Unblock User"
+            style={{ color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.2)' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 019.9-1" />
+            </svg>
+          </button>
+        )}
+
         <button 
           className={`${styles.actionBtn} ${styles.editBtn}`} 
           onClick={() => onEdit(user)}
