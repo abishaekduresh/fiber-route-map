@@ -266,6 +266,53 @@ export async function getCountries(): Promise<ApiResponse<any[]>> {
 }
 
 /**
+ * Create a new country.
+ */
+export async function createCountry(data: any): Promise<ApiResponse> {
+  return apiFetch('/api/countries', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Update an existing country.
+ */
+export async function updateCountry(uuid: string, data: any): Promise<ApiResponse> {
+  return apiFetch(`/api/countries/${uuid}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Delete a country.
+ */
+export async function deleteCountry(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/countries/${uuid}`, {
+    method: 'DELETE',
+  });
+}
+
+/**
+ * Block a country.
+ */
+export async function blockCountry(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/countries/${uuid}/block`, {
+    method: 'POST',
+  });
+}
+
+/**
+ * Unblock a country.
+ */
+export async function unblockCountry(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/countries/${uuid}/unblock`, {
+    method: 'PUT',
+  });
+}
+
+/**
  * Fetch list of roles.
  */
 export async function getRoles(): Promise<ApiResponse<any[]>> {

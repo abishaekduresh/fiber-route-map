@@ -61,7 +61,8 @@ export default function Sidebar({
         </svg>
       ),
       subItems: [
-        { name: 'Users', href: '/manage/users' }
+        { name: 'Users', href: '/manage/users' },
+        { name: 'Countries', href: '/manage/countries' }
       ]
     }
   ];
