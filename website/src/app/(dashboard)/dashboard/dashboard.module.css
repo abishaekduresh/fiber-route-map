@@ -554,27 +554,55 @@
   }
   
   .filterControls {
-    flex-direction: column;
-    align-items: stretch;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
   }
   
   .filterSelect {
-    width: 100%;
+    width: 100% !important;
   }
   
   .tableHeader {
-    padding: 1.25rem;
+    padding: 1.25rem !important;
   }
   
   .paginationContainer {
     flex-wrap: wrap;
     padding: 1rem;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .headerTop {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 1.25rem !important;
+  }
+  
+  .headerActions {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.75rem !important;
+  }
+  
+  .headerActions > button {
+    width: 100% !important;
+    padding: 0.75rem 0.5rem !important;
+    font-size: 0.85rem !important;
   }
 }
 
 @media (max-width: 480px) {
+  .headerActions {
+    grid-template-columns: 1fr !important;
+  }
+  
   .welcomeTitle {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
   }
   
   .statCard {

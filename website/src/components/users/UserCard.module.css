@@ -200,14 +200,25 @@
 
 @media (max-width: 480px) {
   .cardHeader {
-    position: relative;
-    padding-right: 4rem; /* Space for role badge */
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .userInfo {
+    width: 100%;
+  }
+  
+  .userName {
+    white-space: normal;
+    word-break: break-word;
+    padding-right: 0;
   }
   
   .roleBadge {
-    position: absolute;
-    top: 0;
-    right: 0;
+    position: static;
+    display: inline-block;
+    margin-top: 0.25rem;
   }
   
   .detailsGrid {
@@ -216,10 +227,11 @@
   
   .cardFooter {
     justify-content: space-between;
+    gap: 0.5rem;
   }
   
   .actionBtn {
     flex: 1;
-    max-width: 44px;
+    max-width: none;
   }
 }
