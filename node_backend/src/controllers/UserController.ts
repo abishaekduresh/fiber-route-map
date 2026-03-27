@@ -69,7 +69,7 @@ export class UserController {
         name,
         phone,
         status,
-        sessionLimit,
+        sessionLimit: user.sessionLimit,
         country,
         roles
       },

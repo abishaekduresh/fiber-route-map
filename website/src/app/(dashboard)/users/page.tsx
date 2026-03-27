@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { getUsers, deleteUser } from '@/lib/api';
 import UserModal from '@/components/users/UserModal';
+import UserDetailsModal from '@/components/users/UserDetailsModal';
 import styles from '../dashboard/dashboard.module.css';
 
 /**
@@ -18,7 +19,9 @@ export default function UsersPage() {
   
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
+  const [viewingUser, setViewingUser] = useState<any>(null);
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -44,6 +47,11 @@ export default function UsersPage() {
   const handleEdit = (user: any) => {
     setEditingUser(user);
     setIsModalOpen(true);
+  };
+
+  const handleView = (user: any) => {
+    setViewingUser(user);
+    setIsViewOpen(true);
   };
 
   const handleDelete = async (user: any) => {
@@ -138,6 +146,15 @@ export default function UsersPage() {
                     <td>
                       <div className={styles.actionCell}>
                         <button 
+                          className={`${styles.actionBtn} ${styles.viewBtn}`} 
+                          onClick={() => handleView(user)}
+                          title="View Details"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+                          </svg>
+                        </button>
+                        <button 
                           className={`${styles.actionBtn} ${styles.editBtn}`} 
                           onClick={() => handleEdit(user)}
                           title="Edit User"
@@ -166,11 +183,20 @@ export default function UsersPage() {
         )}
       </div>
 
+import UserDetailsModal from '@/components/users/UserDetailsModal';
+
+// ... at the bottom ...
       <UserModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         onSuccess={fetchUsers}
         user={editingUser}
+      />
+
+      <UserDetailsModal
+        isOpen={isViewOpen}
+        onClose={() => setIsViewOpen(false)}
+        user={viewingUser}
       />
     </DashboardLayout>
   );

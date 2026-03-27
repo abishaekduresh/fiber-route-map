@@ -220,6 +220,11 @@
   color: #fff;
 }
 
+.viewBtn:hover {
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
 .editBtn:hover {
   color: #3b82f6;
   border-color: rgba(59, 130, 246, 0.3);
