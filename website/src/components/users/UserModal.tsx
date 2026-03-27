@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getCountries, getRoles, createUser, updateUser, ApiResponse } from '@/lib/api';
 import styles from '@/app/(dashboard)/dashboard/dashboard.module.css';
+import { toast } from 'sonner';
 
 interface UserModalProps {
   isOpen: boolean;
@@ -17,7 +18,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, user }: UserModa
   const [roles, setRoles] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingData, setIsFetchingData] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Removed error state as it's now handled by toast
 
   const [formData, setFormData] = useState({
     name: '',
@@ -93,11 +94,10 @@ export default function UserModal({ isOpen, onClose, onSuccess, user }: UserModa
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError(null);
 
     // Basic validation
     if (!isEdit && formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      toast.error('Passwords do not match');
       setIsLoading(false);
       return;
     }
@@ -123,13 +123,14 @@ export default function UserModal({ isOpen, onClose, onSuccess, user }: UserModa
       }
 
       if (result.success) {
+        toast.success(isEdit ? 'User updated successfully' : 'User created successfully');
         onSuccess();
         onClose();
       } else {
-        setError(result.message || 'Operation failed');
+        toast.error(result.message || 'Operation failed');
       }
     } catch (err) {
-      setError('Network error. Please try again.');
+      toast.error('Network error. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -151,7 +152,6 @@ export default function UserModal({ isOpen, onClose, onSuccess, user }: UserModa
 
         <form onSubmit={handleSubmit}>
           <div className={styles.modalContent}>
-            {error && <div className={styles.errorText} style={{ marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
             
             <div className={styles.formGrid}>
               <div className={styles.inputGroup}>

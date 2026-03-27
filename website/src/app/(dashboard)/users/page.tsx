@@ -5,6 +5,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { getUsers, deleteUser } from '@/lib/api';
 import UserModal from '@/components/users/UserModal';
 import UserDetailsModal from '@/components/users/UserDetailsModal';
+import { toast } from 'sonner';
 import styles from '../dashboard/dashboard.module.css';
 
 /**
@@ -15,7 +16,7 @@ import styles from '../dashboard/dashboard.module.css';
 export default function UsersPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Removed error state as it's now handled by toast
   
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -30,10 +31,10 @@ export default function UsersPage() {
       if (result.success && result.data) {
         setUsers(result.data);
       } else {
-        setError(result.message || 'Failed to fetch users');
+        toast.error(result.message || 'Failed to fetch users');
       }
     } catch (err) {
-      setError('Network error. Please try again later.');
+      toast.error('Network error. Please try again later.');
       console.error('Fetch users error:', err);
     } finally {
       setIsLoading(false);
@@ -62,12 +63,13 @@ export default function UsersPage() {
     try {
       const result = await deleteUser(user.id);
       if (result.success) {
+        toast.success(`User "${user.attributes?.name}" deleted successfully`);
         fetchUsers();
       } else {
-        alert(result.message || 'Delete failed');
+        toast.error(result.message || 'Delete failed');
       }
     } catch (err) {
-      alert('Network error during deletion');
+      toast.error('Network error during deletion');
     }
   };
 
@@ -96,10 +98,6 @@ export default function UsersPage() {
           <div className={styles.tableLoader}>
             <div className="spinner" style={{ margin: '0 auto 1rem' }} />
             <p>Accessing user directory...</p>
-          </div>
-        ) : error ? (
-          <div className={styles.tableLoader} style={{ color: '#ef4444' }}>
-            <p>{error}</p>
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
