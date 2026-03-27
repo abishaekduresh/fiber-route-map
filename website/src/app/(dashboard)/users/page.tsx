@@ -183,9 +183,6 @@ export default function UsersPage() {
         )}
       </div>
 
-import UserDetailsModal from '@/components/users/UserDetailsModal';
-
-// ... at the bottom ...
       <UserModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
