@@ -611,4 +611,29 @@
   .statCard {
     padding: 1.25rem;
   }
+
+  /* Modal Responsive Fixes */
+  .modal {
+    width: 98% !important;
+    max-height: 95vh !important;
+  }
+
+  .modalContent {
+    padding: 1.25rem !important;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .modalFooter {
+    flex-direction: column-reverse !important;
+    padding: 1.25rem !important;
+  }
+
+  .modalFooter > button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
 }
