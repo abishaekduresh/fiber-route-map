@@ -154,8 +154,8 @@ export default function ManageUsersPage() {
   return (
     <DashboardLayout title="Manage Users">
       <div className={styles.tableContainer}>
-        <div className={styles.tableHeader} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+        <div className={styles.tableHeader}>
+          <div className={styles.headerTop}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <h3 className={styles.tableTitle}>System Users</h3>
               <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
@@ -163,7 +163,7 @@ export default function ManageUsersPage() {
                 {users.length !== filteredUsers.length && ` (filtered from ${users.length})`}
               </span>
             </div>
-            <div style={{ display: 'flex', gap: '1rem' }}>
+            <div className={styles.headerActions}>
               <button className={styles.exportBtn} onClick={handleExportCSV}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />

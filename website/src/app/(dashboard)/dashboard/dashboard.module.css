@@ -539,3 +539,45 @@
   align-items: center;
   justify-content: center;
 }
+
+/* Responsive Overrides */
+@media (max-width: 1024px) {
+  .cardGrid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .cardGrid {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+  
+  .filterControls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filterSelect {
+    width: 100%;
+  }
+  
+  .tableHeader {
+    padding: 1.25rem;
+  }
+  
+  .paginationContainer {
+    flex-wrap: wrap;
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcomeTitle {
+    font-size: 1.75rem;
+  }
+  
+  .statCard {
+    padding: 1.25rem;
+  }
+}

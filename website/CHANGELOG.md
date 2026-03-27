@@ -4,6 +4,8 @@ All notable changes to the Fiber Route Map Website will be documented in this fi
 
 ## [1.16.0] - 2026-03-27
 ### Added
+- **Mobile-First Responsiveness**: Optimized all new card-based layouts for mobile devices, ensuring full usability on smaller screens.
+- **Improved Filter Controls**: Enhanced filter and search UI with responsive stacking and fluid widths.
 - **Country Management Module**: Added a new `/manage/countries` page for administrative country management (CRUD, status control).
 - **Sidebar Integration**: Synchronized navigation with the new Country Management module.
 - **Card-Based User Management**: Transitioned from a table-based layout to a modern grid of interactive cards with expandable details.

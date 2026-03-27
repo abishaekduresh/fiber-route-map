@@ -143,20 +143,22 @@ export default function ManageCountriesPage() {
   return (
     <DashboardLayout title="Manage Countries">
       <div className={styles.tableContainer} style={{ background: 'transparent', border: 'none' }}>
-        <div className={styles.tableHeader} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '1.5rem', background: 'var(--color-bg-glass)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', marginBottom: '2rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+        <div className={styles.tableHeader} style={{ background: 'var(--color-bg-glass)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', marginBottom: '2rem' }}>
+          <div className={styles.headerTop}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <h3 className={styles.tableTitle}>System Countries</h3>
               <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
                 {filteredCountries.length} {filteredCountries.length === 1 ? 'country' : 'countries'} found
               </span>
             </div>
-            <button className={styles.createBtn} onClick={handleCreate}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              Add New Country
-            </button>
+            <div className={styles.headerActions}>
+              <button className={styles.createBtn} onClick={handleCreate}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Add New Country
+              </button>
+            </div>
           </div>
 
           <div className={styles.filterControls}>
