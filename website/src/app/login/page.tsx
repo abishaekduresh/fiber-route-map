@@ -3,6 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { login, terminateSession, checkHealth, type ApiResponse, type LoginData, type SessionLimitData, type ActiveSession } from '@/lib/api';
 import styles from './login.module.css';
+import ThemeToggle from '@/components/layout/ThemeToggle';
 
 /**
  * Login Page — Futuristic Glassmorphism Design
@@ -108,6 +109,10 @@ export default function LoginPage() {
 
   return (
     <div className={styles.pageContainer}>
+      <div className={styles.themeToggleWrapper}>
+        <ThemeToggle />
+      </div>
+
       {/* Animated background elements */}
       <div className={styles.bgMesh} />
       <div className={styles.gridLines} />
