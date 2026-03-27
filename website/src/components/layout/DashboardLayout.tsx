@@ -19,6 +19,11 @@ export default function DashboardLayout({
   children: React.ReactNode;
   title?: string;
 }) {
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const closeSidebar = () => setIsSidebarOpen(false);
+
   return (
     <AuthGuard>
       <div className={styles.layout}>
@@ -27,10 +32,18 @@ export default function DashboardLayout({
         <div className={styles.orb1} />
         <div className={styles.orb2} />
         
-        <Sidebar aria-label="Main Navigation" />
+        {/* Mobile Sidebar Overlay */}
+        {isSidebarOpen && (
+          <div className={styles.sidebarOverlay} onClick={closeSidebar} />
+        )}
+
+        <Sidebar 
+          className={`${styles.sidebar} ${isSidebarOpen ? styles.sidebarOpen : ''}`} 
+          onClose={closeSidebar}
+        />
         
         <div className={styles.mainContent}>
-          <TopBar title={title} />
+          <TopBar title={title} onMenuClick={toggleSidebar} />
           <main className={styles.pageBody} id="main-content">
             {children}
           </main>

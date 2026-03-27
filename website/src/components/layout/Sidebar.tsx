@@ -11,7 +11,13 @@ import styles from './DashboardLayout.module.css';
  * 
  * Provides navigation for the dashboard.
  */
-export default function Sidebar() {
+export default function Sidebar({ 
+  className = '', 
+  onClose 
+}: { 
+  className?: string;
+  onClose?: () => void;
+}) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -61,14 +67,20 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className={styles.sidebar}>
+    <aside className={`${styles.sidebar} ${className}`}>
       <div className={styles.brand}>
         <div className={styles.logoIcon}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M5 12h14M12 5l7 7-7 7" />
           </svg>
         </div>
-        <span className={styles.brandName}>Fiber Route</span>
+        <span className={styles.brandName}>FIBER ROUTE</span>
+        
+        <button className={styles.mobileCloseBtn} onClick={onClose}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
       </div>
 
       <nav className={styles.navSection}>
