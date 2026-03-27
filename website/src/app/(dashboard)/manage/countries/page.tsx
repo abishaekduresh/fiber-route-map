@@ -143,7 +143,7 @@ export default function ManageCountriesPage() {
   return (
     <DashboardLayout title="Manage Countries">
       <div className={styles.tableContainer} style={{ background: 'transparent', border: 'none' }}>
-        <div className={styles.tableHeader} style={{ background: 'var(--color-bg-glass)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', marginBottom: '2rem' }}>
+        <div className={styles.tableHeader} style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', marginBottom: '2rem' }}>
           <div className={styles.headerTop}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <h3 className={styles.tableTitle}>System Countries</h3>
