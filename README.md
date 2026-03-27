@@ -3,7 +3,7 @@
 A comprehensive system for mapping and managing fiber optic routes.
 
 ## Project Structure
-- `website/`: Premium Next.js 16 Frontend (Glassmorphism, Multi-Theme, Multi-Identifier Auth, Responsive Dashboard).
+- `website/`: Premium Next.js 16 Frontend (Glassmorphism, Unified Multi-Theme UI, Multi-Identifier Auth, Responsive Dashboard, Enhanced User Management with Search, Filters, and Pagination).
 - `node_backend/`: Node.js based REST API (Express, TypeScript, Knex) with Interactive Swagger Docs, Public Registration, and Health Monitoring.
 - `(Other components will be listed here as they are developed)`
 

@@ -8,6 +8,8 @@ All notable changes to the Fiber Route Map Website will be documented in this fi
 - **Search & Filtering**: Integrated real-time search (Name, Username, Email) and multi-status/role filtering.
 - **Client-Side Pagination**: Added pagination with a default limit of 5 users per page for improved performance.
 - **Data Export**: Implemented "Export CSV" functionality to download filtered user lists.
+- **Theme-Aware UI**: Full unification of Light, Dark, and System themes across the entire application layout (Sidebar, TopBar).
+- **Contrast & Visibility Fixes**: Optimized light theme contrast for field labels, status badges, and interactive elements on the Profile and Dashboard pages.
 - **Updated Navigation**: Synchronized `Sidebar` and `TopBar` links with the new management and profile routes.
 
 ## [1.15.0] - 2026-03-27

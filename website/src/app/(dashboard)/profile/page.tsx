@@ -153,7 +153,7 @@ export default function ProfilePage() {
           {/* Sessions Card */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
-              <div className={styles.cardIcon} style={{ background: 'rgba(147, 51, 234, 0.1)', color: '#a855f7' }}>
+              <div className={styles.cardIcon} style={{ background: 'rgba(147, 51, 234, 0.1)', color: 'var(--color-accent-purple)' }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
                   <line x1="12" y1="18" x2="12.01" y2="18" />
@@ -183,7 +183,7 @@ export default function ProfilePage() {
                         <span style={{ 
                           fontSize: '0.65rem', 
                           background: 'rgba(59, 130, 246, 0.2)', 
-                          color: '#60a5fa', 
+                          color: 'var(--color-accent-blue)', 
                           padding: '2px 6px', 
                           borderRadius: '10px',
                           border: '1px solid rgba(59, 130, 246, 0.3)',

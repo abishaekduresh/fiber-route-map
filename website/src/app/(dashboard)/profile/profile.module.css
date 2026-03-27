@@ -18,15 +18,12 @@
   font-size: 1.875rem;
   font-weight: 700;
   letter-spacing: -0.025em;
-  background: linear-gradient(to right, #fff, #a1a1aa);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--color-text-primary);
   margin: 0 0 0.5rem 0;
 }
 
 .subtitle {
-  color: #a1a1aa;
+  color: var(--color-text-secondary);
   font-size: 1.1rem;
   margin: 0;
 }
@@ -38,10 +35,10 @@
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 20px;
+  background: var(--color-bg-glass);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
@@ -50,8 +47,8 @@
 }
 
 .card:hover {
-  border-color: rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--color-border-hover);
+  background: var(--color-bg-glass-hover);
 }
 
 .cardHeader {
@@ -68,25 +65,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #3b82f6;
+  color: var(--color-accent-blue);
 }
 
 .cardTitle {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #f4f4f5;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
 .cardDescription {
   font-size: 0.9rem;
-  color: #a1a1aa;
+  color: var(--color-text-secondary);
   margin: 0;
   line-height: 1.5;
 }
 
 .cardDescription b {
-  color: #3b82f6;
+  color: var(--color-accent-blue);
 }
 
 /* Profile Fields */
@@ -107,12 +104,12 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #71717a;
+  color: var(--color-text-secondary);
 }
 
 .value {
   font-size: 1rem;
-  color: #e4e4e7;
+  color: var(--color-text-primary);
   font-weight: 500;
 }
 
@@ -127,13 +124,13 @@
 
 .roleBadge {
   background: rgba(59, 130, 246, 0.1);
-  color: #60a5fa;
+  color: var(--color-accent-blue);
   border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
 .statusBadge.active {
   background: rgba(34, 197, 94, 0.1);
-  color: #4ade80;
+  color: var(--color-success);
   border: 1px solid rgba(34, 197, 94, 0.2);
 }
 
@@ -149,9 +146,9 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--color-bg-primary);
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-border);
 }
 
 .sessionIcon {
@@ -160,7 +157,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #a1a1aa;
+  color: var(--color-text-muted);
 }
 
 .sessionInfo {
@@ -169,13 +166,13 @@
 
 .deviceName {
   font-weight: 600;
-  color: #f4f4f5;
+  color: var(--color-text-primary);
   font-size: 0.9rem;
 }
 
 .lastActive {
   font-size: 0.75rem;
-  color: #71717a;
+  color: var(--color-text-muted);
 }
 
 .terminateBtn {

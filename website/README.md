@@ -4,11 +4,11 @@ A futuristic, high-performance web dashboard for managing fiber optic networks.
 Built with **Next.js 16 (Turbopack)** and **TypeScript**, featuring a stunning **Glassmorphism Design System**.
 
 ## Version
-**Current Version:** 1.16.0 (Enhanced User Management & Pagination)
+**Current Version:** 1.16.0 (Enhanced User Management & Application-Wide Theme Unification)
 
 ## Features
 - **Dynamic Glassmorphism UI**: High-end aesthetic with animated background orbs, frosty transparency effects, and micro-animations.
-- **Premium Multi-Theme System**: Centralized toggle for Light, Dark, and System modes with persistent local storage.
+- **Application-Wide Theme System**: Unified Light, Dark, and System modes across the entire layout (Sidebar, TopBar, Dashboards, Modals) with persistent storage.
 - **Full Mobile Responsiveness**: Comprehensive mobile-first layout with a retina-optimized retractable sidebar and responsive tables.
 - **Enhanced User Management**: Real-time search by identifier, multi-role/status filtering, and client-side pagination (5 per page).
 - **Data Export**: One-click "Export CSV" functionality for all filtered user data directly from the dashboard.

@@ -234,7 +234,7 @@ export default function UserModal({ isOpen, onClose, onSuccess, user }: UserModa
                       className={`${styles.statusBadge} ${formData.roleUuids.includes(role.id) ? styles['status-active'] : ''}`}
                       style={{ 
                         cursor: 'pointer', 
-                        border: '1px solid rgba(255,255,255,0.05)',
+                        border: '1px solid var(--color-border)',
                         padding: '0.5rem 1rem',
                         fontSize: '0.8rem'
                       }}

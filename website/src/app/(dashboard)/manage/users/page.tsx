@@ -165,7 +165,7 @@ export default function ManageUsersPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <h3 className={styles.tableTitle}>System Users</h3>
-              <span style={{ color: '#a1a1aa', fontSize: '0.9rem' }}>
+              <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
                 {filteredUsers.length} {filteredUsers.length === 1 ? 'user' : 'users'} found
                 {users.length !== filteredUsers.length && ` (filtered from ${users.length})`}
               </span>
@@ -252,14 +252,14 @@ export default function ManageUsersPage() {
                     <tr key={user.id}>
                       <td>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ fontWeight: 600, color: '#fff' }}>{user.attributes?.name || 'Unknown'}</span>
-                          <span style={{ fontSize: '0.8rem', color: '#a1a1aa' }}>
+                          <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{user.attributes?.name || 'Unknown'}</span>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
                             @{user.attributes?.username || 'user'} • {user.attributes?.email || 'No Email'}
                           </span>
                         </div>
                       </td>
                       <td>
-                        <span style={{ color: '#3b82f6', fontWeight: 500 }}>
+                        <span style={{ color: 'var(--color-accent-blue)', fontWeight: 500 }}>
                           {user.attributes?.roles?.[0]?.name || 'Member'}
                         </span>
                       </td>
@@ -269,10 +269,10 @@ export default function ManageUsersPage() {
                         </span>
                       </td>
                       <td>
-                        <span style={{ color: '#fff' }}>{user.attributes?.sessionLimit ?? 1} </span>
+                        <span style={{ color: 'var(--color-text-primary)' }}>{user.attributes?.sessionLimit ?? 1} </span>
                       </td>
                       <td>
-                        <span style={{ color: '#a1a1aa' }}>
+                        <span style={{ color: 'var(--color-text-secondary)' }}>
                           {user.meta?.createdAt ? new Date(user.meta.createdAt).toLocaleDateString() : 'N/A'}
                         </span>
                       </td>
@@ -312,13 +312,13 @@ export default function ManageUsersPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', padding: '4rem', color: '#a1a1aa' }}>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '4rem', color: 'var(--color-text-secondary)' }}>
                       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ marginBottom: '1rem', opacity: 0.5 }}>
                         <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
                       </svg>
                       <p>No users found matching your search criteria.</p>
                       <button 
-                        style={{ background: 'transparent', border: 'none', color: '#3b82f6', cursor: 'pointer', marginTop: '0.5rem' }}
+                        style={{ background: 'transparent', border: 'none', color: 'var(--color-accent-blue)', cursor: 'pointer', marginTop: '0.5rem' }}
                         onClick={() => { setSearchTerm(''); setRoleFilter('all'); setStatusFilter('all'); }}
                       >
                         Clear all filters

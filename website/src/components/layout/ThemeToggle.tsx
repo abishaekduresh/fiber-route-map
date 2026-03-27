@@ -18,11 +18,11 @@ export default function ThemeToggle() {
       <button
         onClick={() => setTheme('light')}
         style={{
-          padding: '6px 10px',
+          padding: '6px 12px',
           borderRadius: '8px',
-          border: 'none',
+          border: '1px solid ' + (theme === 'light' ? 'var(--color-accent-blue)' : 'transparent'),
           background: theme === 'light' ? 'var(--color-bg-elevated)' : 'transparent',
-          color: theme === 'light' ? 'var(--color-accent-blue)' : 'var(--color-text-muted)',
+          color: theme === 'light' ? 'var(--color-accent-blue)' : 'var(--color-text-secondary)',
           cursor: 'pointer',
           transition: 'all 0.2s',
           display: 'flex',
@@ -41,11 +41,11 @@ export default function ThemeToggle() {
       <button
         onClick={() => setTheme('dark')}
         style={{
-          padding: '6px 10px',
+          padding: '6px 12px',
           borderRadius: '8px',
-          border: 'none',
+          border: '1px solid ' + (theme === 'dark' ? 'var(--color-accent-blue)' : 'transparent'),
           background: theme === 'dark' ? 'var(--color-bg-elevated)' : 'transparent',
-          color: theme === 'dark' ? 'var(--color-accent-blue)' : 'var(--color-text-muted)',
+          color: theme === 'dark' ? 'var(--color-accent-blue)' : 'var(--color-text-secondary)',
           cursor: 'pointer',
           transition: 'all 0.2s',
           display: 'flex',
@@ -64,11 +64,11 @@ export default function ThemeToggle() {
       <button
         onClick={() => setTheme('system')}
         style={{
-          padding: '6px 10px',
+          padding: '6px 12px',
           borderRadius: '8px',
-          border: 'none',
+          border: '1px solid ' + (theme === 'system' ? 'var(--color-accent-blue)' : 'transparent'),
           background: theme === 'system' ? 'var(--color-bg-elevated)' : 'transparent',
-          color: theme === 'system' ? 'var(--color-accent-blue)' : 'var(--color-text-muted)',
+          color: theme === 'system' ? 'var(--color-accent-blue)' : 'var(--color-text-secondary)',
           cursor: 'pointer',
           transition: 'all 0.2s',
           display: 'flex',
