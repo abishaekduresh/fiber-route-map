@@ -72,7 +72,7 @@ export default function TopBar({
       <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
         <ThemeToggle />
         
-        <Link href={`/users/${user?.id}`} className={styles.userMenu}>
+        <Link href="/profile" className={styles.userMenu}>
           <div className={styles.userInfo}>
             <span className={styles.userName}>{user?.name || 'Loading...'}</span>
             <span className={styles.userRole}>
