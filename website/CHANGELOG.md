@@ -2,6 +2,14 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
+## [1.15.0] - 2026-03-27
+### Added
+- **Multi-Theme Support**: Integrated a centralized `ThemeContext` enabling users to switch between Light, Dark, and System modes with local storage persistence.
+- **Responsive Dashboard Layout**: redesigned `DashboardLayout` and `Sidebar` with mobile-first media queries, including a hamburger menu overlay.
+- **Bottom-Right Toast Notifications**: Implemented `sonner` for non-intrusive API feedback, replacing static error/success states in the login and user management pages.
+### Changed
+- **Login UI/UX Refinement**: Completely overhauled the login experience with modern glassmorphism, animated backgrounds, and responsive card layouts.
+
 ## [1.13.0] - 2026-03-26
 ### Changed
 - **API Integration**: Re-aligned the centralized API client with the refactored unauthenticated registration flow.

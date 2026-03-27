@@ -4,15 +4,16 @@ A futuristic, high-performance web dashboard for managing fiber optic networks.
 Built with **Next.js 16 (Turbopack)** and **TypeScript**, featuring a stunning **Glassmorphism Design System**.
 
 ## Version
-**Current Version:** 1.14.0 (Health Status & Redirect System)
+**Current Version:** 1.15.0 (Multi-Theme & Responsive Dashboard)
 
 ## Features
-- **Dynamic Glassmorphism UI**: High-end aesthetic with animated background orbs and frosty transparency effects.
-- **Secure Authentication**: Integrated with the Node.js backend for email/username/phone authentication.
-- **Session Management**: Custom modal for handling concurrent device limits, allowing users to remotely terminate sessions.
-- **Robust System Monitoring**: Real-time health polling with automatic redirection to a dedicated `/unhealthy` status page during backend or database outages.
-- **Dynamic Status Indicators**: Predictive "System Online/Offline" indicators in the login view based on live API health.
-- **Responsive Layout**: Designed for seamless operation across desktop and mobile devices.
+- **Dynamic Glassmorphism UI**: High-end aesthetic with animated background orbs, frosty transparency effects, and micro-animations.
+- **Premium Multi-Theme System**: Centralized toggle for Light, Dark, and System modes with persistent local storage.
+- **Full Mobile Responsiveness**: Comprehensive mobile-first layout with a retina-optimized retractable sidebar and responsive tables.
+- **Sonner Notification System**: Modern, bottom-right toast notifications for all API feedback, replacing legacy static alerts.
+- **Secure Authentication**: Multi-identifier (Email/Username/Phone) login with device tracking and session limit enforcement.
+- **Session Management**: Advanced modal for handling concurrent device limits and remote session termination.
+- **Robust System Monitoring**: Real-time health polling with automatic status-aware redirection.
 
 ## Requirements
 - Node.js 18+

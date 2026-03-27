@@ -1,4 +1,4 @@
-# API Documentation (v1.14.0)
+# API Documentation (v1.15.0)
 
 This document provides a comprehensive reference for all Node.js backend API endpoints. All timestamps are in **UTC ISO-8601** format.
 
@@ -44,7 +44,7 @@ Most API endpoints (except for login) require a valid authentication token. The 
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.14.0"
+    "version": "v1.15.0"
   }
 }
 ```
@@ -60,7 +60,7 @@ Most API endpoints (except for login) require a valid authentication token. The 
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.14.0"
+    "version": "v1.15.0"
   }
 }
 ```
@@ -94,7 +94,7 @@ If the user's session limit is reached, login will fail. A **stateless** `mgmtTo
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.14.0"
+    "version": "v1.15.0"
   }
 }
 ```
@@ -103,7 +103,7 @@ If the user's session limit is reached, login will fail. A **stateless** `mgmtTo
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.14.0"
+    "version": "v1.15.0"
   }
 }
 ```
@@ -196,7 +196,7 @@ fetch('http://localhost:3001/api/users', {
 | `sort[field]` | `string` | Single field for object-style sorting | `?sort[field]=name` |
 | `sort[order]` | `string` | Order for object-style sorting (`asc`/`desc`) | `?sort[order]=asc` |
 
-#### Example Response (v1.14.0)
+#### Example Response (v1.15.0)
 ```json
 {
   "success": true,
@@ -242,7 +242,7 @@ fetch('http://localhost:3001/api/users', {
     "sort": [{ "field": "createdAt", "order": "desc" }],
     "requestId": "req_...",
     "timestamp": "2026-03-26T13:41:04.840Z",
-    "version": "v1.14.0"
+    "version": "v1.15.0"
   },
   "links": {
     "self": "/api/users?filter[status]=active&limit=10&page=1",
@@ -300,7 +300,7 @@ fetch('http://localhost:3001/api/users', {
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.14.0"
+    "version": "v1.15.0"
   }
 }
 ```
@@ -316,7 +316,7 @@ fetch('http://localhost:3001/api/users', {
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.14.0"
+    "version": "v1.15.0"
   }
 }
 ```
@@ -349,7 +349,7 @@ fetch('http://localhost:3001/api/users', {
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.14.0"
+    "version": "v1.15.0"
   }
 }
 ```
@@ -397,7 +397,7 @@ fetch('http://localhost:3001/api/users', {
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-24T12:00:00.000Z",
-    "version": "v1.14.0",
+    "version": "v1.15.0",
     "action": "reset-password"
   }
 }
@@ -448,7 +448,7 @@ fetch('http://localhost:3001/api/users', {
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.14.0"
+    "version": "v1.15.0"
   }
 }
 ```
@@ -463,7 +463,7 @@ fetch('http://localhost:3001/api/users', {
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.14.0"
+    "version": "v1.15.0"
   }
 }
 ```
@@ -516,7 +516,7 @@ fetch('http://localhost:3001/api/users', {
     "pagination": { "total": 3, "count": 3, "perPage": 10, "currentPage": 1, "totalPages": 1 },
     "requestId": "req_...",
     "timestamp": "...",
-    "version": "v1.14.0"
+    "version": "v1.15.0"
   },
   "links": {
     "self": "/api/roles?limit=10&page=1",
@@ -563,7 +563,7 @@ fetch('http://localhost:3001/api/users', {
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.14.0"
+    "version": "v1.15.0"
   }
 }
 ```
@@ -586,7 +586,7 @@ If the database server is unreachable, the API returns a `503 Service Unavailabl
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.14.0"
+    "version": "v1.15.0"
   }
 }
 ```
