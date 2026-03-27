@@ -5,7 +5,7 @@
  * Attaches mandatory headers (X-API-Version, Authorization, Device info).
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 /**
  * Detect the device name from the browser's user agent string.
@@ -227,6 +227,49 @@ export async function getUsers(): Promise<ApiResponse<{
   links: any;
 }[]>> {
   return apiFetch('/api/users');
+}
+
+/**
+ * Create a new user.
+ */
+export async function createUser(data: any): Promise<ApiResponse> {
+  return apiFetch('/api/users', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Update an existing user.
+ */
+export async function updateUser(uuid: string, data: any): Promise<ApiResponse> {
+  return apiFetch(`/api/users/${uuid}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Delete (soft delete) a user.
+ */
+export async function deleteUser(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/users/${uuid}`, {
+    method: 'DELETE',
+  });
+}
+
+/**
+ * Fetch list of countries.
+ */
+export async function getCountries(): Promise<ApiResponse<any[]>> {
+  return apiFetch('/api/countries');
+}
+
+/**
+ * Fetch list of roles.
+ */
+export async function getRoles(): Promise<ApiResponse<any[]>> {
+  return apiFetch('/api/roles');
 }
 
 /**

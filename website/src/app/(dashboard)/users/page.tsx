@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { getUsers } from '@/lib/api';
+import { getUsers, deleteUser } from '@/lib/api';
+import UserModal from '@/components/users/UserModal';
 import styles from '../dashboard/dashboard.module.css';
 
 /**
@@ -14,33 +15,73 @@ export default function UsersPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Modal states
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
+
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    try {
+      const result = await getUsers();
+      if (result.success && result.data) {
+        setUsers(result.data);
+      } else {
+        setError(result.message || 'Failed to fetch users');
+      }
+    } catch (err) {
+      setError('Network error. Please try again later.');
+      console.error('Fetch users error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const result = await getUsers();
-        if (result.success && result.data) {
-          setUsers(result.data);
-        } else {
-          setError(result.message || 'Failed to fetch users');
-        }
-      } catch (err) {
-        setError('Network error. Please try again later.');
-        console.error('Fetch users error:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchUsers();
   }, []);
+
+  const handleEdit = (user: any) => {
+    setEditingUser(user);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (user: any) => {
+    if (!window.confirm(`Are you sure you want to delete user "${user.attributes?.name}"?`)) {
+      return;
+    }
+
+    try {
+      const result = await deleteUser(user.id);
+      if (result.success) {
+        fetchUsers();
+      } else {
+        alert(result.message || 'Delete failed');
+      }
+    } catch (err) {
+      alert('Network error during deletion');
+    }
+  };
+
+  const handleCreate = () => {
+    setEditingUser(null);
+    setIsModalOpen(true);
+  };
 
   return (
     <DashboardLayout title="Manage Users">
       <div className={styles.tableContainer}>
         <div className={styles.tableHeader}>
-          <h3 className={styles.tableTitle}>System Users</h3>
-          <span style={{ color: '#a1a1aa', fontSize: '0.9rem' }}>{users.length} users found</span>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <h3 className={styles.tableTitle}>System Users</h3>
+            <span style={{ color: '#a1a1aa', fontSize: '0.9rem' }}>{users.length} users found</span>
+          </div>
+          <button className={styles.createBtn} onClick={handleCreate}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Add New User
+          </button>
         </div>
 
         {isLoading ? (
@@ -62,6 +103,7 @@ export default function UsersPage() {
                   <th>Status</th>
                   <th>Session Limit</th>
                   <th>Created At</th>
+                  <th style={{ textAlign: 'right' }}>System Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -86,12 +128,35 @@ export default function UsersPage() {
                       </span>
                     </td>
                     <td>
-                      <span style={{ color: '#fff' }}>{user.attributes?.sessionLimit ?? 1} sessions</span>
+                      <span style={{ color: '#fff' }}>{user.attributes?.sessionLimit ?? 1} </span>
                     </td>
                     <td>
                       <span style={{ color: '#a1a1aa' }}>
                         {user.meta?.createdAt ? new Date(user.meta.createdAt).toLocaleDateString() : 'N/A'}
                       </span>
+                    </td>
+                    <td>
+                      <div className={styles.actionCell}>
+                        <button 
+                          className={`${styles.actionBtn} ${styles.editBtn}`} 
+                          onClick={() => handleEdit(user)}
+                          title="Edit User"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                          </svg>
+                        </button>
+                        <button 
+                          className={`${styles.actionBtn} ${styles.deleteBtn}`} 
+                          onClick={() => handleDelete(user)}
+                          title="Remove User"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                          </svg>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -100,6 +165,13 @@ export default function UsersPage() {
           </div>
         )}
       </div>
+
+      <UserModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSuccess={fetchUsers}
+        user={editingUser}
+      />
     </DashboardLayout>
   );
 }
