@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { login, terminateSession, type ApiResponse, type LoginData, type SessionLimitData, type ActiveSession } from '@/lib/api';
+import { login, terminateSession, checkHealth, type ApiResponse, type LoginData, type SessionLimitData, type ActiveSession } from '@/lib/api';
 import styles from './login.module.css';
 
 /**
@@ -22,6 +22,20 @@ export default function LoginPage() {
   const [mgmtToken, setMgmtToken] = useState<string | null>(null);
   const [sessionLimit, setSessionLimit] = useState<number>(1);
   const [terminatingUuid, setTerminatingUuid] = useState<string | null>(null);
+  const [isSystemOnline, setIsSystemOnline] = useState(true);
+
+  // Check system health on load
+  useState(() => {
+    const initHealth = async () => {
+      try {
+        const res = await checkHealth();
+        setIsSystemOnline(res.success !== false && res.services?.database === 'connected');
+      } catch (e) {
+        setIsSystemOnline(false);
+      }
+    };
+    initHealth();
+  });
 
   /**
    * Handle form submission — calls the login API
@@ -225,8 +239,8 @@ export default function LoginPage() {
         <div className={styles.footer}>
           <p className={styles.footerText}>Fiber Route Map Control Center</p>
           <div className={styles.version}>
-            <span className={styles.versionDot} />
-            <span>v1.13.0 • System Online</span>
+            <span className={styles.versionDot} style={{ backgroundColor: isSystemOnline ? '#10b981' : '#ef4444' }} />
+            <span>v1.13.0 • {isSystemOnline ? 'System Online' : 'System Offline'}</span>
           </div>
         </div>
       </div>

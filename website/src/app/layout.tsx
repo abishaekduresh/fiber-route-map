@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import HealthStatus from "@/components/HealthStatus";
 
 export const metadata: Metadata = {
   title: "Fiber Route Map — Control Center",
@@ -14,6 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
+        <HealthStatus />
         {children}
       </body>
     </html>

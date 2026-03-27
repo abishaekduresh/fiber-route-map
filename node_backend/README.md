@@ -4,11 +4,11 @@ The authoritative backend REST API for the Fiber Route Map system, replicated in
 Built using [Express](https://expressjs.com/) and [TypeScript](https://www.typescriptlang.org/), leveraging [Knex.js](https://knexjs.org/) for database interaction.
 
 ## Version
-**Current Version:** 1.13.0 (Interactive Docs & Public Registration)
+**Current Version:** 1.14.0 (Robust Health Monitoring)
 
 ## Interactive Documentation
 The API is fully documented using Swagger/OpenAPI 3.0.
-- **URL**: `http://localhost:3000/api/docs`
+- **URL**: `http://localhost:3001/api/docs`
 - **Features**: Direct endpoint testing, schema exploration, and version-aware requests.
 
 ## Requirements
@@ -22,7 +22,7 @@ The API is fully documented using Swagger/OpenAPI 3.0.
    ```
 2. Ensure you have a `.env` file with your specific Database credentials and API version:
    ```env
-   PORT=3000
+   PORT=3001
    API_VERSION=v1
 
    # Database Settings
@@ -60,8 +60,16 @@ The API uses a secure, database-backed session system:
 - **Per-User Limits**: Authentication respects individual `sessionLimit` configured per account (defaulting to 1).
 - **Management**: Users can list active devices via `GET /api/auth/users/sessions` and terminate sessions via `DELETE /api/auth/users/sessions/:uuid`.
 
+### System Health Monitoring
+The API provides a dedicated health check endpoint:
+- **Endpoint**: `GET /api/health`
+- **Response**: Standardized JSON indicating database connectivity and system timestamp.
+- **Status Codes**: 
+  - `200 OK`: System healthy and database connected.
+  - `503 Service Unavailable`: Database connection failure (returned with `success: false` and `errorType`).
+
 ### Universal 200 OK
-The API always returns an HTTP 200 OK status code at the protocol level. The actual response status (e.g., 201, 401, 503) is communicated through the `statusCode` field in the JSON body.
+The API mostly returns an HTTP 200 OK status code at the protocol level. The actual response status (e.g., 201, 401, 503) is communicated through the `statusCode` field in the JSON body.
 
 ### JSON Responses
 The API outputs consistent **camelCase** JSON payloads.

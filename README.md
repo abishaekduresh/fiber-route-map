@@ -12,5 +12,5 @@ A comprehensive system for mapping and managing fiber optic routes.
 - MySQL / MariaDB
 
 ## Getting Started
-1. Setup the backend: See [node_backend README](node_backend/README.md).
-2. Setup the frontend: See [website README](website/README.md).
+1. Setup the backend: See [node_backend README](node_backend/README.md) (runs on port 3001).
+2. Setup the frontend: See [website README](website/README.md) (runs on port 3000).

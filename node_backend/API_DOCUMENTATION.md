@@ -1,4 +1,4 @@
-# API Documentation (v1.13.0)
+# API Documentation (v1.14.0)
 
 This document provides a comprehensive reference for all Node.js backend API endpoints. All timestamps are in **UTC ISO-8601** format.
 
@@ -44,7 +44,7 @@ Most API endpoints (except for login) require a valid authentication token. The 
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.13.0"
+    "version": "v1.14.0"
   }
 }
 ```
@@ -60,7 +60,7 @@ Most API endpoints (except for login) require a valid authentication token. The 
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.13.0"
+    "version": "v1.14.0"
   }
 }
 ```
@@ -94,49 +94,56 @@ If the user's session limit is reached, login will fail. A **stateless** `mgmtTo
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.13.0"
+    "version": "v1.14.0"
   }
 }
 ```
 *Note: Include the `mgmtToken` in the `X-Mgmt-Token` header when calling the terminate endpoint.*
-### 0.2 Logout
-**Endpoint**: `POST /api/auth/users/logout`  
-**Description**: Invalidates the current session token.
-
-### 0.3 Get Current Profile (Me)
-**Endpoint**: `GET /api/auth/me`  
-**Description**: Retrieve the profile and active sessions of the currently authenticated user.
-
-#### Example Response
-```json
-{
-  "success": true,
-  "statusCode": 200,
-  "message": "User profile retrieved successfully",
-  "data": {
-    "user": { ... },
-    "sessions": [
-      {
-        "id": "session-uuid",
-        "type": "session",
-        "attributes": {
-          "deviceName": "My Phone",
-          "lastActive": "..."
-        }
-      }
-    ]
   },
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.13.0"
+    "version": "v1.14.0"
   }
 }
 ```
 
 ---
 
-### 0.4 Session Management (Protected)
+### 0.4 System Health Monitoring
+**Endpoint**: `GET /api/health`  
+**Description**: Check the status of the API and its backend services (e.g., database).
+
+#### Example Response (Healthy)
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "timestamp": "2026-03-27T12:00:00.000Z",
+  "version": "v1",
+  "services": {
+    "database": "connected"
+  }
+}
+```
+
+#### Example Response (Unhealthy - 503)
+```json
+{
+  "success": false,
+  "statusCode": 503,
+  "timestamp": "2026-03-27T12:00:00.000Z",
+  "version": "v1",
+  "services": {
+    "database": "disconnected"
+  },
+  "errorType": "Database connection error"
+}
+```
+
+---
+
+### 0.5 Session Management (Protected)
 Manage active sessions and devices.
 
 #### 0.4.1 List Active Sessions
@@ -156,7 +163,7 @@ After logging in, include the `token` in the `Authorization` header for subseque
 ```javascript
 const token = "fd90b9..."; // Token from login response
 
-fetch('http://localhost:3000/api/users', {
+fetch('http://localhost:3001/api/users', {
   headers: {
     'Authorization': `Bearer ${token}`
   }
@@ -189,7 +196,7 @@ fetch('http://localhost:3000/api/users', {
 | `sort[field]` | `string` | Single field for object-style sorting | `?sort[field]=name` |
 | `sort[order]` | `string` | Order for object-style sorting (`asc`/`desc`) | `?sort[order]=asc` |
 
-#### Example Response (v1.13.0)
+#### Example Response (v1.14.0)
 ```json
 {
   "success": true,
@@ -235,7 +242,7 @@ fetch('http://localhost:3000/api/users', {
     "sort": [{ "field": "createdAt", "order": "desc" }],
     "requestId": "req_...",
     "timestamp": "2026-03-26T13:41:04.840Z",
-    "version": "v1.13.0"
+    "version": "v1.14.0"
   },
   "links": {
     "self": "/api/users?filter[status]=active&limit=10&page=1",
@@ -293,7 +300,7 @@ fetch('http://localhost:3000/api/users', {
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.13.0"
+    "version": "v1.14.0"
   }
 }
 ```
@@ -309,7 +316,7 @@ fetch('http://localhost:3000/api/users', {
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.13.0"
+    "version": "v1.14.0"
   }
 }
 ```
@@ -342,7 +349,7 @@ fetch('http://localhost:3000/api/users', {
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.13.0"
+    "version": "v1.14.0"
   }
 }
 ```
@@ -390,7 +397,7 @@ fetch('http://localhost:3000/api/users', {
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-24T12:00:00.000Z",
-    "version": "v1.13.0",
+    "version": "v1.14.0",
     "action": "reset-password"
   }
 }
@@ -441,7 +448,7 @@ fetch('http://localhost:3000/api/users', {
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.13.0"
+    "version": "v1.14.0"
   }
 }
 ```
@@ -456,7 +463,7 @@ fetch('http://localhost:3000/api/users', {
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.13.0"
+    "version": "v1.14.0"
   }
 }
 ```
@@ -509,7 +516,7 @@ fetch('http://localhost:3000/api/users', {
     "pagination": { "total": 3, "count": 3, "perPage": 10, "currentPage": 1, "totalPages": 1 },
     "requestId": "req_...",
     "timestamp": "...",
-    "version": "v1.13.0"
+    "version": "v1.14.0"
   },
   "links": {
     "self": "/api/roles?limit=10&page=1",
@@ -556,7 +563,7 @@ fetch('http://localhost:3000/api/users', {
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.13.0"
+    "version": "v1.14.0"
   }
 }
 ```
@@ -579,7 +586,7 @@ If the database server is unreachable, the API returns a `503 Service Unavailabl
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.13.0"
+    "version": "v1.14.0"
   }
 }
 ```

@@ -2,6 +2,15 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.14.0] - 2026-03-27
+### Added
+- **Robust Health Monitoring**: Implemented a standardized `/api/health` endpoint in the backend for real-time system and database status.
+- **Health-Based Redirects**: Frontend now automatically redirects to a dedicated `/unhealthy` page if the backend or database is unreachable.
+- **Dynamic System Status**: Integrated live health checks into the login page footer, replacing hardcoded "System Online" strings.
+- **Recovery Workflow**: Added a "Try Again" mechanism on the status page to automatically return to the dashboard upon system recovery.
+### Changed
+- **Backend Port Reconfiguration**: Moved the Node.js backend to port **3001** to resolve deployment conflicts with the Next.js frontend.
+
 ## [1.13.0] - 2026-03-26
 ### Added
 - **Interactive API Documentation**: Launched a fully interactive Swagger/OpenAPI 3.0 UI at `/api/docs` with universal coverage.

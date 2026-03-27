@@ -5,6 +5,14 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.0] - 2026-03-27
+### Added
+- **Health Check Endpoint**: Implemented `GET /api/health` returning standardized JSON with database connectivity status and system timestamps.
+- **Resilient Middleware**: Enhanced `dbCheck.ts` to support granular health reporting for the new health controller.
+### Changed
+- **Port Assignment**: Updated default server port to **3001** in `.env` and `src/index.ts` to optimize local development orchestration.
+- **Swagger Documentation**: Expanded Swagger UI to include the new Health resource category.
+
 ## [1.13.0] - 2026-03-26
 ### Added
 - **Interactive Swagger Documentation**: Integrated `swagger-jsdoc` and `swagger-ui-express` to provide an interactive API reference at `/api/docs`.

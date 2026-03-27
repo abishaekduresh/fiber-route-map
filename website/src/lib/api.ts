@@ -5,7 +5,7 @@
  * Attaches mandatory headers (X-API-Version, Authorization, Device info).
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
 
 /**
  * Detect the device name from the browser's user agent string.
@@ -227,6 +227,40 @@ export async function getUsers(): Promise<ApiResponse<{
   links: any;
 }[]>> {
   return apiFetch('/api/users');
+}
+
+/**
+ * Check the system health status.
+ */
+export async function checkHealth(): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/health`, {
+      headers: {
+        'X-API-Version': 'v1'
+      },
+      cache: 'no-store'
+    });
+    
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return await response.json();
+    } else {
+      return { 
+        success: false, 
+        statusCode: response.status, 
+        error: `Unexpected response format: ${response.statusText}`,
+        errorType: 'Server Error'
+      };
+    }
+  } catch (error) {
+    console.error('Health check network error:', error);
+    return { 
+      success: false, 
+      statusCode: 0, 
+      error: 'Network failure: Unable to reach the backend server.',
+      errorType: 'Connection Error'
+    };
+  }
 }
 
 export { apiFetch };

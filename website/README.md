@@ -4,17 +4,19 @@ A futuristic, high-performance web dashboard for managing fiber optic networks.
 Built with **Next.js 16 (Turbopack)** and **TypeScript**, featuring a stunning **Glassmorphism Design System**.
 
 ## Version
-**Current Version:** 1.13.0 (API Standardization Sync)
+**Current Version:** 1.14.0 (Health Status & Redirect System)
 
 ## Features
 - **Dynamic Glassmorphism UI**: High-end aesthetic with animated background orbs and frosty transparency effects.
 - **Secure Authentication**: Integrated with the Node.js backend for email/username/phone authentication.
 - **Session Management**: Custom modal for handling concurrent device limits, allowing users to remotely terminate sessions.
+- **Robust System Monitoring**: Real-time health polling with automatic redirection to a dedicated `/unhealthy` status page during backend or database outages.
+- **Dynamic Status Indicators**: Predictive "System Online/Offline" indicators in the login view based on live API health.
 - **Responsive Layout**: Designed for seamless operation across desktop and mobile devices.
 
 ## Requirements
 - Node.js 18+
-- [Fiber Route Map Backend](https://github.com/abishaekduresh/fiber-route-map/tree/main/node_backend) running on port 3000.
+- [Fiber Route Map Backend](https://github.com/abishaekduresh/fiber-route-map/tree/main/node_backend) running on port 3001.
 
 ## Installation
 1. Navigate to the `website/` directory and install dependencies:
@@ -23,7 +25,7 @@ Built with **Next.js 16 (Turbopack)** and **TypeScript**, featuring a stunning *
    ```
 2. Create/update your `.env.local` file:
    ```env
-   NEXT_PUBLIC_API_URL=http://localhost:3000
+   NEXT_PUBLIC_API_URL=http://localhost:3001
    ```
 
 ## Running Locally
