@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { getUsers, deleteUser } from '@/lib/api';
 import UserModal from '@/components/users/UserModal';
-import UserDetailsModal from '@/components/users/UserDetailsModal';
+import UserCard from '@/components/users/UserCard';
 import { toast } from 'sonner';
 import styles from '../../dashboard/dashboard.module.css';
 
@@ -29,9 +29,7 @@ export default function ManageUsersPage() {
   
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isViewOpen, setIsViewOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
-  const [viewingUser, setViewingUser] = useState<any>(null);
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -93,11 +91,6 @@ export default function ManageUsersPage() {
   const handleEdit = (user: any) => {
     setEditingUser(user);
     setIsModalOpen(true);
-  };
-
-  const handleView = (user: any) => {
-    setViewingUser(user);
-    setIsViewOpen(true);
   };
 
   const handleDelete = async (user: any) => {
@@ -234,100 +227,30 @@ export default function ManageUsersPage() {
             <p>Accessing user directory...</p>
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table className={styles.userTable}>
-              <thead>
-                <tr>
-                  <th>User Information</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>Session Limit</th>
-                  <th>Created At</th>
-                  <th style={{ textAlign: 'right' }}>System Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedUsers.length > 0 ? (
-                  paginatedUsers.map((user) => (
-                    <tr key={user.id}>
-                      <td>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{user.attributes?.name || 'Unknown'}</span>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
-                            @{user.attributes?.username || 'user'} • {user.attributes?.email || 'No Email'}
-                          </span>
-                        </div>
-                      </td>
-                      <td>
-                        <span style={{ color: 'var(--color-accent-blue)', fontWeight: 500 }}>
-                          {user.attributes?.roles?.[0]?.name || 'Member'}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`${styles.statusBadge} ${styles['status-' + (user.attributes?.status || 'active')]}`}>
-                          {user.attributes?.status || 'Active'}
-                        </span>
-                      </td>
-                      <td>
-                        <span style={{ color: 'var(--color-text-primary)' }}>{user.attributes?.sessionLimit ?? 1} </span>
-                      </td>
-                      <td>
-                        <span style={{ color: 'var(--color-text-secondary)' }}>
-                          {user.meta?.createdAt ? new Date(user.meta.createdAt).toLocaleDateString() : 'N/A'}
-                        </span>
-                      </td>
-                      <td>
-                        <div className={styles.actionCell}>
-                          <button 
-                            className={`${styles.actionBtn} ${styles.viewBtn}`} 
-                            onClick={() => handleView(user)}
-                            title="View Details"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
-                            </svg>
-                          </button>
-                          <button 
-                            className={`${styles.actionBtn} ${styles.editBtn}`} 
-                            onClick={() => handleEdit(user)}
-                            title="Edit User"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                            </svg>
-                          </button>
-                          <button 
-                            className={`${styles.actionBtn} ${styles.deleteBtn}`} 
-                            onClick={() => handleDelete(user)}
-                            title="Remove User"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', padding: '4rem', color: 'var(--color-text-secondary)' }}>
-                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ marginBottom: '1rem', opacity: 0.5 }}>
-                        <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-                      </svg>
-                      <p>No users found matching your search criteria.</p>
-                      <button 
-                        style={{ background: 'transparent', border: 'none', color: 'var(--color-accent-blue)', cursor: 'pointer', marginTop: '0.5rem' }}
-                        onClick={() => { setSearchTerm(''); setRoleFilter('all'); setStatusFilter('all'); }}
-                      >
-                        Clear all filters
-                      </button>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+          <div className={styles.cardGrid}>
+            {paginatedUsers.length > 0 ? (
+              paginatedUsers.map((user) => (
+                <UserCard 
+                  key={user.id} 
+                  user={user} 
+                  onEdit={handleEdit} 
+                  onDelete={handleDelete} 
+                />
+              ))
+            ) : (
+              <div className={styles.emptyState}>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ marginBottom: '1rem', opacity: 0.5 }}>
+                  <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <p>No users found matching your search criteria.</p>
+                <button 
+                  style={{ background: 'transparent', border: 'none', color: 'var(--color-accent-blue)', cursor: 'pointer', marginTop: '0.5rem' }}
+                  onClick={() => { setSearchTerm(''); setRoleFilter('all'); setStatusFilter('all'); }}
+                >
+                  Clear all filters
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -392,12 +315,6 @@ export default function ManageUsersPage() {
         onClose={() => setIsModalOpen(false)} 
         onSuccess={fetchUsers}
         user={editingUser}
-      />
-
-      <UserDetailsModal
-        isOpen={isViewOpen}
-        onClose={() => setIsViewOpen(false)}
-        user={viewingUser}
       />
     </DashboardLayout>
   );

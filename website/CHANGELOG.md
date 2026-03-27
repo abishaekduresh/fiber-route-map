@@ -4,7 +4,7 @@ All notable changes to the Fiber Route Map Website will be documented in this fi
 
 ## [1.16.0] - 2026-03-27
 ### Added
-- **Enhanced User Management**: Moved the user management page to a new `/manage/users` URL.
+- **Card-Based User Management**: Transitioned from a table-based layout to a modern grid of interactive cards with expandable details.
 - **Search & Filtering**: Integrated real-time search (Name, Username, Email) and multi-status/role filtering.
 - **Client-Side Pagination**: Added pagination with a default limit of 5 users per page for improved performance.
 - **Data Export**: Implemented "Export CSV" functionality to download filtered user lists.
