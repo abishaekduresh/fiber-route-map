@@ -77,12 +77,13 @@ export interface LoginData {
         code: string;
         phoneCode: string;
       } | null;
-      roles: {
-        uuid: string;
-        name: string;
-        slug: string;
-      }[];
-    };
+        roles: {
+          uuid: string;
+          name: string;
+          slug: string;
+        }[];
+        permissions: string[];
+      };
     meta: {
       createdAt: string;
       updatedAt: string;
@@ -335,6 +336,52 @@ export async function unblockCountry(uuid: string): Promise<ApiResponse> {
  */
 export async function getRoles(): Promise<ApiResponse<any[]>> {
   return apiFetch('/api/roles');
+}
+
+/**
+ * Get all available permissions.
+ */
+export async function getPermissions(): Promise<ApiResponse<any[]>> {
+  return apiFetch('/api/permissions');
+}
+
+/**
+ * Create a new role.
+ */
+export async function createRole(data: any): Promise<ApiResponse> {
+  return apiFetch('/api/roles', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Update an existing role.
+ */
+export async function updateRole(uuid: string, data: any): Promise<ApiResponse> {
+  return apiFetch(`/api/roles/${uuid}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Delete a role.
+ */
+export async function deleteRole(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/roles/${uuid}`, {
+    method: 'DELETE',
+  });
+}
+
+/**
+ * Sync permissions for a role.
+ */
+export async function syncRolePermissions(uuid: string, permissions: string[]): Promise<ApiResponse> {
+  return apiFetch(`/api/roles/${uuid}/permissions`, {
+    method: 'POST',
+    body: JSON.stringify({ permissions }),
+  });
 }
 
 /**

@@ -20,6 +20,7 @@ export interface User {
     name: string;
     slug: string;
   }[];
+  permissions?: string[];
 }
 
 export type CreateUserDTO = Pick<User, 'email' | 'username' | 'name' | 'phone' | 'sessionLimit'> & { 

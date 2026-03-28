@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { logout } from '@/lib/api';
+import { Can } from '../auth/Can';
 import styles from './DashboardLayout.module.css';
 
 /**
@@ -62,6 +63,7 @@ export default function Sidebar({
       ),
       subItems: [
         { name: 'Users', href: '/manage/users' },
+        { name: 'Roles', href: '/manage/roles', permission: 'role.view' },
         { name: 'Countries', href: '/manage/countries' }
       ]
     }
@@ -108,16 +110,28 @@ export default function Sidebar({
                   </div>
                   {isExpanded && (
                     <ul className={styles.dropdownMenu}>
-                      {link.subItems!.map(sub => (
-                        <li key={sub.href}>
-                          <Link 
-                            href={sub.href}
-                            className={`${styles.subItem} ${pathname === sub.href ? styles.activeSubItem : ''}`}
-                          >
-                            <span>{sub.name}</span>
-                          </Link>
-                        </li>
-                      ))}
+                      {link.subItems!.map(sub => {
+                        const content = (
+                          <li key={sub.href}>
+                            <Link 
+                              href={sub.href}
+                              className={`${styles.subItem} ${pathname === sub.href ? styles.activeSubItem : ''}`}
+                            >
+                              <span>{sub.name}</span>
+                            </Link>
+                          </li>
+                        );
+
+                        if (sub.permission) {
+                          return (
+                            <Can key={sub.href} I={sub.permission}>
+                              {content}
+                            </Can>
+                          );
+                        }
+
+                        return content;
+                      })}
                     </ul>
                   )}
                 </li>

@@ -4,7 +4,7 @@ The authoritative backend REST API for the Fiber Route Map system, replicated in
 Built using [Express](https://expressjs.com/) and [TypeScript](https://www.typescriptlang.org/), leveraging [Knex.js](https://knexjs.org/) for database interaction.
 
 ## Version
-**Current Version:** 1.15.0 (Frontend UI Synchronized)
+**Current Version:** 1.17.0 (Granular RBAC Integration)
 
 ## Interactive Documentation
 The API is fully documented using Swagger/OpenAPI 3.0.
@@ -53,12 +53,14 @@ All requests to `/api` (except documentation) must include:
 - `X-Device-Id` (Optional, unique device identifier)
 - `X-Device-Name` (Recommended, e.g., "Chrome on Windows", "iPhone 15")
 
-### Authentication & Session Management
-The API uses a secure, database-backed session system:
+### Authentication & RBAC
+The API uses a secure, database-backed session system and a granular Role-Based Access Control (RBAC) model:
 - **Registration**: Publicly available via `POST /api/users`.
 - **Identifier**: Log in via `POST /api/auth/users/login` using **email**, **username**, or **phone number**.
 - **Per-User Limits**: Authentication respects individual `sessionLimit` configured per account (defaulting to 1).
-- **Management**: Users can list active devices via `GET /api/auth/users/sessions` and terminate sessions via `DELETE /api/auth/users/sessions/:uuid`.
+- **Session Management**: Users can list active devices via `GET /api/auth/users/sessions` and terminate sessions via `DELETE /api/auth/users/sessions/:uuid`.
+- **RBAC Enforcement**: All resource endpoints (Users, Roles, Countries) are protected by a custom `rbac` middleware that validates permission slugs (e.g., `user.view`, `role.create`).
+- **Admin Bypass**: Users with the `admin` role slug have full access to all system endpoints, bypassing granular checks.
 
 ### System Health Monitoring
 The API provides a dedicated health check endpoint:

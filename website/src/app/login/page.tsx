@@ -4,6 +4,7 @@ import { useState, useEffect, FormEvent } from 'react';
 import { login, terminateSession, checkHealth, type ApiResponse, type LoginData, type SessionLimitData, type ActiveSession } from '@/lib/api';
 import styles from './login.module.css';
 import ThemeToggle from '@/components/layout/ThemeToggle';
+import { useAuth } from '@/components/providers/AuthContext';
 import { toast } from 'sonner';
 
 /**
@@ -22,6 +23,7 @@ export default function LoginPage() {
   const [mgmtToken, setMgmtToken] = useState<string | null>(null);
   const [sessionLimit, setSessionLimit] = useState<number>(1);
   const [terminatingUuid, setTerminatingUuid] = useState<string | null>(null);
+  const { setUser } = useAuth();
 
   // Check backend health on mount
   useEffect(() => {
@@ -56,6 +58,10 @@ export default function LoginPage() {
         toast.success(`Welcome back, ${loginData.user.attributes.name}!`);
         setIsModalOpen(false);
         setMgmtToken(null);
+        
+        // Use central AuthContext to store user
+        setUser(loginData.user);
+
         setTimeout(() => {
           window.location.href = '/dashboard';
         }, 1500);

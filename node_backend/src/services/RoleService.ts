@@ -1,8 +1,12 @@
 import { RoleRepository } from '../repositories/RoleRepository.js';
+import { PermissionRepository } from '../repositories/PermissionRepository.js';
 import { CreateRoleDTO, UpdateRoleDTO, Role } from '../models/Role.js';
 
 export class RoleService {
-  constructor(private readonly repo: RoleRepository) {}
+  constructor(
+    private readonly repo: RoleRepository,
+    private readonly permissionRepo: PermissionRepository
+  ) {}
 
   async createRole(data: CreateRoleDTO): Promise<Role> {
     // Check if slug is unique (including deleted roles due to DB constraint)
@@ -71,5 +75,19 @@ export class RoleService {
 
     const updatedRole = await this.repo.findByUuid(uuid);
     return updatedRole!;
+  }
+
+  async syncPermissions(roleUuid: string, permissionUuids: string[]): Promise<Role> {
+    const roleId = await this.repo.getInternalIdByUuid(roleUuid);
+    if (!roleId) {
+      const error = new Error('Role not found');
+      (error as any).status = 404;
+      throw error;
+    }
+
+    const permissionIds = await this.permissionRepo.findIdsByUuids(permissionUuids);
+    await this.repo.syncPermissions(roleId, permissionIds);
+
+    return this.getRoleByUuid(roleUuid);
   }
 }

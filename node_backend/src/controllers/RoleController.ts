@@ -15,7 +15,7 @@ export class RoleController {
   constructor(private readonly service: RoleService) {}
 
   private transformRole = (role: any) => {
-    const { uuid, name, slug, description, status, createdAt, updatedAt } = role;
+    const { uuid, name, slug, description, status, permissions, createdAt, updatedAt } = role;
     return {
       id: uuid,
       type: 'role',
@@ -23,7 +23,12 @@ export class RoleController {
         name,
         slug,
         description,
-        status
+        status,
+        permissions: permissions?.map((p: any) => ({
+          id: p.uuid,
+          name: p.name,
+          slug: p.slug
+        })) || []
       },
       meta: {
         createdAt,
@@ -64,13 +69,13 @@ export class RoleController {
   };
 
   private buildLink = (req: Request, params: any) => {
-    const url = new URL(req.baseUrl, 'http://localhost');
+    const url = new URL(req.baseUrl + req.path, 'http://localhost');
     const filters = typeof params.filters === 'object' ? params.filters : {};
     const filter = typeof params.filter === 'object' ? params.filter : {};
     const mergedFilter = { ...filters, ...filter };
 
     Object.entries(params).forEach(([key, value]) => {
-      if (value === undefined || value === null || key === 'filter' || key === 'filters') return;
+      if (value === undefined || value === null || key === 'filter' || key === 'filters' || key === 'page' || key === 'limit') return;
       if (typeof value !== 'object') {
         url.searchParams.append(key, String(value));
       }
@@ -79,6 +84,9 @@ export class RoleController {
     Object.entries(mergedFilter).forEach(([fKey, fVal]) => {
       url.searchParams.append(`filter[${fKey}]`, String(fVal));
     });
+    
+    if (params.page) url.searchParams.append('page', String(params.page));
+    if (params.limit) url.searchParams.append('limit', String(params.limit));
 
     return `${url.pathname}${url.search}`;
   };
@@ -104,6 +112,7 @@ export class RoleController {
         limit: String(limit),
         status: filterObj.status,
         name: filterObj.name,
+        sort: sortParam
       };
 
       const result = await this.service.getAllRoles(params);
@@ -154,7 +163,7 @@ export class RoleController {
     try {
       const data = createRoleSchema.parse(req.body);
       const role = await this.service.createRole(data as any);
-      res.json({
+      res.status(201).json({
         success: true,
         statusCode: 201,
         message: 'Role created successfully',
@@ -203,6 +212,22 @@ export class RoleController {
         success: true,
         statusCode: 200,
         message: 'Role restored successfully',
+        data: this.transformRole(role),
+        meta: this.getMeta(req, {}, null)
+      });
+    } catch (error: any) {
+      next(error);
+    }
+  };
+
+  syncPermissions = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const permissionUuids = z.array(z.string()).parse(req.body.permissions);
+      const role = await this.service.syncPermissions(req.params.uuid as string, permissionUuids);
+      res.json({
+        success: true,
+        statusCode: 200,
+        message: 'Role permissions synchronized successfully',
         data: this.transformRole(role),
         meta: this.getMeta(req, {}, null)
       });

@@ -51,10 +51,11 @@ export class RoleRepository {
     const offset = (page - 1) * limit;
     const roles = limit === -1 ? await query : await query.offset(offset).limit(limit);
 
-    const sanitizedRoles = roles.map((role: any) => {
+    const sanitizedRoles = await Promise.all(roles.map(async (role: any) => {
       const { id, ...roleWithoutInternalFields } = role;
-      return roleWithoutInternalFields as Role;
-    });
+      const permissions = await this.getPermissionsByRoleId(id);
+      return { ...roleWithoutInternalFields, permissions } as Role;
+    }));
 
     return { roles: sanitizedRoles, total };
   }
@@ -63,7 +64,8 @@ export class RoleRepository {
     const role = await db(this.table).where('uuid', uuid).whereNull('deletedAt').first();
     if (!role) return null;
     const { id, ...roleWithoutInternalFields } = role;
-    return roleWithoutInternalFields as Role;
+    const permissions = await this.getPermissionsByRoleId(id);
+    return { ...roleWithoutInternalFields, permissions } as Role;
   }
 
   async findByUuidIncludeDeleted(uuid: string): Promise<Role | null> {
@@ -123,5 +125,31 @@ export class RoleRepository {
       updatedAt: nowDb()
     });
     return result > 0;
+  }
+
+  async syncPermissions(roleId: number, permissionIds: number[]): Promise<void> {
+    await db.transaction(async (trx: any) => {
+      // Remove existing permissions
+      await trx('role_permissions').where('roleId', roleId).del();
+      
+      // Add new permissions
+      if (permissionIds.length > 0) {
+        const rolePermissions = permissionIds.map(permissionId => ({ roleId, permissionId }));
+        await trx('role_permissions').insert(rolePermissions);
+      }
+    });
+  }
+
+  async getPermissionsByRoleId(roleId: number): Promise<any[]> {
+    const permissions = await db('role_permissions')
+      .join('permissions', 'role_permissions.permissionId', 'permissions.id')
+      .select('permissions.uuid', 'permissions.name', 'permissions.slug', 'permissions.description')
+      .where('role_permissions.roleId', roleId);
+    return permissions;
+  }
+
+  async getInternalIdByUuid(uuid: string): Promise<number | null> {
+    const role = await db(this.table).select('id').where('uuid', uuid).first();
+    return role ? role.id : null;
   }
 }

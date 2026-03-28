@@ -2,19 +2,16 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
-## [1.16.0] - 2026-03-27
+## [1.17.0] - 2026-03-28
 ### Added
-- **Mobile-First Responsiveness**: Optimized all new card-based layouts for mobile devices, ensuring full usability on smaller screens.
-- **Improved Filter Controls**: Enhanced filter and search UI with responsive stacking and fluid widths.
-- **Country Management Module**: Added a new `/manage/countries` page for administrative country management (CRUD, status control).
-- **Sidebar Integration**: Synchronized navigation with the new Country Management module.
-- **Card-Based User Management**: Transitioned from a table-based layout to a modern grid of interactive cards with expandable details.
-- **Search & Filtering**: Integrated real-time search (Name, Username, Email) and multi-status/role filtering.
-- **Client-Side Pagination**: Added pagination with a default limit of 5 users per page for improved performance.
-- **Data Export**: Implemented "Export CSV" functionality to download filtered user lists.
-- **Theme-Aware UI**: Full unification of Light, Dark, and System themes across the entire application layout (Sidebar, TopBar).
-- **Contrast & Visibility Fixes**: Optimized light theme contrast for field labels, status badges, and interactive elements on the Profile and Dashboard pages.
-- **Updated Navigation**: Synchronized `Sidebar` and `TopBar` links with the new management and profile routes.
+- **Granular RBAC Management UI**: Developed a new management module for Roles and Permissions.
+- **Permission Selection Grid**: Implemented a resource-grouped permission selection UI in the Role Modal.
+- **Multi-Role User Assignment**: Enhanced the User Modal to allow toggling multiple system roles per user.
+- **RBAC-Aware Navigation**: Integrated the `<Can>` component into the sidebar to dynamically show/hide management links based on user permissions.
+- **Centralized Auth Status**: Developed `AuthContext` to manage application-wide user state and permission-checking logic.
+- **Role Listing Cards**: Created specialized interactive cards for role discovery with default role protection.
+
+## [1.16.0] - 2026-03-27
 
 ## [1.15.0] - 2026-03-27
 ### Added

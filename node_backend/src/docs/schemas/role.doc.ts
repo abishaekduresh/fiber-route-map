@@ -28,5 +28,9 @@
  *               type: string
  *               enum: [active, inactive]
  *               example: "active"
+ *             permissions:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Permission'
  */
 export const RoleDoc = {};

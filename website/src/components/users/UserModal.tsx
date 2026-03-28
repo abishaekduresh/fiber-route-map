@@ -85,10 +85,13 @@ export default function UserModal({ isOpen, onClose, onSuccess, user }: UserModa
   };
 
   const handleRoleChange = (roleUuid: string) => {
-    setFormData(prev => ({
-      ...prev,
-      roleUuids: [roleUuid] // Only allow one role
-    }));
+    setFormData(prev => {
+      const isSelected = prev.roleUuids.includes(roleUuid);
+      const newRoleUuids = isSelected 
+        ? prev.roleUuids.filter(uuid => uuid !== roleUuid)
+        : [...prev.roleUuids, roleUuid];
+      return { ...prev, roleUuids: newRoleUuids };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

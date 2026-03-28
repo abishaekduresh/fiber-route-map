@@ -2,12 +2,16 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
-## [1.15.0] - 2026-03-27
+## [1.17.0] - 2026-03-28
 ### Added
-- **Premium Multi-Theme Architecture**: Implemented a global theme system (Light, Dark, System) with persistent user preferences and dynamic CSS variable-based styling.
-- **Full Mobile Responsiveness**: Refactored the dashboard and login page to provide a native-feel experience on all viewports, including a retractable mobile sidebar and touch-optimized components.
-- **Sonner Toast System**: Integrated the `sonner` library for high-performance, bottom-right toast notifications across the entire application, replacing all legacy static alerts and browser `alert()` calls.
-- **Enhanced Glassmorphism UI**: Standardized high-premium aesthetics with backdrop blurs, gradients, and micro-animations across all functional modules.
+- **Granular RBAC System**: Launched a comprehensive Role-Based Access Control (RBAC) architecture across the entire stack.
+- **Permission Management**: Added a new permission-based security layer that enables granular control (View, Create, Update, Delete) for all system resources (Users, Roles, Countries).
+- **Interactive Role Management UI**: Introduced a new management dashboard for creating roles and assigning system permissions with a visual grouping logic.
+- **Declarative Frontend Security**: Integrated the `<Can>` component and `usePermissions` hook for real-time, permission-aware UI rendering on the website.
+- **Backend Enforce Middleware**: Developed an `rbac` middleware in Node.js to validate permission slugs on a per-request basis with administrative bypass capabilities.
+- **Flat-File Permission Model**: Enhanced the user model to store a flattened list of permission slugs for O(1) checking efficiency.
+
+## [1.15.0] - 2026-03-27
 
 ## [1.14.0] - 2026-03-27
 ### Added

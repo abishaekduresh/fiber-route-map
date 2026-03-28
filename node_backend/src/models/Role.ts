@@ -1,9 +1,12 @@
+import { Permission } from './Permission.js';
+
 export interface Role {
   uuid: string;
   name: string;
   slug: string;
   description: string | null;
   status: 'active' | 'inactive';
+  permissions?: Permission[];
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;

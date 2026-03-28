@@ -93,6 +93,7 @@
  *       200:
  *         description: Role deleted
  *
+ *
  * /roles/{uuid}/restore:
  *   put:
  *     tags:
@@ -108,5 +109,33 @@
  *     responses:
  *       200:
  *         description: Role restored
+ *
+ * /roles/{uuid}/permissions:
+ *   post:
+ *     tags:
+ *       - Roles
+ *     summary: Sync Role Permissions
+ *     description: Assign exactly these permission slugs to the role.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: uuid
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [permissions]
+ *             properties:
+ *               permissions:
+ *                 type: array
+ *                 items: { type: string, example: "user.view" }
+ *     responses:
+ *       200:
+ *         description: Permissions synchronized
  */
 export const RolePathDoc = {};

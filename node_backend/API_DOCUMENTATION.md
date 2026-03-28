@@ -1,4 +1,4 @@
-# API Documentation (v1.15.0)
+# API Documentation (v1.17.0)
 
 This document provides a comprehensive reference for all Node.js backend API endpoints. All timestamps are in **UTC ISO-8601** format.
 
@@ -570,7 +570,35 @@ fetch('http://localhost:3001/api/users', {
 
 ---
 
-## 4. Error Handling
+## 4. Permissions (Protected)
+
+### 4.1 List Permissions
+**Endpoint**: `GET /api/permissions`  
+**Description**: Retrieve all available system permission slugs.
+**Required Permission**: `role.view`
+
+#### Example Response
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "data": [
+    {
+      "id": "uuid",
+      "type": "permission",
+      "attributes": {
+        "name": "View Users",
+        "slug": "user.view",
+        "resource": "user"
+      }
+    }
+  ]
+}
+```
+
+---
+
+## 5. Error Handling
 
 ### 4.1 Database Connectivity
 If the database server is unreachable, the API returns a `503 Service Unavailable` status in the JSON body.

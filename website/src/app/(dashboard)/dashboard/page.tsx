@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { getUsers } from '@/lib/api';
+import { Can } from '@/components/auth/Can';
 import styles from './dashboard.module.css';
 
 /**
@@ -46,18 +47,20 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className={styles.statCard}>
-            <div className={styles.statIcon} style={{ background: 'rgba(147, 51, 234, 0.1)', color: 'var(--color-accent-purple)' }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-              </svg>
+          <Can I="user.view">
+            <div className={styles.statCard}>
+              <div className={styles.statIcon} style={{ background: 'rgba(147, 51, 234, 0.1)', color: 'var(--color-accent-purple)' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                </svg>
+              </div>
+              <div className={styles.statData}>
+                <span className={styles.statValue}>{userCount}</span>
+                <span className={styles.statLabel}>Users Managed</span>
+              </div>
             </div>
-            <div className={styles.statData}>
-              <span className={styles.statValue}>{userCount}</span>
-              <span className={styles.statLabel}>Users Managed</span>
-            </div>
-          </div>
+          </Can>
 
           <div className={styles.statCard}>
             <div className={styles.statIcon} style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--color-success)' }}>

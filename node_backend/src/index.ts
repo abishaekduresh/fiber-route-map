@@ -11,6 +11,7 @@ import { auth } from './middleware/auth.js';
 import userRoutes from './routes/userRoutes.js';
 import countryRoutes from './routes/countryRoutes.js';
 import roleRoutes from './routes/roleRoutes.js';
+import permissionRoutes from './routes/permissionRoutes.js';
 import healthRoutes from './routes/healthRoutes.js';
 import { authRoutes } from './routes/authRoutes.js';
 import logger from './utils/logger.js';
@@ -45,6 +46,7 @@ app.use('/api/auth', authRoutes(authService));
 app.use('/api/users', auth(authService), userRoutes);
 app.use('/api/countries', auth(authService), countryRoutes);
 app.use('/api/roles', auth(authService), roleRoutes);
+app.use('/api/permissions', permissionRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 

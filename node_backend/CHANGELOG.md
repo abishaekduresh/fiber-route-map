@@ -5,10 +5,16 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.0] - 2026-03-28
+### Added
+- **Granular RBAC Middleware**: Implemented `rbac.ts` middleware to enforce permission-based access control on all resource routes.
+- **Permission Management API**: Created `PermissionController` and `PermissionRepository` for managing discovery and assignment of system permissions.
+- **Role-Permission Synchronization**: Added `syncPermissions` to `RoleService` to allow dynamic linking of permissions to roles.
+- **Flattened Permission Loading**: Updated `UserRepository` to automatically aggregate and flatten permission slugs from all assigned roles into the user object.
+- **Admin Bypass Logic**: Integrated a hardcoded bypass for the `admin` role slug to ensure system administrators always have full access.
+- **Resource Protection**: Secured all User, Role, and Country endpoints with mandatory permission slugs (e.g., `user.create`, `country.delete`).
+
 ## [1.15.0] - 2026-03-27
-### Changed
-- **Version Harmonization**: Synchronized project-wide versioning to v1.15.0 to reflect the launch of the new multi-theme responsive frontend.
-- **Documentation Update**: Synchronized `API_DOCUMENTATION.md` and Swagger definitions with the latest frontend integration requirements.
 
 ## [1.14.0] - 2026-03-27
 ### Added

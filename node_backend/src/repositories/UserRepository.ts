@@ -139,7 +139,7 @@ export class UserRepository {
       return acc;
     }, {});
 
-    const sanitizedUsers = users.map((user: any) => {
+    const sanitizedUsers = await Promise.all(users.map(async (user: any) => {
       const { id, countryId, password, countryName, countryCode, countryPhoneCode, countryUuid, sessionLimit, ...userWithoutInternalFields } = user;
       return {
         ...userWithoutInternalFields,
@@ -150,11 +150,22 @@ export class UserRepository {
           code: countryCode,
           phoneCode: countryPhoneCode
         } : null,
-        roles: rolesByUserId[id] || []
+        roles: rolesByUserId[id] || [],
+        permissions: await this.getPermissionsByUserRoles(id)
       } as User;
-    });
+    }));
 
     return { users: sanitizedUsers, total };
+  }
+
+  async getPermissionsByUserRoles(userId: number): Promise<string[]> {
+    const results = await db('user_roles')
+      .join('role_permissions', 'user_roles.roleId', 'role_permissions.roleId')
+      .join('permissions', 'role_permissions.permissionId', 'permissions.id')
+      .select('permissions.slug')
+      .where('user_roles.userId', userId);
+    
+    return [...new Set((results as any[]).map((p: any) => p.slug as string))];
   }
 
   async findByUuid(uuid: string): Promise<User | null> {
@@ -186,7 +197,8 @@ export class UserRepository {
         code: user.countryCode,
         phoneCode: user.countryPhoneCode
       } : null,
-      roles
+      roles,
+      permissions: await this.getPermissionsByUserRoles(user.id)
     } as any;
   }
 
@@ -219,7 +231,8 @@ export class UserRepository {
         code: user.countryCode,
         phoneCode: user.countryPhoneCode
       } : null,
-      roles
+      roles,
+      permissions: await this.getPermissionsByUserRoles(user.id)
     } as any;
   }
 
@@ -264,7 +277,8 @@ export class UserRepository {
         code: user.countryCode,
         phoneCode: user.countryPhoneCode
       } : null,
-      roles
+      roles,
+      permissions: await this.getPermissionsByUserRoles(user.id)
     } as any;
   }
 
@@ -297,7 +311,8 @@ export class UserRepository {
         code: user.countryCode,
         phoneCode: user.countryPhoneCode
       } : null,
-      roles
+      roles,
+      permissions: await this.getPermissionsByUserRoles(user.id)
     } as any;
   }
 
@@ -330,7 +345,8 @@ export class UserRepository {
         code: user.countryCode,
         phoneCode: user.countryPhoneCode
       } : null,
-      roles
+      roles,
+      permissions: await this.getPermissionsByUserRoles(user.id)
     } as any;
   }
 
