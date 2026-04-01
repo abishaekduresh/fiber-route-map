@@ -44,10 +44,30 @@ export class PermissionRepository {
     const countResult = await countQuery.count('* as total').first();
     const total = Number(countResult?.total || 0);
 
-    query = query.orderBy('slug', 'asc');
+    // Apply sorting
+    if (params.sort) {
+      if (typeof params.sort === 'string') {
+        const sortFields = params.sort.split(',');
+        sortFields.forEach((s: string) => {
+          const desc = s.trim().startsWith('-');
+          const field = desc ? s.trim().substring(1) : s.trim();
+          query = query.orderBy(field, desc ? 'desc' : 'asc');
+        });
+      } else if (typeof params.sort === 'object') {
+        const field = params.sort.field || 'slug';
+        const order = params.sort.order || 'asc';
+        query = query.orderBy(field, order);
+      }
+    } else {
+      query = query.orderBy('slug', 'asc');
+    }
 
-    const offset = (page - 1) * limit;
-    const permissions = limit === -1 ? await query : await query.offset(offset).limit(limit);
+    if (limit !== -1) {
+      const offset = (page - 1) * limit;
+      query = query.offset(offset).limit(limit);
+    }
+
+    const permissions = await query;
 
     const sanitizedPermissions = permissions.map((perm: any) => {
       const { id, ...permWithoutInternalFields } = perm;

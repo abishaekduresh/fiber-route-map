@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { PermissionController } from '../controllers/PermissionController.js';
+import { PermissionService } from '../services/PermissionService.js';
 import { PermissionRepository } from '../repositories/PermissionRepository.js';
 import { auth } from '../middleware/auth.js';
 import { rbac } from '../middleware/rbac.js';
@@ -12,7 +13,8 @@ const userRepo = new UserRepository();
 const authRepo = new AuthRepository();
 const authService = new AuthService(authRepo, userRepo);
 const permissionRepo = new PermissionRepository();
-const permissionController = new PermissionController(permissionRepo);
+const permissionService = new PermissionService(permissionRepo);
+const permissionController = new PermissionController(permissionService);
 
 // Apply auth middleware to all permission routes
 router.use(auth(authService));

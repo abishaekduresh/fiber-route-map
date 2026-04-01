@@ -5,6 +5,14 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.0] - 2026-04-01
+### Added
+- **Standardized Permission API**: Refactored `PermissionController` and `PermissionRepository` to follow the project's "Universal 200 OK" and JSON:API inspired response format.
+- **Permission Service Layer**: Created `PermissionService` to encapsulate all permission management business logic and Zod validation.
+- **Enhanced OpenAPI Swagger Docs**: Expanded documentation for all permission CRUD operations (`List`, `Show`, `Create`, `Update`, `Delete`) with request/response schemas.
+- **Dynamic Sorting**: Updated repositories to support dynamic sorting by resource attributes.
+- **API Reference**: Expanded `API_DOCUMENTATION.md` with full coverage of the standardized permission module.
+
 ## [1.17.0] - 2026-03-28
 ### Added
 - **Granular RBAC Middleware**: Implemented `rbac.ts` middleware to enforce permission-based access control on all resource routes.

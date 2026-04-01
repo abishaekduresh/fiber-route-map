@@ -2,6 +2,13 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.18.0] - 2026-04-01
+### Added
+- **Standardized Permission API**: Refactored permission endpoints to follow the "Universal 200 OK" and JSON:API inspired response format.
+- **Enhanced Swagger Documentation**: Fully documented all permission CRUD operations (List, Show, Create, Update, Delete) with interactive testing support.
+- **Permission Service Layer**: Introduced a specialized layer to manage Permission business logic and validation.
+- **Dynamic Permission Sorting**: Enabled multi-field sorting capabilities for permission resource discovery.
+
 ## [1.17.0] - 2026-03-28
 ### Added
 - **Granular RBAC System**: Launched a comprehensive Role-Based Access Control (RBAC) architecture across the entire stack.

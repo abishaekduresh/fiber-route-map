@@ -574,14 +574,24 @@ fetch('http://localhost:3001/api/users', {
 
 ### 4.1 List Permissions
 **Endpoint**: `GET /api/permissions`  
-**Description**: Retrieve all available system permission slugs.
+**Description**: Retrieve a paginated list of all available system permission slugs.
 **Required Permission**: `role.view`
+
+#### Query Parameters
+| Parameter | Type | Description | Example |
+| :--- | :--- | :--- | :--- |
+| `page` | `number` | Page number (default: 1) | `?page=1` |
+| `limit` | `number` | Items per page (default: 10, -1 for all) | `?limit=-1` |
+| `filter[name]` | `string` | Partial match search by name | `?filter[name]=User` |
+| `filter[slug]` | `string` | Partial match search by slug | `?filter[slug]=user.` |
+| `sort` | `string` | Sort field (default: `slug`, prefix `-` for desc) | `?sort=-name` |
 
 #### Example Response
 ```json
 {
   "success": true,
   "statusCode": 200,
+  "message": "Permissions retrieved successfully",
   "data": [
     {
       "id": "uuid",
@@ -589,12 +599,50 @@ fetch('http://localhost:3001/api/users', {
       "attributes": {
         "name": "View Users",
         "slug": "user.view",
-        "resource": "user"
+        "resource": "user",
+        "description": "Can view user list and details"
+      },
+      "meta": {
+        "createdAt": "2026-03-25T17:38:56.000Z",
+        "updatedAt": "2026-03-25T17:38:56.000Z"
+      },
+      "links": {
+        "self": "/api/permissions/uuid"
       }
     }
-  ]
+  ],
+  "meta": {
+    "pagination": { "total": 15, "count": 10, "perPage": 10, "currentPage": 1, "totalPages": 2 },
+    "requestId": "req_...",
+    "timestamp": "2026-04-01T12:00:00.000Z",
+    "version": "v1.17.0"
+  }
 }
 ```
+
+### 4.2 Create Permission
+**Endpoint**: `POST /api/permissions`  
+**Description**: Register a new granular permission. Slug must be unique.
+**Required Permission**: `role.create`
+
+#### Request Body
+```json
+{
+  "name": "Export Data",
+  "slug": "data.export",
+  "description": "Allows exporting system data to CSV"
+}
+```
+
+### 4.3 Update Permission
+**Endpoint**: `PUT /api/permissions/:uuid`  
+**Description**: Update an existing permission's name, slug, or description.
+**Required Permission**: `role.update`
+
+### 4.4 Delete Permission
+**Endpoint**: `DELETE /api/permissions/:uuid`  
+**Description**: Permanently delete a permission from the system.
+**Required Permission**: `role.delete`
 
 ---
 
