@@ -5,6 +5,10 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.1] - 2026-04-01
+### Fixed
+- **API Continuity**: The `POST /api/roles/:uuid/permissions` sync endpoint implicitly relies perfectly on the resolved frontend `uuid` sync changes. No backend mutations were strictly necessary.
+
 ## [1.18.0] - 2026-04-01
 ### Added
 - **Standardized Permission API**: Refactored `PermissionController` and `PermissionRepository` to follow the project's "Universal 200 OK" and JSON:API inspired response format.

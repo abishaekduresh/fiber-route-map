@@ -56,6 +56,11 @@ website/
 - Define all design tokens (colors, spacing, fonts, transitions) in `globals.css` using CSS custom properties.
 - **Never use TailwindCSS** unless explicitly requested.
 
+### 4.3 Data Grid Guidelines
+- All management dashboard list views (Users, Roles, etc.) must use a standard **Card Grid Layout** instead of HTML tables.
+- Use **Local CSS Modules** (e.g. `UserCard.module.css`, `RoleCard.module.css`) to define the structure for standard cards (header with title and badge, body with `detailsGrid`, and a `cardFooter` containing all action buttons).
+- Enforce **Client-Side Pagination** uniformly across these pages using a standard variable `itemsPerPage` (default to 5 unless context demands otherwise), and consistent pagination control HTML at the bottom.
+
 ---
 
 ## 5. API Integration

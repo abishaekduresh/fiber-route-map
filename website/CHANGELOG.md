@@ -2,6 +2,16 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
+## [1.18.1] - 2026-04-01
+### Added
+- **Architectural Policy Constraints**: Formalized Paginated Grid layouts via a new section in `.antigravity/SKILL.md`.
+### Changed
+- **Roles Management Overhaul**: Refactored the internal Roles list payload to rely on an identical frontend-pagination logic pattern (`itemsPerPage=5`) to perfectly align visually with the Users management layout.
+- **Card Styling Isolation**: Abstracted Role card components to utilize an isolated, dedicated `.module.css` footprint.
+### Fixed
+- **Permissions Synchronization**: Re-wired the `<RoleModal />` component to pass specific UUID identifiers rather than slugs to properly appease backend data queries.
+- **Modal Overflow Trapping**: Elevated dynamic overlays by disabling parent layout `z-index` properties to gracefully override lateral navigation bounding boxes.
+
 ## [1.17.0] - 2026-03-28
 ### Added
 - **Granular RBAC Management UI**: Developed a new management module for Roles and Permissions.

@@ -2,6 +2,14 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.18.1] - 2026-04-01
+### Fixed
+- **Role Permissions Sync**: Standardized frontend data mapping to strictly pass `uuid` identifiers rather than slugs when synchronizing permissions with the Node.js backend.
+- **Global Modal Stacking**: Freed component modals from restrictive wrapper sub-stacking contexts to allow genuine overlay positioning across the entire dashboard layout.
+### Changed
+- **Roles UI Standardization**: Upgraded the Roles list display to use paginated Card Grids identical to the Users management view.
+- **Architectural Policy**: Updated `.antigravity/SKILL.md` to rigorously enforce frontend pagination and consistent grid layouts for all management interfaces.
+
 ## [1.18.0] - 2026-04-01
 ### Added
 - **Standardized Permission API**: Refactored permission endpoints to follow the "Universal 200 OK" and JSON:API inspired response format.

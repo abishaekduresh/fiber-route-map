@@ -64,6 +64,7 @@ export default function Sidebar({
       subItems: [
         { name: 'Users', href: '/manage/users' },
         { name: 'Roles', href: '/manage/roles', permission: 'role.view' },
+        { name: 'Permissions', href: '/manage/permissions', permission: 'role.view' },
         { name: 'Countries', href: '/manage/countries' }
       ]
     }

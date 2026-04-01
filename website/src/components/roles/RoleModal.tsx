@@ -17,6 +17,7 @@ export default function RoleModal({ isOpen, onClose, onSuccess, role }: RoleModa
   const [permissions, setPermissions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingData, setIsFetchingData] = useState(true);
+  const [permissionSearch, setPermissionSearch] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -46,7 +47,7 @@ export default function RoleModal({ isOpen, onClose, onSuccess, role }: RoleModa
           name: role.attributes?.name || '',
           slug: role.attributes?.slug || '',
           description: role.attributes?.description || '',
-          permissionIds: role.attributes?.permissions?.map((p: any) => p.slug) || []
+          permissionIds: role.attributes?.permissions?.map((p: any) => p.id) || []
         });
       } else {
         setFormData({
@@ -64,25 +65,32 @@ export default function RoleModal({ isOpen, onClose, onSuccess, role }: RoleModa
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handlePermissionToggle = (permissionSlug: string) => {
+  const handlePermissionToggle = (permissionId: string) => {
     setFormData(prev => {
-      const isSelected = prev.permissionIds.includes(permissionSlug);
+      const isSelected = prev.permissionIds.includes(permissionId);
       const newPermissions = isSelected 
-        ? prev.permissionIds.filter(p => p !== permissionSlug)
-        : [...prev.permissionIds, permissionSlug];
+        ? prev.permissionIds.filter(p => p !== permissionId)
+        : [...prev.permissionIds, permissionId];
       return { ...prev, permissionIds: newPermissions };
     });
   };
 
   const groupedPermissions = useMemo(() => {
     const groups: Record<string, any[]> = {};
-    permissions.forEach(p => {
-      const resource = p.slug.split('.')[0] || 'other';
+    const filteredPerms = permissions.filter(p => {
+      const name = (p.attributes?.name || '').toLowerCase();
+      const slug = (p.attributes?.slug || '').toLowerCase();
+      const search = permissionSearch.toLowerCase();
+      return name.includes(search) || slug.includes(search);
+    });
+
+    filteredPerms.forEach(p => {
+      const resource = p.attributes?.slug?.split('.')[0] || 'other';
       if (!groups[resource]) groups[resource] = [];
       groups[resource].push(p);
     });
     return groups;
-  }, [permissions]);
+  }, [permissions, permissionSearch]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,39 +192,68 @@ export default function RoleModal({ isOpen, onClose, onSuccess, role }: RoleModa
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div className={styles.searchInputWrapper} style={{ marginBottom: '0.5rem' }}>
+                      <div className={styles.searchIcon}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                      </div>
+                      <input 
+                        type="text" 
+                        placeholder="Search system permissions..." 
+                        className={styles.searchInput}
+                        value={permissionSearch}
+                        onChange={(e) => setPermissionSearch(e.target.value)}
+                        style={{ fontSize: '0.8rem', padding: '0.5rem 1rem 0.5rem 2.2rem' }}
+                      />
+                    </div>
+
                     {Object.entries(groupedPermissions).map(([resource, perms]) => (
                       <div key={resource} style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                           <h5 style={{ textTransform: 'capitalize', fontWeight: 'bold', fontSize: '0.9rem', color: 'var(--color-accent-blue)' }}>
                             {resource} Management
                           </h5>
-                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <div style={{ display: 'flex', gap: '0.75rem' }}>
                             <button 
                               type="button" 
                               onClick={() => {
-                                const allSlugs = perms.map(p => p.slug);
+                                const allIds = perms.map(p => p.id);
                                 setFormData(prev => ({
                                   ...prev,
-                                  permissionIds: [...new Set([...prev.permissionIds, ...allSlugs])]
+                                  permissionIds: [...new Set([...prev.permissionIds, ...allIds])]
                                 }));
                               }}
-                              style={{ background: 'transparent', border: 'none', color: 'var(--color-primary)', fontSize: '0.75rem', cursor: 'pointer' }}
+                              style={{ background: 'transparent', border: 'none', color: 'var(--color-primary)', fontSize: '0.7rem', cursor: 'pointer', opacity: 0.8 }}
                             >
                               Check All
                             </button>
+                            <button 
+                              type="button" 
+                              onClick={() => {
+                                const allIds = perms.map(p => p.id);
+                                setFormData(prev => ({
+                                  ...prev,
+                                  permissionIds: prev.permissionIds.filter(id => !allIds.includes(id))
+                                }));
+                              }}
+                              style={{ background: 'transparent', border: 'none', color: 'var(--color-text-secondary)', fontSize: '0.7rem', cursor: 'pointer', opacity: 0.6 }}
+                            >
+                              Clear All
+                            </button>
                           </div>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '1rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem' }}>
                           {perms.map(p => (
                             <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.8rem' }}>
                               <input 
                                 type="checkbox" 
-                                checked={formData.permissionIds.includes(p.slug)}
-                                onChange={() => handlePermissionToggle(p.slug)}
+                                checked={formData.permissionIds.includes(p.id)}
+                                onChange={() => handlePermissionToggle(p.id)}
                                 style={{ accentColor: 'var(--color-accent-blue)' }}
                               />
-                              <span style={{ color: formData.permissionIds.includes(p.slug) ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>
-                                {p.name}
+                              <span style={{ color: formData.permissionIds.includes(p.id) ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>
+                                {p.attributes.name}
                               </span>
                             </label>
                           ))}

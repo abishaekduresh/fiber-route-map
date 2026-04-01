@@ -20,6 +20,10 @@ export default function ManageRolesPage() {
   // Search and Filter states
   const [searchTerm, setSearchTerm] = useState('');
   
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<any>(null);
@@ -56,6 +60,19 @@ export default function ManageRolesPage() {
       return name.includes(search) || slug.includes(search);
     });
   }, [roles, searchTerm]);
+
+  // Paginated roles logic
+  const paginatedRoles = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredRoles.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredRoles, currentPage]);
+
+  const totalPages = Math.ceil(filteredRoles.length / itemsPerPage);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const handleEdit = (role: any) => {
     setEditingRole(role);
@@ -131,8 +148,8 @@ export default function ManageRolesPage() {
           </div>
         ) : (
           <div className={styles.cardGrid}>
-            {filteredRoles.length > 0 ? (
-              filteredRoles.map((role) => (
+            {paginatedRoles.length > 0 ? (
+              paginatedRoles.map((role) => (
                 <RoleCard 
                   key={role.id} 
                   role={role} 
@@ -154,6 +171,60 @@ export default function ManageRolesPage() {
                 </button>
               </div>
             )}
+          </div>
+        )}
+
+        {!isLoading && filteredRoles.length > 0 && (
+          <div className={styles.paginationContainer}>
+            <button 
+              className={styles.pageBtn} 
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+              Prev
+            </button>
+            
+            <div style={{ display: 'flex', gap: '0.25rem' }}>
+              {[...Array(totalPages)].map((_, i) => {
+                const pageNum = i + 1;
+                if (
+                  totalPages <= 7 || 
+                  pageNum === 1 || 
+                  pageNum === totalPages || 
+                  (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                ) {
+                  return (
+                    <button 
+                      key={pageNum}
+                      className={`${styles.pageBtn} ${currentPage === pageNum ? styles.activePageBtn : ''}`}
+                      onClick={() => setCurrentPage(pageNum)}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                } else if (
+                  (pageNum === currentPage - 2 && pageNum > 1) || 
+                  (pageNum === currentPage + 2 && pageNum < totalPages)
+                ) {
+                  return <span key={pageNum} className={styles.pageInfo}>...</span>;
+                }
+                return null;
+              })}
+            </div>
+
+            <button 
+              className={styles.pageBtn} 
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
           </div>
         )}
       </div>

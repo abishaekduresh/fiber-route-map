@@ -346,6 +346,42 @@ export async function getPermissions(): Promise<ApiResponse<any[]>> {
 }
 
 /**
+ * Get a specific permission by UUID.
+ */
+export async function getPermissionByUuid(uuid: string): Promise<ApiResponse<any>> {
+  return apiFetch(`/api/permissions/${uuid}`);
+}
+
+/**
+ * Create a new permission.
+ */
+export async function createPermission(data: any): Promise<ApiResponse> {
+  return apiFetch('/api/permissions', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Update an existing permission.
+ */
+export async function updatePermission(uuid: string, data: any): Promise<ApiResponse> {
+  return apiFetch(`/api/permissions/${uuid}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Delete a permission.
+ */
+export async function deletePermission(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/permissions/${uuid}`, {
+    method: 'DELETE',
+  });
+}
+
+/**
  * Create a new role.
  */
 export async function createRole(data: any): Promise<ApiResponse> {
