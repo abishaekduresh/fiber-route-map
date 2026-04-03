@@ -4,7 +4,7 @@ The authoritative backend REST API for the Fiber Route Map system, replicated in
 Built using [Express](https://expressjs.com/) and [TypeScript](https://www.typescriptlang.org/), leveraging [Knex.js](https://knexjs.org/) for database interaction.
 
 ## Version
-**Current Version:** 1.19.0 (Self-Deletion Prevention)
+**Current Version:** 1.20.0 (Setup Wizard & RBAC Hardening)
 
 ## Interactive Documentation
 The API is fully documented using Swagger/OpenAPI 3.0.
@@ -15,7 +15,13 @@ The API is fully documented using Swagger/OpenAPI 3.0.
 - Node.js 18+
 - MySQL/MariaDB
 
-## Installation
+## First-Time Setup
+The recommended way to configure the application is through the **web-based Setup Wizard**:
+1. Start the backend: `npm run dev`
+2. Open the frontend at `http://localhost:3000/setup`
+3. Follow the 5-step wizard — it will write `.env`, create the database, run all migrations, seed permissions, create a Super Admin role, and create your first admin user automatically.
+
+### Manual Installation
 1. Navigate to the `node_backend/` directory and install dependencies:
    ```bash
    npm install
@@ -59,8 +65,7 @@ The API uses a secure, database-backed session system and a granular Role-Based 
 - **Identifier**: Log in via `POST /api/auth/users/login` using **email**, **username**, or **phone number**.
 - **Per-User Limits**: Authentication respects individual `sessionLimit` configured per account (defaulting to 1).
 - **Session Management**: Users can list active devices via `GET /api/auth/users/sessions` and terminate sessions via `DELETE /api/auth/users/sessions/:uuid`.
-- **RBAC Enforcement**: All resource endpoints (Users, Roles, Countries) are protected by a custom `rbac` middleware that validates permission slugs (e.g., `user.view`, `role.create`).
-- **Admin Bypass**: Users with the `admin` role slug have full access to all system endpoints, bypassing granular checks.
+- **RBAC Enforcement**: All resource endpoints (Users, Roles, Countries, Permissions) are protected by a custom `rbac` middleware that validates permission slugs (e.g., `user.view`, `role.create`). Permissions are **always** enforced from the database — there is no role-based bypass.
 - **Self-Deletion Prevention**: Authenticated users cannot delete their own account. `DELETE /api/users/:uuid` returns `403 Forbidden` if the target UUID matches the requesting user.
 
 ### System Health Monitoring

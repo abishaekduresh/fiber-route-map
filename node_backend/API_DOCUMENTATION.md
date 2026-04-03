@@ -1,4 +1,4 @@
-# API Documentation (v1.19.0)
+# API Documentation (v1.20.0)
 
 This document provides a comprehensive reference for all Node.js backend API endpoints. All timestamps are in **UTC ISO-8601** format.
 
@@ -693,7 +693,132 @@ If the database server is unreachable, the API returns a `503 Service Unavailabl
 
 ---
 
-## 5. Global Response Standard
+## 5. Setup Wizard
+
+The Setup Wizard endpoints are **public** — they require no `Authorization`, `X-Api-Version`, or database connectivity. They are mounted before all middleware and are the only way to configure the application on first run.
+
+---
+
+### 5.1 Get Setup Status
+**Endpoint**: `GET /api/setup/status`
+**Description**: Returns the current setup state. Safe to call at any time — before, during, or after setup.
+
+#### Example Response
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Setup status retrieved",
+  "data": {
+    "isComplete": false,
+    "envConfigured": false,
+    "dbConnected": false,
+    "tablesMigrated": false,
+    "permissionsSeeded": false,
+    "adminCreated": false
+  }
+}
+```
+
+---
+
+### 5.2 Test Database Connection
+**Endpoint**: `POST /api/setup/test-connection`
+**Description**: Validates the provided database credentials by attempting a temporary connection (`SELECT 1`).
+
+#### Request Body
+```json
+{
+  "dbHost": "localhost",
+  "dbPort": 3306,
+  "dbName": "fiber_route_map",
+  "dbUser": "root",
+  "dbPass": ""
+}
+```
+
+#### Example Response (Success)
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Database connection successful"
+}
+```
+
+#### Example Response (Failure)
+```json
+{
+  "success": false,
+  "statusCode": 422,
+  "errorType": "CONNECTION_FAILED",
+  "message": "Connection failed: Access denied for user 'root'@'localhost'"
+}
+```
+
+---
+
+### 5.3 Run Full Setup
+**Endpoint**: `POST /api/setup/run`
+**Description**: Executes the complete setup sequence: writes `.env`, creates the database, runs all 9 table migrations, seeds 21 permissions, creates a Super Admin role, and creates the first admin user. **Blocked with 409 if `SETUP_COMPLETE=true`.**
+
+#### Request Body
+```json
+{
+  "env": {
+    "dbHost": "localhost",
+    "dbPort": 3306,
+    "dbName": "fiber_route_map",
+    "dbUser": "root",
+    "dbPass": "",
+    "dbCharset": "utf8mb4",
+    "timezone": "UTC",
+    "port": 3001,
+    "apiVersion": "v1"
+  },
+  "admin": {
+    "name": "Super Admin",
+    "username": "superadmin",
+    "email": "admin@example.com",
+    "phone": "9876543210",
+    "password": "Admin@1234",
+    "confirmPassword": "Admin@1234"
+  }
+}
+```
+
+#### Example Response (Success)
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Setup completed successfully",
+  "data": {
+    "steps": [
+      { "step": "env",         "success": true, "message": ".env written successfully" },
+      { "step": "database",    "success": true, "message": "Database 'fiber_route_map' created/verified" },
+      { "step": "tables",      "success": true, "message": "9 tables created successfully" },
+      { "step": "permissions", "success": true, "message": "21 permissions seeded" },
+      { "step": "role",        "success": true, "message": "Super Admin role created" },
+      { "step": "admin",       "success": true, "message": "Admin user 'superadmin' created successfully" }
+    ]
+  }
+}
+```
+
+#### Example Response (Already Complete - 409)
+```json
+{
+  "success": false,
+  "statusCode": 409,
+  "errorType": "SETUP_COMPLETE",
+  "message": "Setup already complete. Re-run is blocked."
+}
+```
+
+---
+
+## 6. Global Response Standard
 
 All endpoints follow this structure:
 - **`success`**: `boolean` indicating business logic success.

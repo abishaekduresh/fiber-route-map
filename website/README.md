@@ -4,13 +4,14 @@ A futuristic, high-performance web dashboard for managing fiber optic networks.
 Built with **Next.js 16 (Turbopack)** and **TypeScript**, featuring a stunning **Glassmorphism Design System**.
 
 ## Version
-**Current Version:** 1.19.0 (Complete UI/UX Overhaul & In-App Confirmation Dialogs)
+**Current Version:** 1.20.0 (Setup Wizard & Permission Enforcement)
 
 ## Features
+- **First-Time Setup Wizard**: 5-step web wizard at `/setup` — configures the database, seeds all permissions, creates a Super Admin role, and sets up the first admin account automatically.
 - **Dynamic Glassmorphism UI**: High-end aesthetic with animated background orbs, frosty transparency effects, and micro-animations.
 - **Application-Wide Theme System**: Unified Light, Dark, and System modes across the entire layout (Sidebar, TopBar, Dashboards, Modals) with persistent storage.
 - **Full Mobile Responsiveness**: Comprehensive mobile-first layout with a retina-optimized retractable sidebar and responsive tables.
-- **Granular RBAC Management**: Complete UI for managing roles and assigned system permissions.
+- **Granular RBAC Management**: Complete UI for managing roles and assigned system permissions — enforced directly from database-assigned permissions with no admin bypass.
 - **Declarative UI Control**: Integrated `<Can>` component and `usePermissions` hook for real-time, permission-aware rendering.
 - **Enhanced User Management**: Multi-role assignment, real-time search, and status filtering with search persistence.
 - **In-App Confirmation Dialogs**: Polished `ConfirmDialog` component (danger/warning variants) replaces all browser-native `confirm()` and `alert()` calls.

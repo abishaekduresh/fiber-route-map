@@ -2,6 +2,14 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.20.0] - 2026-04-03
+### Added
+- **Web-Based Setup Wizard**: New `/setup` page (frontend) and `/api/setup/*` endpoints (backend) — collects DB credentials, writes `.env`, creates all 9 database tables, seeds 21 permissions, creates a Super Admin role, and sets up the first admin user in a single flow.
+- **Declarative Permission Gating**: All management action buttons across Users, Roles, Countries, and Permissions UIs are now controlled by `<Can I="resource.action">` gates for true RBAC-enforced rendering.
+### Security
+- **RBAC Admin Bypass Removed** (Backend): `rbac.ts` no longer grants blanket access to admin-role users — actual assigned permissions are enforced for every request.
+- **RBAC Admin Bypass Removed** (Frontend): `hasPermission()` in `AuthContext.tsx` no longer special-cases admin roles — permission checks always evaluate against the flattened permission list from the API.
+
 ## [1.19.0] - 2026-04-03
 ### Added
 - **ConfirmDialog Component**: Replaced all browser-native `window.confirm()` and `alert()` calls with a polished, glassmorphism-styled in-app confirmation dialog across all management pages (Users, Roles, Countries, Permissions) and the Profile page.

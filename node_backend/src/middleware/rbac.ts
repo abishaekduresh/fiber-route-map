@@ -18,12 +18,6 @@ export const rbac = (permission: string) => {
         throw error;
       }
 
-      // Admin bypass: Users with 'admin' role slug have full access
-      const isAdmin = user.roles?.some(role => role.slug === 'admin');
-      if (isAdmin) {
-        return next();
-      }
-
       // Check for specific permission
       const hasPermission = user.permissions?.includes(permission);
 

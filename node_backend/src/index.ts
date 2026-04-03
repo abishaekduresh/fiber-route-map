@@ -14,6 +14,7 @@ import roleRoutes from './routes/roleRoutes.js';
 import permissionRoutes from './routes/permissionRoutes.js';
 import healthRoutes from './routes/healthRoutes.js';
 import { authRoutes } from './routes/authRoutes.js';
+import setupRoutes from './routes/setupRoutes.js';
 import logger from './utils/logger.js';
 import db from './config/database.js';
 import swaggerUi from 'swagger-ui-express';
@@ -38,6 +39,10 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(requestId);
+
+// Setup routes — BEFORE versionCheck/dbCheck/auth so they work before DB exists
+app.use('/api/setup', setupRoutes);
+
 app.use(versionCheck);
 app.use(dbCheck);
 

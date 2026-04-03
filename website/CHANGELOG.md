@@ -2,6 +2,15 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
+## [1.20.0] - 2026-04-03
+### Added
+- **First-Time Setup Wizard** (`/setup`): A 5-step web wizard that configures the database, seeds all permissions, creates a Super Admin role, and sets up the first admin account — all without touching the command line.
+- **Setup API Client** (`src/lib/setupApi.ts`): Dedicated API client for setup endpoints — no auth headers, no API version header required.
+- **Next.js Edge Middleware** (`src/middleware.ts`): Automatically redirects `/setup` to `/login` if setup is already complete (based on `setup_complete` cookie).
+- **Declarative Permission Gating**: All management action buttons (Edit, Delete, Block/Unblock, Add New) across Users, Roles, Countries, and Permissions pages are now wrapped in `<Can I="resource.action">` gates — buttons are hidden if the user lacks the required permission.
+### Fixed
+- **Admin Bypass Removed**: `hasPermission()` in `AuthContext.tsx` no longer grants blanket access to admin-role users. Permissions are now always resolved from `user.attributes.permissions[]` — no special-casing by role slug.
+
 ## [1.19.0] - 2026-04-03
 ### Added
 - **ConfirmDialog Component** (`src/components/ui/ConfirmDialog.tsx`): A reusable, glassmorphism-styled in-app confirmation dialog with `danger` and `warning` variants, replacing all browser-native dialogs.

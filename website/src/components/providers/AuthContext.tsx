@@ -49,11 +49,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hasPermission = (permission: string): boolean => {
     if (!user) return false;
-    
-    // Admin bypass: If user has 'admin' role slug, they have all permissions
-    const isAdmin = user.attributes.roles?.some(role => role.slug === 'admin');
-    if (isAdmin) return true;
-
     return user.attributes.permissions?.includes(permission) || false;
   };
 

@@ -6,6 +6,7 @@ import { getRoles, deleteRole, ApiResponse } from '@/lib/api';
 import RoleModal from '@/components/roles/RoleModal';
 import RoleCard from '@/components/roles/RoleCard';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { Can } from '@/components/auth/Can';
 import { toast } from 'sonner';
 import styles from '../../dashboard/dashboard.module.css';
 
@@ -121,12 +122,14 @@ export default function ManageRolesPage() {
               </span>
             </div>
             <div className={styles.headerActions}>
-              <button className={styles.createBtn} onClick={handleCreate}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                Create New Role
-              </button>
+              <Can I="role.create">
+                <button className={styles.createBtn} onClick={handleCreate}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  Create New Role
+                </button>
+              </Can>
             </div>
           </div>
 

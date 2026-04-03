@@ -5,6 +5,17 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.20.0] - 2026-04-03
+### Added
+- **Setup Wizard Backend**: New `/api/setup/*` endpoints (`GET /status`, `POST /test-connection`, `POST /run`) mounted before all auth/version/dbCheck middleware so they work before the database exists.
+- **SetupService**: Idempotent full-stack initializer — writes `.env`, creates database, runs all 9 table migrations (`users`, `countries`, `roles`, `user_roles`, `permissions`, `role_permissions`, `user_sessions`, `user_identities`), seeds 21 permissions auto-generated from route definitions, creates a Super Admin role with all permissions, and creates the first admin user.
+- **SetupController**: Zod-validated request handling with a `SETUP_COMPLETE` guard — blocks re-runs once setup is finished.
+- **Swagger Documentation**: Added full OpenAPI 3.0 documentation for all three setup endpoints with request/response examples.
+### Fixed
+- **RBAC Admin Bypass Removed**: `rbac.ts` middleware no longer grants blanket access to `admin`-role users; actual assigned permissions are enforced for every user, ensuring database-level permission assignments are respected.
+- **varchar(191) Index Fix**: All uniquely-indexed string columns (`email`, `sessionToken`, `slug`, `token`) capped at 191 characters to comply with MySQL's 767-byte InnoDB index limit for `utf8mb4`.
+- **Correct Session Table**: Setup now creates `user_sessions` (with `sessionToken`, `ipAddress`, `userAgent`) and `user_identities` to match `AuthRepository` table names exactly.
+
 ## [1.19.0] - 2026-04-03
 ### Security
 - **Self-Deletion Prevention**: `DELETE /api/users/:uuid` now returns `403 Forbidden` with `errorType: FORBIDDEN` when the authenticated user attempts to delete their own account. The check compares `req.params.uuid` against the requesting user's `uuid` from the auth middleware before any service call is made.
