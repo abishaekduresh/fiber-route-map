@@ -5,6 +5,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { getUsers, deleteUser, blockUser, unblockUser } from '@/lib/api';
 import UserModal from '@/components/users/UserModal';
 import UserCard from '@/components/users/UserCard';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { toast } from 'sonner';
 import styles from '../../dashboard/dashboard.module.css';
 
@@ -30,6 +31,9 @@ export default function ManageUsersPage() {
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
+
+  // Confirm dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null);
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -93,22 +97,25 @@ export default function ManageUsersPage() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (user: any) => {
-    if (!window.confirm(`Are you sure you want to delete user "${user.attributes?.name}"?`)) {
-      return;
-    }
-
-    try {
-      const result = await deleteUser(user.id);
-      if (result.success) {
-        toast.success(`User "${user.attributes?.name}" deleted successfully`);
-        fetchUsers();
-      } else {
-        toast.error(result.message || 'Delete failed');
-      }
-    } catch (err) {
-      toast.error('Network error during deletion');
-    }
+  const handleDelete = (user: any) => {
+    setConfirmDialog({
+      title: 'Delete User',
+      message: `Are you sure you want to delete "${user.attributes?.name}"? This action cannot be undone.`,
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          const result = await deleteUser(user.id);
+          if (result.success) {
+            toast.success(`User "${user.attributes?.name}" deleted successfully`);
+            fetchUsers();
+          } else {
+            toast.error(result.message || 'Delete failed');
+          }
+        } catch (err) {
+          toast.error('Network error during deletion');
+        }
+      },
+    });
   };
 
   const handleBlock = async (user: any) => {
@@ -340,11 +347,20 @@ export default function ManageUsersPage() {
         )}
       </div>
 
-      <UserModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <UserModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         onSuccess={fetchUsers}
         user={editingUser}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialog !== null}
+        title={confirmDialog?.title ?? ''}
+        message={confirmDialog?.message ?? ''}
+        confirmLabel="Delete"
+        onConfirm={() => confirmDialog?.onConfirm()}
+        onCancel={() => setConfirmDialog(null)}
       />
     </DashboardLayout>
   );

@@ -262,7 +262,16 @@ export class UserController {
   // DELETE /api/users/:uuid
   delete = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await this.service.deleteUser(req.params.uuid as string);
+      const targetUuid = req.params.uuid as string;
+      const requestingUser = (req as any).user;
+
+      if (requestingUser?.uuid === targetUuid) {
+        const error = new Error('You cannot delete your own account.');
+        (error as any).status = 403;
+        throw error;
+      }
+
+      await this.service.deleteUser(targetUuid);
       res.json({
         success: true,
         statusCode: 200,

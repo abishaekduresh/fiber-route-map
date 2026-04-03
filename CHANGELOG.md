@@ -2,6 +2,14 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.19.0] - 2026-04-03
+### Added
+- **ConfirmDialog Component**: Replaced all browser-native `window.confirm()` and `alert()` calls with a polished, glassmorphism-styled in-app confirmation dialog across all management pages (Users, Roles, Countries, Permissions) and the Profile page.
+### Changed
+- **Complete Website UI/UX Overhaul**: Comprehensively redesigned all CSS modules — global design tokens, sidebar, topbar, login, dashboard, user cards, role cards, and profile page — with refined spacing, transitions, focus styles, and visual hierarchy.
+### Security
+- **Self-Deletion Prevention**: Backend now returns `403 Forbidden` when an authenticated user attempts to delete their own account via `DELETE /api/users/:uuid`.
+
 ## [1.18.1] - 2026-04-01
 ### Fixed
 - **Role Permissions Sync**: Standardized frontend data mapping to strictly pass `uuid` identifiers rather than slugs when synchronizing permissions with the Node.js backend.

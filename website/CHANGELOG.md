@@ -2,6 +2,25 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
+## [1.19.0] - 2026-04-03
+### Added
+- **ConfirmDialog Component** (`src/components/ui/ConfirmDialog.tsx`): A reusable, glassmorphism-styled in-app confirmation dialog with `danger` and `warning` variants, replacing all browser-native dialogs.
+- **Design Tokens**: Extended `globals.css` with `--color-warning`, `--color-info`, `--color-border-active`, `--shadow-sm/md`, `--shadow-blue/purple`, `--gradient-surface`, `--transition-base/medium/slow`, and a full spacing scale (`--space-*`).
+- **Focus Accessibility**: Added global `:focus-visible` styles and consistent `3px ring` focus states on all interactive inputs.
+- **Custom Scrollbars**: Added global webkit and Firefox scrollbar styles consistent with the design system.
+### Changed
+- **Complete CSS Overhaul**: Redesigned all module stylesheets:
+  - `globals.css` — fixed duplicate `body`, added 10+ new tokens, new keyframes (`scaleIn`, `slideUp`, `pulse`).
+  - `DashboardLayout.module.css` — active nav items now show a left blue indicator bar, sub-items have dot indicators, avatar uses brand gradient, sidebar nav is independently scrollable, smoother mobile slide animation.
+  - `dashboard.module.css` — stat cards reveal a gradient top stripe on hover, modal uses `scaleIn` animation, status badges include a glowing dot indicator.
+  - `login.module.css` — added missing `orb3` class, version dot has a pulsing green glow, spinner is white-on-gradient for better contrast.
+  - `UserCard.module.css` / `RoleCard.module.css` — gradient top stripe on hover, color-coded action button hover states (`editBtn`, `deleteBtn`, `blockBtn`, `unblockBtn`).
+  - `profile.module.css` — card headers restructured with icon + title/description layout, session items have icon background and hover transition, `retryBtn` uses brand gradient.
+### Fixed
+- **window.confirm() Removed**: Replaced `window.confirm()` in Users, Roles, Countries, and Permissions pages with `ConfirmDialog`.
+- **alert() Removed**: Replaced `alert()` calls in the Profile page with `toast.error()` (sonner).
+- **Missing 'use client'**: Added missing `'use client'` directive to `profile/page.tsx`.
+
 ## [1.18.1] - 2026-04-01
 ### Added
 - **Architectural Policy Constraints**: Formalized Paginated Grid layouts via a new section in `.antigravity/SKILL.md`.

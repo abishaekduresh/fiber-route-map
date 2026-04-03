@@ -5,6 +5,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { getCountries, deleteCountry, blockCountry, unblockCountry } from '@/lib/api';
 import CountryCard from '@/components/users/CountryCard';
 import CountryModal from '@/components/users/CountryModal';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { toast } from 'sonner';
 import styles from '../../dashboard/dashboard.module.css';
 
@@ -29,6 +30,9 @@ export default function ManageCountriesPage() {
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCountry, setEditingCountry] = useState<any>(null);
+
+  // Confirm dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null);
 
   const fetchCountries = async () => {
     setIsLoading(true);
@@ -94,22 +98,25 @@ export default function ManageCountriesPage() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (country: any) => {
-    if (!window.confirm(`Are you sure you want to delete country "${country.attributes?.name}"?`)) {
-      return;
-    }
-
-    try {
-      const result = await deleteCountry(country.id);
-      if (result.success) {
-        toast.success(`Country "${country.attributes?.name}" deleted successfully`);
-        fetchCountries();
-      } else {
-        toast.error(result.message || 'Delete failed');
-      }
-    } catch (err) {
-      toast.error('Network error during deletion');
-    }
+  const handleDelete = (country: any) => {
+    setConfirmDialog({
+      title: 'Delete Country',
+      message: `Are you sure you want to delete "${country.attributes?.name}"? This action cannot be undone.`,
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          const result = await deleteCountry(country.id);
+          if (result.success) {
+            toast.success(`Country "${country.attributes?.name}" deleted successfully`);
+            fetchCountries();
+          } else {
+            toast.error(result.message || 'Delete failed');
+          }
+        } catch (err) {
+          toast.error('Network error during deletion');
+        }
+      },
+    });
   };
 
   const handleBlock = async (country: any) => {
@@ -280,11 +287,20 @@ export default function ManageCountriesPage() {
         )}
       </div>
 
-      <CountryModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <CountryModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         onSuccess={fetchCountries}
         country={editingCountry}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialog !== null}
+        title={confirmDialog?.title ?? ''}
+        message={confirmDialog?.message ?? ''}
+        confirmLabel="Delete"
+        onConfirm={() => confirmDialog?.onConfirm()}
+        onCancel={() => setConfirmDialog(null)}
       />
     </DashboardLayout>
   );

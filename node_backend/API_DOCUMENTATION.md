@@ -1,4 +1,4 @@
-# API Documentation (v1.17.0)
+# API Documentation (v1.19.0)
 
 This document provides a comprehensive reference for all Node.js backend API endpoints. All timestamps are in **UTC ISO-8601** format.
 
@@ -357,8 +357,32 @@ fetch('http://localhost:3001/api/users', {
 ---
 
 ### 1.4 Delete User (Soft Delete)
-**Endpoint**: `DELETE /api/users/:uuid`  
-**Description**: Marks a user as `deleted`.
+**Endpoint**: `DELETE /api/users/:uuid`
+**Description**: Marks a user as `deleted`. An authenticated user **cannot delete their own account** — attempting to do so returns a `403 Forbidden` error.
+
+#### Required Permission
+`user.delete`
+
+#### Example Response (Success)
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "User deleted successfully",
+  "meta": { "requestId": "req_...", "timestamp": "...", "version": "v1.19.0" }
+}
+```
+
+#### Example Response (Self-Deletion — 403)
+```json
+{
+  "success": false,
+  "statusCode": 403,
+  "errorType": "FORBIDDEN",
+  "message": "You cannot delete your own account.",
+  "meta": { "requestId": "req_...", "timestamp": "...", "version": "v1.19.0" }
+}
+```
 
 ---
 

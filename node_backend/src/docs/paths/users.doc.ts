@@ -109,6 +109,7 @@
  *     tags:
  *       - Users
  *     summary: Delete User (Soft Delete)
+ *     description: Marks a user as deleted. An authenticated user cannot delete their own account.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -119,7 +120,9 @@
  *         schema: { type: string, format: uuid }
  *     responses:
  *       200:
- *         description: User deleted
+ *         description: User deleted successfully
+ *       403:
+ *         description: Forbidden — cannot delete your own account
  *
  * /users/{uuid}/block:
  *   post:

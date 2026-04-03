@@ -1,9 +1,11 @@
 'use client';
 
+'use client';
+
 import { useEffect, useState } from 'react';
 import { getCurrentUser, terminateSession, type LoginData, type ActiveSession } from '@/lib/api';
 import styles from './profile.module.css';
-
+import { toast } from 'sonner';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 
 /**
@@ -64,11 +66,11 @@ export default function ProfilePage() {
         }
         setSessions(prev => prev.filter(s => s.uuid !== uuid));
       } else {
-        alert(result.message);
+        toast.error(result.message || 'Failed to terminate session.');
       }
     } catch (err) {
       console.error('Termination error:', err);
-      alert('Failed to terminate session.');
+      toast.error('Failed to terminate session.');
     } finally {
       setTerminatingUuid(null);
     }

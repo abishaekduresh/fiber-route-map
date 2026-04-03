@@ -5,6 +5,10 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.0] - 2026-04-03
+### Security
+- **Self-Deletion Prevention**: `DELETE /api/users/:uuid` now returns `403 Forbidden` with `errorType: FORBIDDEN` when the authenticated user attempts to delete their own account. The check compares `req.params.uuid` against the requesting user's `uuid` from the auth middleware before any service call is made.
+
 ## [1.18.1] - 2026-04-01
 ### Fixed
 - **API Continuity**: The `POST /api/roles/:uuid/permissions` sync endpoint implicitly relies perfectly on the resolved frontend `uuid` sync changes. No backend mutations were strictly necessary.

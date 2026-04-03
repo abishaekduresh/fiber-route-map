@@ -4,7 +4,7 @@ The authoritative backend REST API for the Fiber Route Map system, replicated in
 Built using [Express](https://expressjs.com/) and [TypeScript](https://www.typescriptlang.org/), leveraging [Knex.js](https://knexjs.org/) for database interaction.
 
 ## Version
-**Current Version:** 1.18.1 (Permission Syncing Fixes)
+**Current Version:** 1.19.0 (Self-Deletion Prevention)
 
 ## Interactive Documentation
 The API is fully documented using Swagger/OpenAPI 3.0.
@@ -61,6 +61,7 @@ The API uses a secure, database-backed session system and a granular Role-Based 
 - **Session Management**: Users can list active devices via `GET /api/auth/users/sessions` and terminate sessions via `DELETE /api/auth/users/sessions/:uuid`.
 - **RBAC Enforcement**: All resource endpoints (Users, Roles, Countries) are protected by a custom `rbac` middleware that validates permission slugs (e.g., `user.view`, `role.create`).
 - **Admin Bypass**: Users with the `admin` role slug have full access to all system endpoints, bypassing granular checks.
+- **Self-Deletion Prevention**: Authenticated users cannot delete their own account. `DELETE /api/users/:uuid` returns `403 Forbidden` if the target UUID matches the requesting user.
 
 ### System Health Monitoring
 The API provides a dedicated health check endpoint:

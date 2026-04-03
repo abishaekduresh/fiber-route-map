@@ -5,6 +5,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { getPermissions, deletePermission, ApiResponse } from '@/lib/api';
 import PermissionModal from '@/components/permissions/PermissionModal';
 import PermissionCard from '@/components/permissions/PermissionCard';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { toast } from 'sonner';
 import styles from '../../dashboard/dashboard.module.css';
 
@@ -23,6 +24,9 @@ export default function ManagePermissionsPage() {
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPermission, setEditingPermission] = useState<any>(null);
+
+  // Confirm dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null);
 
   const fetchPermissions = async () => {
     setIsLoading(true);
@@ -69,22 +73,25 @@ export default function ManagePermissionsPage() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (permission: any) => {
-    if (!window.confirm(`Are you sure you want to permanently delete permission "${permission.attributes?.name}"?`)) {
-      return;
-    }
-
-    try {
-      const result = await deletePermission(permission.id);
-      if (result.success) {
-        toast.success(`Permission "${permission.attributes?.name}" deleted successfully`);
-        fetchPermissions();
-      } else {
-        toast.error(result.message || 'Delete failed');
-      }
-    } catch (err) {
-      toast.error('Network error during deletion');
-    }
+  const handleDelete = (permission: any) => {
+    setConfirmDialog({
+      title: 'Delete Permission',
+      message: `Are you sure you want to permanently delete "${permission.attributes?.name}"? This action cannot be undone.`,
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          const result = await deletePermission(permission.id);
+          if (result.success) {
+            toast.success(`Permission "${permission.attributes?.name}" deleted successfully`);
+            fetchPermissions();
+          } else {
+            toast.error(result.message || 'Delete failed');
+          }
+        } catch (err) {
+          toast.error('Network error during deletion');
+        }
+      },
+    });
   };
 
   const handleCreate = () => {
@@ -184,11 +191,20 @@ export default function ManagePermissionsPage() {
         )}
       </div>
 
-      <PermissionModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <PermissionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         onSuccess={fetchPermissions}
         permission={editingPermission}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialog !== null}
+        title={confirmDialog?.title ?? ''}
+        message={confirmDialog?.message ?? ''}
+        confirmLabel="Delete"
+        onConfirm={() => confirmDialog?.onConfirm()}
+        onCancel={() => setConfirmDialog(null)}
       />
     </DashboardLayout>
   );

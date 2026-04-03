@@ -5,6 +5,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { getRoles, deleteRole, ApiResponse } from '@/lib/api';
 import RoleModal from '@/components/roles/RoleModal';
 import RoleCard from '@/components/roles/RoleCard';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { toast } from 'sonner';
 import styles from '../../dashboard/dashboard.module.css';
 
@@ -27,6 +28,9 @@ export default function ManageRolesPage() {
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<any>(null);
+
+  // Confirm dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null);
 
   const fetchRoles = async () => {
     setIsLoading(true);
@@ -79,22 +83,25 @@ export default function ManageRolesPage() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (role: any) => {
-    if (!window.confirm(`Are you sure you want to delete role "${role.attributes?.name}"?`)) {
-      return;
-    }
-
-    try {
-      const result = await deleteRole(role.id);
-      if (result.success) {
-        toast.success(`Role "${role.attributes?.name}" deleted successfully`);
-        fetchRoles();
-      } else {
-        toast.error(result.message || 'Delete failed');
-      }
-    } catch (err) {
-      toast.error('Network error during deletion');
-    }
+  const handleDelete = (role: any) => {
+    setConfirmDialog({
+      title: 'Delete Role',
+      message: `Are you sure you want to delete "${role.attributes?.name}"? This action cannot be undone.`,
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          const result = await deleteRole(role.id);
+          if (result.success) {
+            toast.success(`Role "${role.attributes?.name}" deleted successfully`);
+            fetchRoles();
+          } else {
+            toast.error(result.message || 'Delete failed');
+          }
+        } catch (err) {
+          toast.error('Network error during deletion');
+        }
+      },
+    });
   };
 
   const handleCreate = () => {
@@ -229,11 +236,20 @@ export default function ManageRolesPage() {
         )}
       </div>
 
-      <RoleModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <RoleModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         onSuccess={fetchRoles}
         role={editingRole}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialog !== null}
+        title={confirmDialog?.title ?? ''}
+        message={confirmDialog?.message ?? ''}
+        confirmLabel="Delete"
+        onConfirm={() => confirmDialog?.onConfirm()}
+        onCancel={() => setConfirmDialog(null)}
       />
     </DashboardLayout>
   );

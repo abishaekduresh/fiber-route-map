@@ -1,42 +1,67 @@
+/* ============================================
+   ROLE CARD
+   ============================================ */
+
 .card {
   background: var(--color-bg-glass);
   backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: 1.5rem;
+  padding: 1.375rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  transition: all 0.3s ease;
+  gap: 1.125rem;
+  transition: transform var(--transition-base), border-color var(--transition-base),
+              box-shadow var(--transition-base), background var(--transition-base);
   position: relative;
   overflow: hidden;
 }
 
-.card:hover {
-  transform: translateY(-4px);
-  border-color: var(--color-border-hover);
-  background: var(--color-bg-glass-hover);
-  box-shadow: var(--shadow-lg);
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--gradient-brand);
+  opacity: 0;
+  transition: opacity var(--transition-base);
 }
 
+.card:hover {
+  transform: translateY(-3px);
+  border-color: var(--color-border-hover);
+  background: var(--color-bg-glass-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.card:hover::before {
+  opacity: 1;
+}
+
+/* --- Card Header --- */
 .cardHeader {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  align-items: flex-start;
+  gap: 0.875rem;
 }
 
 .avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
   background: var(--gradient-brand);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-weight: 700;
-  font-size: 1.25rem;
+  font-weight: 800;
+  font-size: 1.1rem;
   flex-shrink: 0;
+  box-shadow: var(--shadow-purple);
+  letter-spacing: 0.02em;
 }
 
 .roleInfo {
@@ -45,54 +70,63 @@
 }
 
 .roleName {
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--color-text-primary);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.01em;
 }
 
 .roleSlug {
-  font-size: 0.85rem;
-  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  margin-top: 0.15rem;
+  font-family: 'Courier New', monospace;
 }
 
 .statusBadge {
-  padding: 0.2rem 0.6rem;
-  border-radius: 6px;
-  font-size: 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.175rem 0.55rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   background: rgba(16, 185, 129, 0.1);
   color: var(--color-success);
   border: 1px solid rgba(16, 185, 129, 0.2);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
+/* --- Details Grid --- */
 .detailsGrid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1rem;
+  gap: 0.875rem;
 }
 
 .detailItem {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.2rem;
 }
 
 .detailLabel {
-  font-size: 0.65rem;
-  font-weight: 600;
+  font-size: 0.625rem;
+  font-weight: 700;
   text-transform: uppercase;
-  color: var(--color-text-secondary);
-  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  letter-spacing: 0.07em;
 }
 
 .detailValue {
-  font-size: 0.875rem;
+  font-size: 0.84rem;
   color: var(--color-text-primary);
   font-weight: 500;
   white-space: nowrap;
@@ -100,80 +134,82 @@
   text-overflow: ellipsis;
 }
 
+/* --- Card Footer --- */
 .cardFooter {
   display: flex;
   justify-content: flex-end;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.375rem;
   margin-top: auto;
-  padding-top: 1rem;
+  padding-top: 0.875rem;
   border-top: 1px solid var(--color-border);
 }
 
 .actionBtn {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-base);
+  flex-shrink: 0;
 }
 
 .actionBtn:hover {
   background: var(--color-bg-glass-hover);
   color: var(--color-text-primary);
-  transform: scale(1.05);
+  border-color: var(--color-border-hover);
+  transform: translateY(-1px);
 }
 
 .editBtn:hover {
   color: var(--color-accent-blue);
   border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.06);
 }
 
 .deleteBtn:hover {
   color: #ef4444;
   border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.06);
 }
 
-/* Mobile Responsiveness */
+/* --- Responsive --- */
 @media (max-width: 640px) {
   .card {
     padding: 1.25rem;
   }
-  
+
   .roleName {
-    font-size: 1rem;
+    font-size: 0.9375rem;
   }
 }
 
 @media (max-width: 480px) {
   .cardHeader {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+    align-items: center;
   }
-  
+
   .roleInfo {
     width: 100%;
   }
-  
+
   .roleName {
     white-space: normal;
     word-break: break-word;
-    padding-right: 0;
   }
-  
+
   .cardFooter {
     justify-content: space-between;
-    gap: 0.5rem;
   }
-  
+
   .actionBtn {
     flex: 1;
-    max-width: none;
+    max-width: 48px;
   }
 }
