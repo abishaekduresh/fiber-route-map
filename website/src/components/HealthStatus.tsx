@@ -9,6 +9,9 @@ import { checkHealth } from '@/lib/api';
  * 
  * Monitors the backend health and displays a warning banner if the system is unhealthy or unreachable.
  */
+// Pages where health checks should never run
+const SKIP_HEALTH_CHECK_PATHS = ['/setup', '/login', '/unhealthy'];
+
 export default function HealthStatus() {
   const [isUnhealthy, setIsUnhealthy] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -16,6 +19,9 @@ export default function HealthStatus() {
   const pathname = usePathname();
 
   useEffect(() => {
+    // Don't interfere with setup/login/unhealthy flows
+    if (SKIP_HEALTH_CHECK_PATHS.some((p) => pathname?.startsWith(p))) return;
+
     const performCheck = async () => {
       try {
         const res = await checkHealth();
@@ -32,8 +38,7 @@ export default function HealthStatus() {
           const msg = res.errorType || res.error || 'The system is experiencing technical difficulties.';
           setErrorMessage(msg);
           
-          // Forceful redirect to unhealthy page if not already there
-          if (pathname !== '/unhealthy') {
+          if (!SKIP_HEALTH_CHECK_PATHS.some((p) => pathname?.startsWith(p))) {
             window.location.href = `/unhealthy?error=${encodeURIComponent(msg)}`;
           }
         } else {
@@ -47,7 +52,7 @@ export default function HealthStatus() {
         setIsUnhealthy(true);
         const msg = 'Unable to connect to the backend server.';
         setErrorMessage(msg);
-        if (pathname !== '/unhealthy') {
+        if (!SKIP_HEALTH_CHECK_PATHS.some((p) => pathname?.startsWith(p))) {
           window.location.href = `/unhealthy?error=${encodeURIComponent(msg)}`;
         }
       }
@@ -62,8 +67,8 @@ export default function HealthStatus() {
     return () => clearInterval(interval);
   }, []);
 
-  // Don't show the banner if we are on the unhealthy page or if system is healthy
-  if (!isUnhealthy || pathname === '/unhealthy') return null;
+  // Don't show the banner on setup/login/unhealthy or if system is healthy
+  if (!isUnhealthy || SKIP_HEALTH_CHECK_PATHS.some((p) => pathname?.startsWith(p))) return null;
 
   return (
     <div style={{
