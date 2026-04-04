@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { checkHealth } from '@/lib/api';
+import { checkSetupStatus } from '@/lib/setupApi';
 import { useState } from 'react';
 
 function UnhealthyContent() {
@@ -14,21 +15,26 @@ function UnhealthyContent() {
   const handleRetry = async () => {
     setIsRetrying(true);
     try {
+      // Check setup first — if setup is incomplete, go to wizard
+      const setupRes = await checkSetupStatus().catch(() => null);
+      if (setupRes && !setupRes.data?.isComplete) {
+        router.push('/setup');
+        return;
+      }
+
       const res = await checkHealth();
       const isDbDisconnected = res.services?.database !== 'connected';
       const hasApiError = res.errorType && res.statusCode !== 200;
       const isUnsuccessful = res.success === false;
 
       if (!isDbDisconnected && !hasApiError && !isUnsuccessful) {
-        // System is healthy now, redirect to dashboard or home
         router.push('/');
       } else {
-        // Still unhealthy, maybe update the error message
         const newError = res.errorType || res.error || error;
         router.replace(`/unhealthy?error=${encodeURIComponent(newError)}&t=${Date.now()}`);
       }
-    } catch (err) {
-      // Still failed
+    } catch {
+      // Still failed — stay on page
     } finally {
       setTimeout(() => setIsRetrying(false), 500);
     }
