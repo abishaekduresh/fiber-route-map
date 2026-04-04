@@ -93,3 +93,7 @@ export async function runSetup(env: EnvConfig, admin: AdminConfig): Promise<Setu
     body: JSON.stringify({ env, admin }),
   });
 }
+
+export async function resetSetup(): Promise<{ success: boolean; message: string }> {
+  return setupFetch('/api/setup/reset', { method: 'DELETE' });
+}

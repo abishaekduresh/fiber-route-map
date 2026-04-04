@@ -11,5 +11,6 @@ const controller = new SetupController();
 router.get('/status', controller.status);
 router.post('/test-connection', controller.testConnection);
 router.post('/run', controller.run);
+router.delete('/reset', controller.reset);
 
 export default router;

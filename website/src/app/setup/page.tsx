@@ -6,6 +6,7 @@ import {
   checkSetupStatus,
   testDbConnection,
   runSetup,
+  resetSetup,
   type EnvConfig,
   type AdminConfig,
   type StepResult,
@@ -92,16 +93,26 @@ export default function SetupPage() {
 
   // Checking status on mount
   const [isChecking, setIsChecking] = useState(true);
+  const [partialSetup, setPartialSetup] = useState<{ dbName: string } | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
 
   useEffect(() => {
     checkSetupStatus()
       .then((res) => {
         if (res?.data?.isComplete) {
           router.replace('/login');
+          return;
+        }
+        // Partial setup: .env was written but setup never completed
+        if (res?.data?.steps?.envConfigured && !res.data.isComplete) {
+          setPartialSetup({ dbName: envConfig.dbName });
         }
       })
       .catch(() => {/* backend offline — show wizard anyway */})
       .finally(() => setIsChecking(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   // ── Validation ─────────────────────────────────────────────────────────────
@@ -185,6 +196,29 @@ export default function SetupPage() {
     }
   };
 
+  const handleReset = async () => {
+    setIsResetting(true);
+    setResetError(null);
+    try {
+      const res = await resetSetup();
+      if (res.success) {
+        setPartialSetup(null);
+        setShowResetConfirm(false);
+        setStep(1);
+        setEnvConfig(DEFAULT_ENV);
+        setAdminConfig(DEFAULT_ADMIN);
+        setConnectionStatus(null);
+        setErrors({});
+      } else {
+        setResetError(res.message || 'Reset failed');
+      }
+    } catch {
+      setResetError('Could not reach the backend server');
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   const handleEnvChange = (field: keyof EnvConfig, value: string | number) => {
     setEnvConfig((prev) => ({ ...prev, [field]: value }));
     setConnectionStatus(null); // Reset test when credentials change
@@ -262,6 +296,79 @@ export default function SetupPage() {
               It only needs to run once.
             </p>
 
+            {/* Partial setup detected banner */}
+            {partialSetup && !showResetConfirm && (
+              <div className={styles.warningBanner}>
+                <div className={styles.warningBannerHeader}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                  <p className={styles.warningBannerTitle}>Previous Setup Detected</p>
+                </div>
+                <p className={styles.warningBannerText}>
+                  A previous setup was started but not completed. You can resume from where you left off, or reset and start fresh by dropping the existing database.
+                </p>
+                <div className={styles.warningBannerActions}>
+                  <button className={styles.resumeBtn} onClick={() => setPartialSetup(null)}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                    Resume Setup
+                  </button>
+                  <button className={styles.resetBtn} onClick={() => setShowResetConfirm(true)}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 102.13-9.36L1 10" />
+                    </svg>
+                    Reset & Start Fresh
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Inline confirm dialog for DB reset */}
+            {showResetConfirm && (
+              <div className={styles.confirmBox}>
+                <p className={styles.confirmBoxTitle}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  Drop Database?
+                </p>
+                <p className={styles.confirmBoxText}>
+                  This will permanently drop the database{' '}
+                  <span className={styles.confirmBoxDbName}>{partialSetup?.dbName}</span>
+                  {' '}and all its data. This action cannot be undone.
+                </p>
+                {resetError && <span className={styles.errorMsg}>{resetError}</span>}
+                <div className={styles.confirmBoxActions}>
+                  <button
+                    className={styles.backBtn}
+                    onClick={() => { setShowResetConfirm(false); setResetError(null); }}
+                    disabled={isResetting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className={styles.confirmDangerBtn}
+                    onClick={handleReset}
+                    disabled={isResetting}
+                  >
+                    {isResetting ? (
+                      <><div className={styles.spinnerSm} /> Dropping…</>
+                    ) : (
+                      <>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
+                        </svg>
+                        Yes, Drop Database
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className={styles.featureList}>
               {[
                 { icon: '🗄️', label: 'Configure database connection & create all tables' },
@@ -276,12 +383,14 @@ export default function SetupPage() {
               ))}
             </div>
 
-            <button className={styles.submitBtn} onClick={() => setStep(2)}>
-              Start Setup
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
-              </svg>
-            </button>
+            {!showResetConfirm && (
+              <button className={styles.submitBtn} onClick={() => setStep(2)}>
+                {partialSetup ? 'Resume Setup' : 'Start Setup'}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+                </svg>
+              </button>
+            )}
           </div>
         )}
 

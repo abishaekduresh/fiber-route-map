@@ -139,6 +139,48 @@ export class SetupService {
     };
   }
 
+  // ── Reset Setup (drop database, clear SETUP_COMPLETE) ───────────────────────
+
+  async resetSetup(): Promise<{ success: boolean; message: string }> {
+    const dbHost = process.env.DB_HOST;
+    const dbPort = Number(process.env.DB_PORT) || 3306;
+    const dbName = process.env.DB_NAME;
+    const dbUser = process.env.DB_USER;
+    const dbPass = process.env.DB_PASS || '';
+    const dbCharset = process.env.DB_CHARSET || 'utf8mb4';
+
+    if (!dbHost || !dbName || !dbUser) {
+      return { success: false, message: 'No database configuration found in environment — nothing to reset' };
+    }
+
+    // Connect without specifying DB to avoid "unknown database" error
+    const db = knex({
+      client: 'mysql2',
+      connection: { host: dbHost, port: dbPort, user: dbUser, password: dbPass, charset: dbCharset },
+      pool: { min: 0, max: 2 },
+    });
+
+    try {
+      await db.raw(`DROP DATABASE IF EXISTS \`${dbName}\``);
+      logger.info(`Setup reset: dropped database '${dbName}'`);
+    } finally {
+      await db.destroy();
+    }
+
+    // Clear SETUP_COMPLETE from .env and in-memory
+    const envPath = path.resolve(process.cwd(), '.env');
+    if (fs.existsSync(envPath)) {
+      const updated = fs.readFileSync(envPath, 'utf-8')
+        .split('\n')
+        .map((line) => line.startsWith('SETUP_COMPLETE=') ? 'SETUP_COMPLETE=false' : line)
+        .join('\n');
+      fs.writeFileSync(envPath, updated, 'utf-8');
+    }
+    process.env.SETUP_COMPLETE = 'false';
+
+    return { success: true, message: `Database '${dbName}' dropped and setup reset` };
+  }
+
   // ── Test Connection ──────────────────────────────────────────────────────────
 
   async testConnection(config: DbConfig): Promise<{ success: boolean; message: string }> {
@@ -241,7 +283,7 @@ export class SetupService {
 
   async migrate(db: Knex): Promise<void> {
     // 1. users
-    await db.schema.createTableIfNotExists('users', (t) => {
+    await db.schema.createTableIfNotExists('users', (t: Knex.CreateTableBuilder) => {
       t.increments('id').primary();
       t.string('uuid', 36).notNullable().unique();
       t.string('email', 191).notNullable().unique();   // 191 = max safe length for utf8mb4 unique index (191*4=764 < 767)
@@ -258,7 +300,7 @@ export class SetupService {
     });
 
     // 2. countries
-    await db.schema.createTableIfNotExists('countries', (t) => {
+    await db.schema.createTableIfNotExists('countries', (t: Knex.CreateTableBuilder) => {
       t.increments('id').primary();
       t.string('uuid', 36).notNullable().unique();
       t.string('name', 255).notNullable();
@@ -274,7 +316,7 @@ export class SetupService {
     const hasCountryFk = await db.schema.hasColumn('users', 'countryId');
     if (hasCountryFk) {
       try {
-        await db.schema.alterTable('users', (t) => {
+        await db.schema.alterTable('users', (t: Knex.CreateTableBuilder) => {
           t.foreign('countryId').references('id').inTable('countries').onDelete('SET NULL');
         });
       } catch {
@@ -283,7 +325,7 @@ export class SetupService {
     }
 
     // 3. roles
-    await db.schema.createTableIfNotExists('roles', (t) => {
+    await db.schema.createTableIfNotExists('roles', (t: Knex.CreateTableBuilder) => {
       t.increments('id').primary();
       t.string('uuid', 36).notNullable().unique();
       t.string('name', 255).notNullable();
@@ -296,7 +338,7 @@ export class SetupService {
     });
 
     // 4. user_roles
-    await db.schema.createTableIfNotExists('user_roles', (t) => {
+    await db.schema.createTableIfNotExists('user_roles', (t: Knex.CreateTableBuilder) => {
       t.integer('userId').unsigned().notNullable();
       t.integer('roleId').unsigned().notNullable();
       t.primary(['userId', 'roleId']);
@@ -305,7 +347,7 @@ export class SetupService {
     });
 
     // 5. permissions
-    await db.schema.createTableIfNotExists('permissions', (t) => {
+    await db.schema.createTableIfNotExists('permissions', (t: Knex.CreateTableBuilder) => {
       t.increments('id').primary();
       t.string('uuid', 36).notNullable().unique();
       t.string('name', 255).notNullable();
@@ -317,7 +359,7 @@ export class SetupService {
     });
 
     // 6. role_permissions
-    await db.schema.createTableIfNotExists('role_permissions', (t) => {
+    await db.schema.createTableIfNotExists('role_permissions', (t: Knex.CreateTableBuilder) => {
       t.integer('roleId').unsigned().notNullable();
       t.integer('permissionId').unsigned().notNullable();
       t.primary(['roleId', 'permissionId']);
@@ -353,6 +395,26 @@ export class SetupService {
     });
 
     logger.info('Setup: All tables created/verified');
+  }
+
+  // ── Seed Default Countries ───────────────────────────────────────────────────
+
+  async seedDefaultCountries(db: Knex): Promise<void> {
+    const now = nowDb();
+
+    const defaults = [
+      { name: 'India', code: 'IN', phoneCode: '+91' },
+    ];
+
+    for (const country of defaults) {
+      const uuid = generateUuidV7();
+      await db.raw(
+        'INSERT IGNORE INTO countries (uuid, name, code, phoneCode, status, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [uuid, country.name, country.code, country.phoneCode, 'active', now, now]
+      );
+    }
+
+    logger.info(`Setup: Seeded ${defaults.length} default country/countries`);
   }
 
   // ── Seed Permissions ─────────────────────────────────────────────────────────
@@ -513,7 +575,16 @@ export class SetupService {
         return { success: false, steps };
       }
 
-      // Step 4: Seed permissions
+      // Step 4: Seed default countries
+      try {
+        await this.seedDefaultCountries(db);
+        steps.push({ step: 'countries', success: true, message: 'Default country India seeded/verified' });
+      } catch (err: any) {
+        steps.push({ step: 'countries', success: false, message: err.message });
+        return { success: false, steps };
+      }
+
+      // Step 5: Seed permissions
       let permissionIds: number[] = [];
       try {
         permissionIds = await this.seedPermissions(db);
@@ -523,7 +594,7 @@ export class SetupService {
         return { success: false, steps };
       }
 
-      // Step 5: Create Super Admin role
+      // Step 6: Create Super Admin role
       let roleId: number;
       try {
         roleId = await this.seedSuperAdminRole(db, permissionIds);
@@ -533,7 +604,7 @@ export class SetupService {
         return { success: false, steps };
       }
 
-      // Step 6: Create admin user
+      // Step 7: Create admin user
       try {
         await this.createAdminUser(db, payload.admin, roleId);
         steps.push({ step: 'admin', success: true, message: `Admin user '${payload.admin.username}' created and assigned Super Admin role` });

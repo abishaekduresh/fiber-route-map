@@ -84,7 +84,7 @@ export class SetupController {
           success: false,
           statusCode: 422,
           errorType: 'VALIDATION_ERROR',
-          message: `Validation failed: ${parsed.error.errors[0]?.message}`,
+          message: `Validation failed: ${parsed.error.issues[0]?.message}`,
           meta: this.getMeta(req),
         });
         return;
@@ -94,6 +94,33 @@ export class SetupController {
       res.json({
         success: result.success,
         statusCode: result.success ? 200 : 503,
+        message: result.message,
+        meta: this.getMeta(req),
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // DELETE /api/setup/reset
+  reset = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      // Guard: cannot reset a completed setup without manual .env edit
+      if (process.env.SETUP_COMPLETE === 'true') {
+        res.json({
+          success: false,
+          statusCode: 409,
+          errorType: 'SETUP_COMPLETE',
+          message: 'Setup is marked as complete. To reset, remove SETUP_COMPLETE=true from your .env and restart the server.',
+          meta: this.getMeta(req),
+        });
+        return;
+      }
+
+      const result = await this.service.resetSetup();
+      res.json({
+        success: result.success,
+        statusCode: result.success ? 200 : 500,
         message: result.message,
         meta: this.getMeta(req),
       });
@@ -120,13 +147,13 @@ export class SetupController {
 
       const parsed = runSchema.safeParse(req.body);
       if (!parsed.success) {
-        const firstError = parsed.error.errors[0];
+        const firstError = parsed.error.issues[0];
         res.json({
           success: false,
           statusCode: 422,
           errorType: 'VALIDATION_ERROR',
           message: `Validation failed: ${firstError?.path.join('.')}: ${firstError?.message}`,
-          errors: parsed.error.errors.map((e) => ({ field: e.path.join('.'), message: e.message })),
+          errors: parsed.error.issues.map((e) => ({ field: e.path.join('.'), message: e.message })),
           meta: this.getMeta(req),
         });
         return;
