@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 // @ts-expect-error: Knex types for NodeNext
 import { knex, type Knex } from 'knex';
@@ -7,6 +8,12 @@ import bcrypt from 'bcryptjs';
 import { generateUuidV7 } from '../utils/uuid.js';
 import { nowDb } from '../utils/time.js';
 import logger from '../utils/logger.js';
+
+// Resolve node_backend/ root regardless of process.cwd() or compilation mode.
+// Works for both tsx (src/services/) and tsc compiled (dist/services/) execution.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const BACKEND_ROOT = path.resolve(__dirname, '../..');
+const ENV_PATH = path.join(BACKEND_ROOT, '.env');
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -93,8 +100,7 @@ export class SetupService {
   // ── Status ──────────────────────────────────────────────────────────────────
 
   async getStatus(): Promise<SetupStatus> {
-    const envPath = path.resolve(process.cwd(), '.env');
-    const envConfigured = fs.existsSync(envPath) && !!process.env.DB_HOST;
+    const envConfigured = fs.existsSync(ENV_PATH) && !!process.env.DB_HOST;
 
     let dbConnected = false;
     let tablesMigrated = false;
@@ -168,13 +174,12 @@ export class SetupService {
     }
 
     // Clear SETUP_COMPLETE from .env and in-memory
-    const envPath = path.resolve(process.cwd(), '.env');
-    if (fs.existsSync(envPath)) {
-      const updated = fs.readFileSync(envPath, 'utf-8')
+    if (fs.existsSync(ENV_PATH)) {
+      const updated = fs.readFileSync(ENV_PATH, 'utf-8')
         .split('\n')
         .map((line) => line.startsWith('SETUP_COMPLETE=') ? 'SETUP_COMPLETE=false' : line)
         .join('\n');
-      fs.writeFileSync(envPath, updated, 'utf-8');
+      fs.writeFileSync(ENV_PATH, updated, 'utf-8');
     }
     process.env.SETUP_COMPLETE = 'false';
 
@@ -210,13 +215,11 @@ export class SetupService {
   // ── Write .env ───────────────────────────────────────────────────────────────
 
   writeEnv(envConfig: EnvConfig): void {
-    const envPath = path.resolve(process.cwd(), '.env');
-
     // Parse existing .env preserving comments
     const existing: string[] = [];
     const existingKeys = new Set<string>();
-    if (fs.existsSync(envPath)) {
-      const lines = fs.readFileSync(envPath, 'utf-8').split('\n');
+    if (fs.existsSync(ENV_PATH)) {
+      const lines = fs.readFileSync(ENV_PATH, 'utf-8').split('\n');
       for (const line of lines) {
         const match = line.match(/^([A-Z_][A-Z0-9_]*)=/);
         if (match) existingKeys.add(match[1]);
@@ -269,7 +272,7 @@ export class SetupService {
     lines.push('# Setup');
     lines.push(`SETUP_COMPLETE=${newValues.SETUP_COMPLETE}`);
 
-    fs.writeFileSync(envPath, lines.join('\n'), 'utf-8');
+    fs.writeFileSync(ENV_PATH, lines.join('\n'), 'utf-8');
 
     // Update process.env in-memory so the running server reflects new values
     for (const [key, value] of Object.entries(newValues)) {
