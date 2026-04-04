@@ -2,6 +2,18 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
+## [1.21.0] - 2026-04-04
+### Added
+- **Partial Setup Detection**: Setup wizard detects when `.env` exists but setup is incomplete — shows an amber warning banner with inline confirmation dialog before resetting (drops DB).
+- **Setup Reset UI**: "Reset & Start Over" flow calls `DELETE /api/setup/reset` and resets all wizard state in-place.
+- **Health-Aware Redirects**: `HealthStatus` and `/unhealthy` page now check setup completion before redirecting — routes to `/setup` if `isComplete: false`, `/unhealthy` otherwise.
+- **Proxy Middleware** (`src/proxy.ts`): Replaces deprecated `middleware.ts` convention (Next.js 16).
+### Fixed
+- **Permissions Always Hidden**: Login response was missing `permissions[]` in user attributes — all `<Can>` gates resolved to hidden. Now fixed in backend `AuthController.transformUser()`.
+- **Permissions Sidebar Nav**: Permissions nav item was guarded by `role.view` instead of `permission.view` — the link was hidden for users without role management access.
+- **Health Check Redirect Loop**: `HealthStatus` skips health polling on `/setup`, `/login`, and `/unhealthy` to prevent redirect cycles.
+- **Hydration Mismatch**: Added `suppressHydrationWarning` to `<body>` in `layout.tsx` to silence browser-extension attribute mismatches.
+
 ## [1.20.0] - 2026-04-03
 ### Added
 - **First-Time Setup Wizard** (`/setup`): A 5-step web wizard that configures the database, seeds all permissions, creates a Super Admin role, and sets up the first admin account — all without touching the command line.

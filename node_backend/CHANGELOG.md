@@ -5,6 +5,17 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.21.0] - 2026-04-04
+### Added
+- **Setup Reset Endpoint** (`DELETE /api/setup/reset`): Drops the configured database and resets `SETUP_COMPLETE=false` in `.env` — blocked with 409 if setup is already complete.
+- **Default Country Seed**: India (`IN`, `+91`) is now automatically inserted during setup as a default country using `INSERT IGNORE` (idempotent).
+### Fixed
+- **Permissions Missing from Login Response**: `AuthController.transformUser()` was not including `permissions[]` in `attributes` — all `<Can>` permission gates were permanently hidden after login. Fixed by destructuring and returning `permissions: permissions || []`.
+- **Backend Default Port**: Changed `process.env.PORT || 3000` to `3001` — port 3000 conflicts with the Next.js frontend, preventing all setup API calls.
+- **`.env` Auto-Create Path**: `index.ts` was resolving `.env` to the project root (`../../`) instead of `node_backend/` (`../`). `dotenv` never loaded the auto-created file.
+- **`.env` Path in SetupService**: All `process.cwd()/.env` references replaced with `import.meta.url`-derived `ENV_PATH` — correct regardless of which directory the server process is started from.
+- **Zod Validation**: `parsed.error.errors` → `parsed.error.issues` in `SetupController` (correct Zod v3 API).
+
 ## [1.20.0] - 2026-04-03
 ### Added
 - **Setup Wizard Backend**: New `/api/setup/*` endpoints (`GET /status`, `POST /test-connection`, `POST /run`) mounted before all auth/version/dbCheck middleware so they work before the database exists.

@@ -2,6 +2,18 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.21.0] - 2026-04-04
+### Added
+- **Setup Reset**: New `DELETE /api/setup/reset` endpoint drops the configured database and resets `SETUP_COMPLETE=false` — frontend partial-setup detection shows a warning banner with inline confirmation before dropping.
+- **Default Country Seed**: India (`IN`, `+91`) is automatically inserted during setup as a default country.
+- **Health-Aware Redirects**: `HealthStatus` and `/unhealthy` page now check setup status before redirecting — routes to `/setup` if setup is incomplete, `/unhealthy` otherwise.
+### Fixed
+- **Permissions Missing from Login Response**: All `<Can>` permission gates were permanently hidden after login. Fixed by including `permissions[]` in the login/me response.
+- **Backend Default Port**: Changed default port from 3000 (conflicts with Next.js) to 3001.
+- **`.env` Path Resolution**: Fixed path bugs in both `index.ts` and `SetupService.ts` that prevented `.env` from being created or loaded correctly.
+- **Permissions Sidebar Nav**: Fixed wrong permission slug (`role.view` → `permission.view`) on the Permissions nav item.
+- **Health Check Redirect Loop**: `HealthStatus` now skips checks on `/setup`, `/login`, and `/unhealthy` to prevent infinite redirect loops.
+
 ## [1.20.0] - 2026-04-03
 ### Added
 - **Web-Based Setup Wizard**: New `/setup` page (frontend) and `/api/setup/*` endpoints (backend) — collects DB credentials, writes `.env`, creates all 9 database tables, seeds 21 permissions, creates a Super Admin role, and sets up the first admin user in a single flow.

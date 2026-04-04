@@ -1,4 +1,4 @@
-# API Documentation (v1.20.0)
+# API Documentation (v1.21.0)
 
 This document provides a comprehensive reference for all Node.js backend API endpoints. All timestamps are in **UTC ISO-8601** format.
 
@@ -813,6 +813,31 @@ The Setup Wizard endpoints are **public** — they require no `Authorization`, `
   "statusCode": 409,
   "errorType": "SETUP_COMPLETE",
   "message": "Setup already complete. Re-run is blocked."
+}
+```
+
+---
+
+### 5.4 Reset Setup
+**Endpoint**: `DELETE /api/setup/reset`
+**Description**: Drops the configured database and resets `SETUP_COMPLETE=false` in `.env`. Allows the setup wizard to be re-run from scratch. **Blocked with 409 if setup is not yet complete.**
+
+#### Example Response (Success)
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Setup reset successfully. Database dropped and SETUP_COMPLETE set to false."
+}
+```
+
+#### Example Response (Not Complete — 409)
+```json
+{
+  "success": false,
+  "statusCode": 409,
+  "errorType": "SETUP_NOT_COMPLETE",
+  "message": "Setup is not complete. Nothing to reset."
 }
 ```
 

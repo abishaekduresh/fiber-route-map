@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 /**
- * Next.js 16 Proxy (replaces middleware.ts)
+ * Next.js Edge Middleware
  *
  * Redirects /setup → /login if setup_complete cookie is set.
  * The cookie is written by the setup wizard after a successful run.
  */
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const setupComplete = request.cookies.get('setup_complete')?.value === 'true';
   const { pathname } = request.nextUrl;
 
