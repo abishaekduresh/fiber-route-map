@@ -443,11 +443,10 @@ export async function checkHealth(): Promise<any> {
         errorType: 'Server Error'
       };
     }
-  } catch (error) {
-    console.error('Health check network error:', error);
-    return { 
-      success: false, 
-      statusCode: 0, 
+  } catch {
+    return {
+      success: false,
+      statusCode: 0,
       error: 'Network failure: Unable to reach the backend server.',
       errorType: 'Connection Error'
     };

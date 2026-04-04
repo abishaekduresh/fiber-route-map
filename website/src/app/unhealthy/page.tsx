@@ -36,11 +36,15 @@ function UnhealthyContent() {
       }
 
       const res = await checkHealth();
-      const isDbDisconnected = res.services?.database !== 'connected';
-      const hasApiError = res.errorType && res.statusCode !== 200;
-      const isUnsuccessful = res.success === false;
 
-      if (!isDbDisconnected && !hasApiError && !isUnsuccessful) {
+      // Network unreachable — stay on page, nothing to redirect to
+      if (res.statusCode === 0) return;
+
+      const isHealthy = res.success !== false
+        && res.services?.database === 'connected'
+        && !res.errorType;
+
+      if (isHealthy) {
         router.push('/');
       } else {
         const newError = res.errorType || res.error || error;
