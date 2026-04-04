@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { checkHealth } from '@/lib/api';
+import { checkSetupStatus } from '@/lib/setupApi';
 
 /**
  * HealthStatus Component
@@ -37,9 +38,15 @@ export default function HealthStatus() {
           setIsUnhealthy(true);
           const msg = res.errorType || res.error || 'The system is experiencing technical difficulties.';
           setErrorMessage(msg);
-          
+
           if (!SKIP_HEALTH_CHECK_PATHS.some((p) => pathname?.startsWith(p))) {
-            window.location.href = `/unhealthy?error=${encodeURIComponent(msg)}`;
+            // Check setup before redirecting — setup not complete means DB was never configured
+            const setupRes = await checkSetupStatus().catch(() => null);
+            if (setupRes && !setupRes.data?.isComplete) {
+              window.location.href = '/setup';
+            } else {
+              window.location.href = `/unhealthy?error=${encodeURIComponent(msg)}`;
+            }
           }
         } else {
           setIsUnhealthy(false);
@@ -48,12 +55,17 @@ export default function HealthStatus() {
             window.location.href = '/';
           }
         }
-      } catch (err) {
+      } catch {
         setIsUnhealthy(true);
         const msg = 'Unable to connect to the backend server.';
         setErrorMessage(msg);
         if (!SKIP_HEALTH_CHECK_PATHS.some((p) => pathname?.startsWith(p))) {
-          window.location.href = `/unhealthy?error=${encodeURIComponent(msg)}`;
+          const setupRes = await checkSetupStatus().catch(() => null);
+          if (setupRes && !setupRes.data?.isComplete) {
+            window.location.href = '/setup';
+          } else {
+            window.location.href = `/unhealthy?error=${encodeURIComponent(msg)}`;
+          }
         }
       }
     };
