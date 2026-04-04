@@ -153,7 +153,7 @@ export class AuthController {
   };
 
   private transformUser = (user: any) => {
-    const { uuid, createdAt, updatedAt, email, username, name, phone, status, country, roles } = user;
+    const { uuid, createdAt, updatedAt, email, username, name, phone, status, country, roles, permissions } = user;
     return {
       id: uuid,
       type: 'user',
@@ -164,7 +164,8 @@ export class AuthController {
         phone,
         status,
         country,
-        roles
+        roles,
+        permissions: permissions || []
       },
       meta: {
         createdAt,
