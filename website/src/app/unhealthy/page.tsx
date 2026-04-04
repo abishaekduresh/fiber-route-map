@@ -1,10 +1,18 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { checkHealth } from '@/lib/api';
 import { checkSetupStatus } from '@/lib/setupApi';
-import { useState } from 'react';
+
+async function needsSetup(): Promise<boolean> {
+  try {
+    const res = await checkSetupStatus();
+    return res?.data?.isComplete === false;
+  } catch {
+    return false;
+  }
+}
 
 function UnhealthyContent() {
   const searchParams = useSearchParams();
@@ -12,12 +20,17 @@ function UnhealthyContent() {
   const error = searchParams.get('error') || 'The system is currently unavailable.';
   const [isRetrying, setIsRetrying] = useState(false);
 
+  // Auto-check on mount: redirect to /setup immediately if setup is incomplete
+  useEffect(() => {
+    needsSetup().then((required) => {
+      if (required) router.replace('/setup');
+    });
+  }, [router]);
+
   const handleRetry = async () => {
     setIsRetrying(true);
     try {
-      // Check setup first — if setup is incomplete, go to wizard
-      const setupRes = await checkSetupStatus().catch(() => null);
-      if (setupRes && !setupRes.data?.isComplete) {
+      if (await needsSetup()) {
         router.push('/setup');
         return;
       }
