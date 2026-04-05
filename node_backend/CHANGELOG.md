@@ -5,6 +5,16 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.0] - 2026-04-05
+### Added
+- **Tenant CRUD API** (`/api/tenants`): List (paginated, filterable by status/name/email/username), create, get, update, soft-delete, block, unblock, suspend. Passwords bcrypt-hashed. Responses include joined country and role objects.
+- **Tenant Business CRUD API** (`/api/tenant-business`): List (filterable by status/name/email/type), create, get, update, soft-delete, block, unblock, suspend. Supports `operator` / `distributor` types.
+- **8 New RBAC Permissions**: `tenant.view`, `tenant.create`, `tenant.update`, `tenant.delete`, `tenant_business.view`, `tenant_business.create`, `tenant_business.update`, `tenant_business.delete` — seeded via `INSERT IGNORE` during setup.
+- **Swagger Docs** (`docs/paths/tenants.doc.ts`, `docs/paths/tenant_business.doc.ts`, `docs/schemas/tenant.doc.ts`): Full OpenAPI 3.0 coverage for both resources.
+### Changed
+- **`SetupService.migrate()`**: Creates 11 tables (added `tenants` and `tenant_business` with InnoDB engine, FK constraints, and named search indexes).
+- **`db.sql`**: Updated `CREATE TABLE` for `tenants` and `tenant_business` — InnoDB, nullable FK columns, `varchar(30)` phone, unique keys on email/username, named `idx_*` indexes, `FOREIGN KEY` constraints. `ALTER TABLE` block added for existing installations.
+
 ## [1.21.0] - 2026-04-04
 ### Added
 - **Setup Reset Endpoint** (`DELETE /api/setup/reset`): Drops the configured database and resets `SETUP_COMPLETE=false` in `.env` — blocked with 409 if setup is already complete.

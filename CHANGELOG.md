@@ -2,6 +2,16 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.22.0] - 2026-04-05
+### Added
+- **Tenant Management**: Full CRUD API (`GET/POST/PUT/DELETE /api/tenants`) with block, unblock, and suspend actions. Tenants have email, username, name, address, password (hashed), and optional country/role associations.
+- **Tenant Business Management**: Full CRUD API (`GET/POST/PUT/DELETE /api/tenant-business`) with block, unblock, and suspend actions. Supports `operator` and `distributor` types with country association.
+- **Swagger Docs for Tenants & Tenant Business**: New `Tenants` and `Tenant Business` tag groups in `/api/docs` with full schema, parameter, and request body documentation.
+- **8 New RBAC Permissions**: `tenant.view/create/update/delete` and `tenant_business.view/create/update/delete` — seeded automatically during setup.
+### Changed
+- **DB Schema**: `tenants` and `tenant_business` tables updated to `InnoDB`, `countryId`/`roleId` made nullable, `phone` column normalised to `varchar(30)`, `address` expanded to `varchar(255)`, `email` expanded to `varchar(191)`. Foreign key constraints and search indexes added.
+- **Setup Migrate**: Now creates 11 tables (was 9) — includes `tenants` and `tenant_business` with FK constraints and indexes on first run.
+
 ## [1.21.0] - 2026-04-04
 ### Added
 - **Setup Reset**: New `DELETE /api/setup/reset` endpoint drops the configured database and resets `SETUP_COMPLETE=false` — frontend partial-setup detection shows a warning banner with inline confirmation before dropping.

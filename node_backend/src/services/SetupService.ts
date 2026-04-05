@@ -69,7 +69,9 @@ const ROUTE_PERMISSIONS = [
   { resource: 'user',       actions: ['view', 'create', 'update', 'delete', 'export'] },
   { resource: 'role',       actions: ['view', 'create', 'update', 'delete'] },
   { resource: 'country',    actions: ['view', 'create', 'update', 'delete'] },
-  { resource: 'permission', actions: ['view', 'create', 'update', 'delete'] },
+  { resource: 'permission',       actions: ['view', 'create', 'update', 'delete'] },
+  { resource: 'tenant',           actions: ['view', 'create', 'update', 'delete'] },
+  { resource: 'tenant_business',  actions: ['view', 'create', 'update', 'delete'] },
 ];
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
@@ -397,6 +399,57 @@ export class SetupService {
       t.foreign('userId').references('id').inTable('users').onDelete('CASCADE');
     });
 
+    // 10. tenants
+    await db.schema.createTableIfNotExists('tenants', (t: Knex.CreateTableBuilder) => {
+      t.increments('id').primary();
+      t.string('uuid', 36).notNullable().unique();
+      t.string('email', 191).notNullable().unique();
+      t.string('username', 100).notNullable().unique();
+      t.string('name', 100).notNullable();
+      t.string('address', 255).notNullable();
+      t.text('password').notNullable();
+      t.integer('countryId').unsigned().nullable();
+      t.integer('roleId').unsigned().nullable();
+      t.enum('status', ['active', 'blocked', 'suspended', 'deleted']).notNullable().defaultTo('active');
+      t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
+      t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
+      t.datetime('deletedAt').nullable();
+      t.index(['status'], 'idx_tenants_status');
+      t.index(['name'], 'idx_tenants_name');
+    });
+
+    try {
+      await db.schema.alterTable('tenants', (t: Knex.CreateTableBuilder) => {
+        t.foreign('countryId').references('id').inTable('countries').onDelete('SET NULL');
+        t.foreign('roleId').references('id').inTable('roles').onDelete('SET NULL');
+      });
+    } catch { /* FKs may already exist */ }
+
+    // 11. tenant_business
+    await db.schema.createTableIfNotExists('tenant_business', (t: Knex.CreateTableBuilder) => {
+      t.increments('id').primary();
+      t.string('uuid', 36).notNullable().unique();
+      t.string('name', 100).notNullable();
+      t.string('address', 255).notNullable();
+      t.string('email', 191).notNullable().unique();
+      t.string('phone', 30).notNullable();
+      t.integer('countryId').unsigned().nullable();
+      t.enum('type', ['operator', 'distributor']).notNullable();
+      t.enum('status', ['active', 'blocked', 'suspended', 'deleted']).notNullable().defaultTo('active');
+      t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
+      t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
+      t.datetime('deletedAt').nullable();
+      t.index(['status'], 'idx_tenant_business_status');
+      t.index(['type'], 'idx_tenant_business_type');
+      t.index(['name'], 'idx_tenant_business_name');
+    });
+
+    try {
+      await db.schema.alterTable('tenant_business', (t: Knex.CreateTableBuilder) => {
+        t.foreign('countryId').references('id').inTable('countries').onDelete('SET NULL');
+      });
+    } catch { /* FK may already exist */ }
+
     logger.info('Setup: All tables created/verified');
   }
 
@@ -572,7 +625,7 @@ export class SetupService {
       // Step 3: Migrate tables
       try {
         await this.migrate(db);
-        steps.push({ step: 'tables', success: true, message: '9 tables created/verified successfully' });
+        steps.push({ step: 'tables', success: true, message: '11 tables created/verified successfully' });
       } catch (err: any) {
         steps.push({ step: 'tables', success: false, message: err.message });
         return { success: false, steps };

@@ -217,7 +217,7 @@
  *                     example: "Admin@1234"
  *     responses:
  *       200:
- *         description: Setup completed (check `success` field — step failures return HTTP 200 with `success: false`)
+ *         description: "Setup completed (check `success` field — step failures return HTTP 200 with `success: false`)"
  *         content:
  *           application/json:
  *             schema:

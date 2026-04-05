@@ -27,6 +27,8 @@ import permissionRoutes from './routes/permissionRoutes.js';
 import healthRoutes from './routes/healthRoutes.js';
 import { authRoutes } from './routes/authRoutes.js';
 import setupRoutes from './routes/setupRoutes.js';
+import tenantRoutes from './routes/tenantRoutes.js';
+import tenantBusinessRoutes from './routes/tenantBusinessRoutes.js';
 import logger from './utils/logger.js';
 import db from './config/database.js';
 import swaggerUi from 'swagger-ui-express';
@@ -64,6 +66,8 @@ app.use('/api/users', auth(authService), userRoutes);
 app.use('/api/countries', auth(authService), countryRoutes);
 app.use('/api/roles', auth(authService), roleRoutes);
 app.use('/api/permissions', permissionRoutes);
+app.use('/api/tenants', auth(authService), tenantRoutes);
+app.use('/api/tenant-business', auth(authService), tenantBusinessRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 

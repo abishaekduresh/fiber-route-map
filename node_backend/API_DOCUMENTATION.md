@@ -1,4 +1,4 @@
-# API Documentation (v1.21.0)
+# API Documentation (v1.22.0)
 
 This document provides a comprehensive reference for all Node.js backend API endpoints. All timestamps are in **UTC ISO-8601** format.
 
@@ -843,7 +843,122 @@ The Setup Wizard endpoints are **public** — they require no `Authorization`, `
 
 ---
 
-## 6. Global Response Standard
+## 6. Tenants (Protected)
+
+All endpoints require `Authorization: Bearer <token>` and `X-API-Version: v1`.
+
+| Action | Method | Endpoint | Permission |
+| :--- | :--- | :--- | :--- |
+| List | `GET` | `/api/tenants` | `tenant.view` |
+| Create | `POST` | `/api/tenants` | `tenant.create` |
+| Get | `GET` | `/api/tenants/:uuid` | `tenant.view` |
+| Update | `PUT` | `/api/tenants/:uuid` | `tenant.update` |
+| Delete | `DELETE` | `/api/tenants/:uuid` | `tenant.delete` |
+| Block | `POST` | `/api/tenants/:uuid/block` | `tenant.update` |
+| Unblock | `PUT` | `/api/tenants/:uuid/unblock` | `tenant.update` |
+| Suspend | `POST` | `/api/tenants/:uuid/suspend` | `tenant.update` |
+
+### 6.1 Create Tenant
+**Endpoint**: `POST /api/tenants`
+
+#### Request Body
+```json
+{
+  "email": "tenant@example.com",
+  "username": "acme_corp",
+  "name": "ACME Corporation",
+  "address": "123 Main St, City",
+  "password": "Secret@123",
+  "countryUuid": "uuid-of-country",
+  "roleUuid": "uuid-of-role"
+}
+```
+*`countryUuid` and `roleUuid` are optional.*
+
+#### Example Response (Success — 201)
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Tenant created successfully",
+  "data": {
+    "id": "019d1eb5-...",
+    "type": "tenant",
+    "attributes": {
+      "email": "tenant@example.com",
+      "username": "acme_corp",
+      "name": "ACME Corporation",
+      "address": "123 Main St, City",
+      "status": "active",
+      "country": { "uuid": "...", "name": "India", "code": "IN", "phoneCode": "+91" },
+      "role": { "uuid": "...", "name": "Super Admin", "slug": "super-admin" }
+    },
+    "meta": { "createdAt": "2026-04-05T00:00:00.000Z", "updatedAt": "2026-04-05T00:00:00.000Z" },
+    "links": { "self": "/api/tenants/019d1eb5-..." }
+  }
+}
+```
+
+---
+
+## 7. Tenant Business (Protected)
+
+All endpoints require `Authorization: Bearer <token>` and `X-API-Version: v1`.
+
+| Action | Method | Endpoint | Permission |
+| :--- | :--- | :--- | :--- |
+| List | `GET` | `/api/tenant-business` | `tenant_business.view` |
+| Create | `POST` | `/api/tenant-business` | `tenant_business.create` |
+| Get | `GET` | `/api/tenant-business/:uuid` | `tenant_business.view` |
+| Update | `PUT` | `/api/tenant-business/:uuid` | `tenant_business.update` |
+| Delete | `DELETE` | `/api/tenant-business/:uuid` | `tenant_business.delete` |
+| Block | `POST` | `/api/tenant-business/:uuid/block` | `tenant_business.update` |
+| Unblock | `PUT` | `/api/tenant-business/:uuid/unblock` | `tenant_business.update` |
+| Suspend | `POST` | `/api/tenant-business/:uuid/suspend` | `tenant_business.update` |
+
+### 7.1 Create Tenant Business
+**Endpoint**: `POST /api/tenant-business`
+
+#### Request Body
+```json
+{
+  "name": "ACME ISP",
+  "address": "456 Network Ave, City",
+  "email": "contact@acme-isp.com",
+  "phone": "9876543210",
+  "type": "operator",
+  "countryUuid": "uuid-of-country"
+}
+```
+*`type` must be `operator` or `distributor`. `countryUuid` is optional.*
+
+#### Example Response (Success — 201)
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Tenant business created successfully",
+  "data": {
+    "id": "019d1eb5-...",
+    "type": "tenant_business",
+    "attributes": {
+      "name": "ACME ISP",
+      "address": "456 Network Ave, City",
+      "email": "contact@acme-isp.com",
+      "phone": "9876543210",
+      "type": "operator",
+      "status": "active",
+      "country": { "uuid": "...", "name": "India", "code": "IN", "phoneCode": "+91" }
+    },
+    "meta": { "createdAt": "2026-04-05T00:00:00.000Z", "updatedAt": "2026-04-05T00:00:00.000Z" },
+    "links": { "self": "/api/tenant-business/019d1eb5-..." }
+  }
+}
+```
+
+---
+
+## 8. Global Response Standard
 
 All endpoints follow this structure:
 - **`success`**: `boolean` indicating business logic success.

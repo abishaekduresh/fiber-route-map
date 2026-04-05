@@ -2,6 +2,10 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
+## [1.22.0] - 2026-04-05
+### Changed
+- No frontend changes — backend-only release. See `node_backend/CHANGELOG.md` for details.
+
 ## [1.21.0] - 2026-04-04
 ### Added
 - **Partial Setup Detection**: Setup wizard detects when `.env` exists but setup is incomplete — shows an amber warning banner with inline confirmation dialog before resetting (drops DB).
