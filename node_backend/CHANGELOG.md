@@ -5,6 +5,14 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.23.0] - 2026-04-09
+### Added
+- **`POST /api/permissions/sync`**: Reads `ROUTE_PERMISSIONS` and `INSERT IGNORE`s any missing slugs. Returns `{ added: string[], total: number }`. Requires `permission.create`.
+- **Swagger**: `POST /api/permissions/sync` documented with full request/response schema in `permission.ts`.
+### Fixed
+- **Permission RBAC Slugs**: Routes were guarded by `role.*` permissions instead of `permission.*`. Fixed in `permissionRoutes.ts`.
+- **`ROUTE_PERMISSIONS` Export**: Made `export const` so `PermissionService.syncPermissions()` can import it without duplication.
+
 ## [1.22.0] - 2026-04-05
 ### Added
 - **Tenant CRUD API** (`/api/tenants`): List (paginated, filterable by status/name/email/username), create, get, update, soft-delete, block, unblock, suspend. Passwords bcrypt-hashed. Responses include joined country and role objects.

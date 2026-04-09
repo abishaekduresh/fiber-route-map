@@ -75,7 +75,7 @@
  *     tags:
  *       - Permissions
  *     summary: Create Permission
- *     description: Create a new granular permission. Slug must be unique and follow the resource.action format.
+ *     description: "Create a new granular permission. Slug must be unique and follow the `resource.action` format."
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -116,6 +116,50 @@
  *                   type: string
  *                 data:
  *                   $ref: '#/components/schemas/Permission'
+ *
+ * /api/permissions/sync:
+ *   post:
+ *     tags:
+ *       - Permissions
+ *     summary: Sync Permissions
+ *     description: >
+ *       Inserts any missing permissions defined in ROUTE_PERMISSIONS using INSERT IGNORE.
+ *       Existing permissions are never modified or deleted — this operation is fully idempotent.
+ *       Requires `permission.create`.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/ApiVersionHeader'
+ *     responses:
+ *       200:
+ *         description: Sync complete
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: "Sync complete — 8 new permissions added"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     added:
+ *                       type: array
+ *                       description: Slugs of newly inserted permissions
+ *                       items:
+ *                         type: string
+ *                       example: ["tenant.view", "tenant.create", "tenant_business.view"]
+ *                     total:
+ *                       type: integer
+ *                       description: Total number of permissions in the database after sync
+ *                       example: 29
  *
  * /api/permissions/{uuid}:
  *   get:

@@ -342,7 +342,7 @@ export async function getRoles(): Promise<ApiResponse<any[]>> {
  * Get all available permissions.
  */
 export async function getPermissions(): Promise<ApiResponse<any[]>> {
-  return apiFetch('/api/permissions');
+  return apiFetch('/api/permissions?limit=-1');
 }
 
 /**
@@ -379,6 +379,14 @@ export async function deletePermission(uuid: string): Promise<ApiResponse> {
   return apiFetch(`/api/permissions/${uuid}`, {
     method: 'DELETE',
   });
+}
+
+/**
+ * Sync all endpoint permissions — inserts any missing permissions from the
+ * ROUTE_PERMISSIONS definition without touching existing records.
+ */
+export async function syncPermissions(): Promise<ApiResponse<{ added: string[]; total: number }>> {
+  return apiFetch('/api/permissions/sync', { method: 'POST' });
 }
 
 /**

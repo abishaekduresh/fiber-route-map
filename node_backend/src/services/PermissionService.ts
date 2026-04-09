@@ -1,5 +1,9 @@
 import { PermissionRepository } from '../repositories/PermissionRepository.js';
 import { Permission, CreatePermissionDTO, UpdatePermissionDTO } from '../models/Permission.js';
+import { ROUTE_PERMISSIONS } from './SetupService.js';
+import { generateUuidV7 } from '../utils/uuid.js';
+import { nowDb } from '../utils/time.js';
+import db from '../config/database.js';
 
 export class PermissionService {
   constructor(private readonly repository: PermissionRepository) {}
@@ -46,5 +50,28 @@ export class PermissionService {
       (error as any).status = 404;
       throw error;
     }
+  }
+
+  async syncPermissions(): Promise<{ added: string[]; total: number }> {
+    const now = nowDb();
+    const added: string[] = [];
+
+    for (const { resource, actions } of ROUTE_PERMISSIONS) {
+      for (const action of actions) {
+        const slug = `${resource}.${action}`;
+        const name = `${resource.charAt(0).toUpperCase() + resource.slice(1).replace('_', ' ')} ${action.charAt(0).toUpperCase() + action.slice(1)}`;
+        const description = `Can ${action} ${resource.replace('_', ' ')}s`;
+
+        const existing = await this.repository.findBySlug(slug);
+        if (!existing) {
+          const uuid = generateUuidV7();
+          await db('permissions').insert({ uuid, name, slug, resource, description, createdAt: now, updatedAt: now });
+          added.push(slug);
+        }
+      }
+    }
+
+    const { total } = await this.repository.getAll({ limit: -1 });
+    return { added, total };
   }
 }

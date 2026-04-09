@@ -2,6 +2,15 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.23.0] - 2026-04-09
+### Added
+- **Permission Sync**: `POST /api/permissions/sync` inserts any missing endpoint permissions (INSERT IGNORE) — idempotent, never modifies existing records. Returns list of added slugs and total count.
+- **Sync Button** (Permissions page): "Sync Permissions" button with spinner, confirm dialog, and toast feedback — visible to users with `permission.create`.
+- **Permissions Pagination**: Client-side pagination (12 per page) with Prev/Next and ellipsis-aware page buttons added to the Manage Permissions page.
+### Fixed
+- **Permissions List Truncated**: `GET /api/permissions` was fetching only 10 records (backend default). Frontend now passes `?limit=-1` to load all permissions — affects both the Permissions page and the Role permission picker in RoleModal.
+- **Permission RBAC Slugs**: Permission routes were guarded by `role.view/create/update/delete` instead of `permission.view/create/update/delete`. Corrected.
+
 ## [1.22.0] - 2026-04-05
 ### Added
 - **Tenant Management**: Full CRUD API (`GET/POST/PUT/DELETE /api/tenants`) with block, unblock, and suspend actions. Tenants have email, username, name, address, password (hashed), and optional country/role associations.

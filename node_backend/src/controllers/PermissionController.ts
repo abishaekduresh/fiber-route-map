@@ -199,4 +199,22 @@ export class PermissionController {
       next(error);
     }
   };
+
+  sync = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { added, total } = await this.service.syncPermissions();
+      const message = added.length > 0
+        ? `Sync complete — ${added.length} new permission${added.length === 1 ? '' : 's'} added`
+        : 'All permissions are already up to date';
+      res.json({
+        success: true,
+        statusCode: 200,
+        message,
+        data: { added, total },
+        meta: this.getMeta(req, {}, null),
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }

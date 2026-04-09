@@ -65,7 +65,7 @@ export interface SetupResult {
 
 // ─── Permission Definitions ───────────────────────────────────────────────────
 
-const ROUTE_PERMISSIONS = [
+export const ROUTE_PERMISSIONS = [
   { resource: 'user',       actions: ['view', 'create', 'update', 'delete', 'export'] },
   { resource: 'role',       actions: ['view', 'create', 'update', 'delete'] },
   { resource: 'country',    actions: ['view', 'create', 'update', 'delete'] },

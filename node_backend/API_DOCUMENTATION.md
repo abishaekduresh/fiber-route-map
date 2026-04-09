@@ -1,4 +1,4 @@
-# API Documentation (v1.22.0)
+# API Documentation (v1.23.0)
 
 This document provides a comprehensive reference for all Node.js backend API endpoints. All timestamps are in **UTC ISO-8601** format.
 
@@ -597,9 +597,9 @@ fetch('http://localhost:3001/api/users', {
 ## 4. Permissions (Protected)
 
 ### 4.1 List Permissions
-**Endpoint**: `GET /api/permissions`  
-**Description**: Retrieve a paginated list of all available system permission slugs.
-**Required Permission**: `role.view`
+**Endpoint**: `GET /api/permissions`
+**Description**: Retrieve a paginated list of all available system permission slugs. Pass `?limit=-1` to retrieve all.
+**Required Permission**: `permission.view`
 
 #### Query Parameters
 | Parameter | Type | Description | Example |
@@ -644,10 +644,39 @@ fetch('http://localhost:3001/api/users', {
 }
 ```
 
-### 4.2 Create Permission
-**Endpoint**: `POST /api/permissions`  
-**Description**: Register a new granular permission. Slug must be unique.
-**Required Permission**: `role.create`
+### 4.2 Sync Permissions
+**Endpoint**: `POST /api/permissions/sync`
+**Description**: Inserts any missing permissions defined in `ROUTE_PERMISSIONS` using `INSERT IGNORE`. Fully idempotent — existing permissions are never modified or deleted.
+**Required Permission**: `permission.create`
+
+#### Example Response (Success)
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Sync complete — 8 new permissions added",
+  "data": {
+    "added": ["tenant.view", "tenant.create", "tenant.update", "tenant.delete",
+              "tenant_business.view", "tenant_business.create", "tenant_business.update", "tenant_business.delete"],
+    "total": 29
+  }
+}
+```
+
+#### Example Response (Already Up To Date)
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "All permissions are already up to date",
+  "data": { "added": [], "total": 29 }
+}
+```
+
+### 4.3 Create Permission
+**Endpoint**: `POST /api/permissions`
+**Description**: Register a new granular permission. Slug must be unique and follow `resource.action` format.
+**Required Permission**: `permission.create`
 
 #### Request Body
 ```json
@@ -658,15 +687,15 @@ fetch('http://localhost:3001/api/users', {
 }
 ```
 
-### 4.3 Update Permission
-**Endpoint**: `PUT /api/permissions/:uuid`  
+### 4.4 Update Permission
+**Endpoint**: `PUT /api/permissions/:uuid`
 **Description**: Update an existing permission's name, slug, or description.
-**Required Permission**: `role.update`
+**Required Permission**: `permission.update`
 
-### 4.4 Delete Permission
-**Endpoint**: `DELETE /api/permissions/:uuid`  
+### 4.5 Delete Permission
+**Endpoint**: `DELETE /api/permissions/:uuid`
 **Description**: Permanently delete a permission from the system.
-**Required Permission**: `role.delete`
+**Required Permission**: `permission.delete`
 
 ---
 

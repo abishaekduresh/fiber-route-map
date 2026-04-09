@@ -266,6 +266,46 @@
   transform: translateY(0);
 }
 
+.syncBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--color-bg-secondary);
+  color: var(--color-accent-blue);
+  border: 1px solid var(--color-accent-blue);
+  padding: 0.575rem 1.125rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  white-space: nowrap;
+  font-family: var(--font-family);
+}
+
+.syncBtn:hover {
+  background: rgba(59, 130, 246, 0.1);
+  transform: translateY(-1px);
+}
+
+.syncBtn:active {
+  transform: translateY(0);
+}
+
+.syncBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.syncBtn .spinning {
+  animation: spin 0.8s linear infinite;
+}
+
 .exportBtn {
   display: inline-flex;
   align-items: center;

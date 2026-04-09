@@ -2,6 +2,13 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
+## [1.23.0] - 2026-04-09
+### Added
+- **Sync Permissions Button**: "Sync Permissions" button on the Manage Permissions page — triggers `POST /api/permissions/sync` after a warning confirm dialog. Shows spinner during sync and toast on completion.
+- **Permissions Pagination**: 12-per-page client-side pagination with Prev/Next controls and ellipsis-aware page numbers. Resets to page 1 on search change.
+### Fixed
+- **All Permissions Now Loaded**: `getPermissions()` now passes `?limit=-1` so all permissions are fetched — previously only 10 were returned, hiding newly synced permissions. Affects both the Permissions page and Role permission picker.
+
 ## [1.22.0] - 2026-04-05
 ### Changed
 - No frontend changes — backend-only release. See `node_backend/CHANGELOG.md` for details.

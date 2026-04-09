@@ -19,10 +19,11 @@ const permissionController = new PermissionController(permissionService);
 // Apply auth middleware to all permission routes
 router.use(auth(authService));
 
-router.get('/', rbac('role.view'), permissionController.getAll);
-router.get('/:uuid', rbac('role.view'), permissionController.getByUuid);
-router.post('/', rbac('role.create'), permissionController.create);
-router.put('/:uuid', rbac('role.update'), permissionController.update);
-router.delete('/:uuid', rbac('role.delete'), permissionController.delete);
+router.get('/', rbac('permission.view'), permissionController.getAll);
+router.get('/:uuid', rbac('permission.view'), permissionController.getByUuid);
+router.post('/sync', rbac('permission.create'), permissionController.sync);
+router.post('/', rbac('permission.create'), permissionController.create);
+router.put('/:uuid', rbac('permission.update'), permissionController.update);
+router.delete('/:uuid', rbac('permission.delete'), permissionController.delete);
 
 export default router;
