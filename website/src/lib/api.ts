@@ -11,9 +11,12 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
  * Detect the device name from the browser's user agent string.
  * Returns a human-readable device name like "Chrome on Windows".
  */
+let _deviceNameCache: string | null = null;
+
 function getDeviceName(): string {
   if (typeof window === 'undefined') return 'Server';
-  
+  if (_deviceNameCache) return _deviceNameCache;
+
   const ua = navigator.userAgent;
   let browser = 'Unknown Browser';
   let os = 'Unknown OS';
@@ -31,7 +34,8 @@ function getDeviceName(): string {
   else if (ua.includes('Android')) os = 'Android';
   else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
 
-  return `${browser} on ${os}`;
+  _deviceNameCache = `${browser} on ${os}`;
+  return _deviceNameCache;
 }
 
 /**
@@ -432,7 +436,7 @@ export async function syncRolePermissions(uuid: string, permissions: string[]): 
  * Fetch list of tenants.
  */
 export async function getTenants(): Promise<ApiResponse<any[]>> {
-  return apiFetch('/api/tenants?limit=100');
+  return apiFetch('/api/tenants?limit=-1');
 }
 
 /**
@@ -495,7 +499,7 @@ export async function suspendTenant(uuid: string): Promise<ApiResponse> {
  * Fetch list of tenant businesses.
  */
 export async function getTenantBusinesses(): Promise<ApiResponse<any[]>> {
-  return apiFetch('/api/tenant-business?limit=100');
+  return apiFetch('/api/tenant-business?limit=-1');
 }
 
 /**
