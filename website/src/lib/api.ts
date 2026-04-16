@@ -429,6 +429,132 @@ export async function syncRolePermissions(uuid: string, permissions: string[]): 
 }
 
 /**
+ * Fetch list of tenants.
+ */
+export async function getTenants(): Promise<ApiResponse<any[]>> {
+  return apiFetch('/api/tenants?limit=100');
+}
+
+/**
+ * Create a new tenant.
+ */
+export async function createTenant(data: any): Promise<ApiResponse> {
+  return apiFetch('/api/tenants', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Update an existing tenant.
+ */
+export async function updateTenant(uuid: string, data: any): Promise<ApiResponse> {
+  return apiFetch(`/api/tenants/${uuid}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Delete (soft delete) a tenant.
+ */
+export async function deleteTenant(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/tenants/${uuid}`, {
+    method: 'DELETE',
+  });
+}
+
+/**
+ * Block a tenant.
+ */
+export async function blockTenant(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/tenants/${uuid}/block`, {
+    method: 'POST',
+  });
+}
+
+/**
+ * Unblock a tenant.
+ */
+export async function unblockTenant(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/tenants/${uuid}/unblock`, {
+    method: 'PUT',
+  });
+}
+
+/**
+ * Suspend a tenant.
+ */
+export async function suspendTenant(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/tenants/${uuid}/suspend`, {
+    method: 'POST',
+  });
+}
+
+/**
+ * Fetch list of tenant businesses.
+ */
+export async function getTenantBusinesses(): Promise<ApiResponse<any[]>> {
+  return apiFetch('/api/tenant-business?limit=100');
+}
+
+/**
+ * Create a new tenant business.
+ */
+export async function createTenantBusiness(data: any): Promise<ApiResponse> {
+  return apiFetch('/api/tenant-business', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Update an existing tenant business.
+ */
+export async function updateTenantBusiness(uuid: string, data: any): Promise<ApiResponse> {
+  return apiFetch(`/api/tenant-business/${uuid}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Delete (soft delete) a tenant business.
+ */
+export async function deleteTenantBusiness(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/tenant-business/${uuid}`, {
+    method: 'DELETE',
+  });
+}
+
+/**
+ * Block a tenant business.
+ */
+export async function blockTenantBusiness(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/tenant-business/${uuid}/block`, {
+    method: 'POST',
+  });
+}
+
+/**
+ * Unblock a tenant business.
+ */
+export async function unblockTenantBusiness(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/tenant-business/${uuid}/unblock`, {
+    method: 'PUT',
+  });
+}
+
+/**
+ * Suspend a tenant business.
+ */
+export async function suspendTenantBusiness(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/tenant-business/${uuid}/suspend`, {
+    method: 'POST',
+  });
+}
+
+/**
  * Check the system health status.
  */
 export async function checkHealth(): Promise<any> {

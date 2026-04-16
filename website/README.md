@@ -4,9 +4,11 @@ A futuristic, high-performance web dashboard for managing fiber optic networks.
 Built with **Next.js 16 (Turbopack)** and **TypeScript**, featuring a stunning **Glassmorphism Design System**.
 
 ## Version
-**Current Version:** 1.23.0 (Permission Sync, Pagination & RBAC Fixes)
+**Current Version:** 1.24.0 (Tenant Management & ViewModal UI)
 
 ## Features
+- **Tenant Management UI**: Comprehensive CRUD interface for managing Tenants and Business entities (Operators/Distributors) with dedicated management pages.
+- **ViewModal Component**: Reusable glassmorphism modal for non-destructive data inspection.
 - **First-Time Setup Wizard**: 5-step web wizard at `/setup` — configures the database, seeds all permissions, creates a Super Admin role, and sets up the first admin account automatically.
 - **Dynamic Glassmorphism UI**: High-end aesthetic with animated background orbs, frosty transparency effects, and micro-animations.
 - **Application-Wide Theme System**: Unified Light, Dark, and System modes across the entire layout (Sidebar, TopBar, Dashboards, Modals) with persistent storage.

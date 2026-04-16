@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(git -C \"c:/wamp64/www/fiber_route_map\" show HEAD:website/src/proxy.ts)",
+      "Bash(ls -la /c/wamp64/www/fiber_route_map/website/src/app/\\\\\\(dashboard\\\\\\)/manage/users)",
+      "Bash(ls -la /c/wamp64/www/fiber_route_map/website/src/app/\\\\\\(dashboard\\\\\\)/manage)",
+      "Bash(ls -la /c/wamp64/www/fiber_route_map/website/src/app/\\\\\\(dashboard\\\\\\)/manage/permissions)"
+    ]
+  }
+}

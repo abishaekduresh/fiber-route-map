@@ -2,6 +2,17 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
+## [1.24.0] - 2026-04-16
+### Added
+- **Tenant & Business Management UI**: Complete frontend implementation for managing Tenants and Tenant Businesses (Operators/Distributors) at `/manage/tenants` and `/manage/tenant-businesses`.
+- **ViewModal Component** (`src/components/ui/ViewModal.tsx`): A reusable, glassmorphism-styled modal for viewing detailed object data without entering edit mode.
+- **Tenant Management Components**: Added specialized cards and modals for tenant resource management.
+### Changed
+- **Sidebar Dropdown Grouping**: Reorganized navigation to group all tenant-related entities under a "Tenants" dropdown menu.
+- **Enhanced User Cards**: Improved styling and action visibility on the User Management page.
+- **API Client Extensions**: Added specialized wrapper functions to `src/lib/api.ts` for Tenant and Tenant Business resources.
+
+
 ## [1.23.0] - 2026-04-09
 ### Added
 - **Sync Permissions Button**: "Sync Permissions" button on the Manage Permissions page — triggers `POST /api/permissions/sync` after a warning confirm dialog. Shows spinner during sync and toast on completion.

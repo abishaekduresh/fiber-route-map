@@ -33,7 +33,7 @@ export default function Sidebar({
     }
   };
 
-  const [expandedItems, setExpandedItems] = useState<string[]>(['Manage']);
+  const [expandedItems, setExpandedItems] = useState<string[]>(['Manage', 'Tenants']);
 
   const toggleDropdown = (name: string) => {
     setExpandedItems((prev: string[]) => 
@@ -66,6 +66,19 @@ export default function Sidebar({
         { name: 'Roles', href: '/manage/roles', permission: 'role.view' },
         { name: 'Permissions', href: '/manage/permissions', permission: 'permission.view' },
         { name: 'Countries', href: '/manage/countries' }
+      ]
+    },
+    {
+      name: 'Tenants',
+      icon: (
+        <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
+          <line x1="12" y1="12" x2="12" y2="16" /><line x1="10" y1="14" x2="14" y2="14" />
+        </svg>
+      ),
+      subItems: [
+        { name: 'Businesses', href: '/manage/tenant-businesses' },
+        { name: 'Tenants', href: '/manage/tenants' },
       ]
     }
   ];

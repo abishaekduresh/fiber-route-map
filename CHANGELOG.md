@@ -2,6 +2,19 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.24.0] - 2026-04-16
+### Added
+- **Tenant Management UI**: Implemented a comprehensive management interface for Tenants, featuring a paginated card grid and a detailed view modal.
+- **Tenant Business Management UI**: Launched a dedicated management module for Tenant Businesses (Operators and Distributors) with full CRUD support.
+- **ViewModal Component**: Developed a high-fidelity, reusable glassmorphism component for inspecting resource details with grouped data sections.
+### Changed
+- **Sidebar Navigation**: Reorganized the dashboard sidebar to group Tenant and Business management under a new "Tenants" dropdown for better scalability.
+- **User Management**: Enhanced the user card UI and updated action visibility based on permission sets.
+### Removed
+- **Legacy Test Scripts**: Deleted `test_errors.js` and `test_refactor.js` from the backend to maintain a clean repository.
+- **AI Skill Migration**: Moved `.ai-agent/SKILL.md` to `.claude/SKILL.md` to align with the new AI agent environment.
+
+
 ## [1.23.0] - 2026-04-09
 ### Added
 - **Permission Sync**: `POST /api/permissions/sync` inserts any missing endpoint permissions (INSERT IGNORE) — idempotent, never modifies existing records. Returns list of added slugs and total count.
