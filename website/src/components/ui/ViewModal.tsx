@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './ViewModal.module.css';
 
 export interface ViewField {
@@ -36,11 +38,18 @@ export default function ViewModal({
   status,
   sections,
 }: ViewModalProps) {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   const statusKey = (status || '').toLowerCase();
 
-  return (
+  return createPortal(
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
 
@@ -87,6 +96,7 @@ export default function ViewModal({
           <button className={styles.closeFooterBtn} onClick={onClose}>Close</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

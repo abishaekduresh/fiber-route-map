@@ -134,6 +134,14 @@
   text-overflow: ellipsis;
 }
 
+.visibleText {
+  color: var(--color-success) !important;
+}
+
+.hiddenText {
+  color: var(--color-text-muted) !important;
+}
+
 /* --- Card Footer --- */
 .cardFooter {
   display: flex;

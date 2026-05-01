@@ -134,11 +134,17 @@ export default function LoginPage() {
       <div className={styles.card}>
         <div className={styles.brand}>
           <div className={styles.logoIcon}>
-            <svg className={styles.logoSvg} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
+            <img 
+              src="/assets/app/logo.png" 
+              alt="Logo" 
+              width={32} 
+              height={32} 
+              style={{ objectFit: 'contain' }}
+            />
           </div>
-          <h1 className={styles.brandTitle}>Fiber Route Map</h1>
+          <h1 className={styles.brandTitle}>
+            {process.env.NEXT_PUBLIC_APP_NAME || 'Fiber Route Map'}
+          </h1>
           <p className={styles.brandSubtitle}>Sign in to your control center</p>
         </div>
 
@@ -221,7 +227,9 @@ export default function LoginPage() {
         </form>
 
         <footer className={styles.footer}>
-          <p className={styles.footerText}>Fiber Route Map Control Center</p>
+          <p className={styles.footerText}>
+            {process.env.NEXT_PUBLIC_APP_NAME || 'Fiber Route Map'} Control Center
+          </p>
           <div className={styles.version}>
             <div className={styles.versionDot} />
             <span>v1.13.0 • System Online</span>

@@ -9,8 +9,11 @@ import { Toaster } from 'sonner';
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Fiber Route Map — Control Center",
+  title: process.env.NEXT_PUBLIC_APP_NAME || "Fiber Route Map",
   description: "Fiber Route Map management system — secure authentication and network management.",
+  icons: {
+    icon: "/assets/app/favicon.png",
+  },
 };
 
 export default function RootLayout({

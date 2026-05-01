@@ -2,6 +2,30 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.26.0] - 2026-05-01
+### Added
+- **Role Tenant Visibility**: Added `showForTenants` boolean attribute to system roles. Administrators can now toggle whether a role should be available when managing tenants.
+- **Tenant Reactivation**: Added "Reactivate" button for suspended tenants in the management UI — allows one-click restoration of account access.
+- **Database Column `showForTenants`**: Updated `roles` table schema to support role-to-tenant visibility filtering.
+- **Role Status Indicators**: Enhanced `RoleCard` with color-coded visibility status ("Visible for Tenants" / "Hidden from Tenants").
+### Changed
+- **Tenant Role Selection**: `TenantModal` now dynamically filters the roles list, displaying only roles marked as `showForTenants`.
+- **Tenant Action Notifications**: Replaced generic "unblocked" toast with status-aware "reactivated" messaging when restoring suspended accounts.
+
+## [1.25.0] - 2026-04-16
+### Added
+- **View Details Button**: Eye-icon button added to every management card (Users, Tenants, Tenant Businesses) — opens a read-only `ViewModal` showing all record fields grouped by section (Contact, Roles/Account/Business Info, Location, Timestamps).
+- **Suspend Action on Cards**: Tenant and Tenant Business cards now expose a dedicated Suspend button alongside Block/Unblock — calls the respective `/suspend` endpoint.
+- **`status-suspended` Badge**: Purple status badge added across all card and view modal components for the `suspended` state.
+- **ViewModal Component** (`website/src/components/ui/ViewModal.tsx`): Reusable glassmorphism detail-view modal with configurable sections, avatar, badge, and status badge — mounted conditionally to avoid DOM bloat.
+
+### Changed
+- **Tenant & Business Sidebar Links**: Removed permission guards from "Businesses" and "Tenants" nav items — links are now always visible like Users and Countries.
+- **Add Business Button**: Removed `<Can I="tenant-business.create">` guard — button is always rendered.
+- **API Client — `getDeviceName()` Cached**: Device name is now resolved once per session and memoised in a module-level variable instead of recomputing on every request.
+- **API Client — Unlimited Tenant/Business Fetch**: `getTenants()` and `getTenantBusinesses()` now use `limit=-1` (matching `getPermissions()`) so all records are returned rather than a hard cap of 100.
+- **Card DOM Efficiency**: `ViewModal` is rendered conditionally (`{isViewOpen && <ViewModal>}`) inside the card `div` instead of always mounted inside a fragment wrapper — eliminates idle component instances for every visible card.
+
 ## [1.24.0] - 2026-04-16
 ### Added
 - **Tenant Management UI**: Implemented a comprehensive management interface for Tenants, featuring a paginated card grid and a detailed view modal.

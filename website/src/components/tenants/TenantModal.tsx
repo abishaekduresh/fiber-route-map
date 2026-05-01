@@ -171,7 +171,7 @@ export default function TenantModal({ isOpen, onClose, onSuccess, tenant }: Tena
                 <label className={styles.label}>Role</label>
                 <select name="roleUuid" className={styles.select} value={formData.roleUuid} onChange={handleChange}>
                   <option value="">Select a role</option>
-                  {roles.map(r => (
+                  {roles.filter(r => r.attributes?.showForTenants).map(r => (
                     <option key={r.id} value={r.id}>{r.attributes?.name}</option>
                   ))}
                 </select>

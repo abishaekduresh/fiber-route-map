@@ -16,6 +16,7 @@ export class RoleRepository {
       slug: data.slug,
       description: data.description,
       status: data.status || 'active',
+      showForTenants: data.showForTenants ? 1 : 0,
       createdAt: now,
       updatedAt: now,
     };
@@ -41,6 +42,12 @@ export class RoleRepository {
     if (params.name) {
       query = query.where('name', 'like', `%${params.name}%`);
       countQuery = countQuery.where('name', 'like', `%${params.name}%`);
+    }
+    
+    if (params.showForTenants !== undefined) {
+      const show = params.showForTenants === 'true' || params.showForTenants === true || params.showForTenants === 1 ? 1 : 0;
+      query = query.where('showForTenants', show);
+      countQuery = countQuery.where('showForTenants', show);
     }
 
     const countResult = await countQuery.count('* as total').first();
@@ -105,6 +112,7 @@ export class RoleRepository {
   async update(uuid: string, data: UpdateRoleDTO): Promise<boolean> {
     const result = await db(this.table).where('uuid', uuid).update({
       ...data,
+      showForTenants: data.showForTenants !== undefined ? (data.showForTenants ? 1 : 0) : undefined,
       updatedAt: nowDb()
     });
     return result > 0;

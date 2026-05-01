@@ -87,11 +87,17 @@ export default function Sidebar({
     <aside className={`${styles.sidebar} ${className}`}>
       <div className={styles.brand}>
         <div className={styles.logoIcon}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M5 12h14M12 5l7 7-7 7" />
-          </svg>
+          <img 
+            src="/assets/app/logo.png" 
+            alt="Logo" 
+            width={24} 
+            height={24} 
+            style={{ objectFit: 'contain' }}
+          />
         </div>
-        <span className={styles.brandName}>FIBER ROUTE</span>
+        <span className={styles.brandName}>
+          {process.env.NEXT_PUBLIC_APP_NAME || 'FIBER ROUTE'}
+        </span>
         
         <button className={styles.mobileCloseBtn} onClick={onClose}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

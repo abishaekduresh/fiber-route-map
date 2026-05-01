@@ -262,12 +262,17 @@ export default function SetupPage() {
         {/* Brand header */}
         <div className={styles.brand}>
           <div className={styles.logoIcon}>
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className={styles.logoSvg}>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
+            <img 
+              src="/assets/app/logo.png" 
+              alt="Logo" 
+              width={32} 
+              height={32} 
+              style={{ objectFit: 'contain' }}
+            />
           </div>
-          <h1 className={styles.brandTitle}>Fiber Route Map</h1>
+          <h1 className={styles.brandTitle}>
+            {process.env.NEXT_PUBLIC_APP_NAME || 'Fiber Route Map'}
+          </h1>
           <p className={styles.brandSubtitle}>First-time Setup Wizard</p>
         </div>
 

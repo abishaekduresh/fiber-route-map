@@ -109,10 +109,12 @@ export default function ManageTenantsPage() {
   };
 
   const handleUnblock = async (tenant: any) => {
+    const status = (tenant.attributes?.status || 'active').toLowerCase();
+    const actionLabel = status === 'suspended' ? 'reactivated' : 'unblocked';
     try {
       const result = await unblockTenant(tenant.id);
-      if (result.success) { toast.success(`Tenant "${tenant.attributes?.name}" unblocked`); fetchTenants(); }
-      else toast.error(result.message || 'Unblock failed');
+      if (result.success) { toast.success(`Tenant "${tenant.attributes?.name}" ${actionLabel}`); fetchTenants(); }
+      else toast.error(result.message || `${status === 'suspended' ? 'Reactivate' : 'Unblock'} failed`);
     } catch { toast.error('Network error'); }
   };
 

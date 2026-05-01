@@ -39,6 +39,12 @@ export default function RoleCard({
 
       <div className={styles.detailsGrid}>
         <div className={styles.detailItem}>
+          <span className={styles.detailLabel}>Tenant Visibility</span>
+          <span className={`${styles.detailValue} ${attributes.showForTenants ? styles.visibleText : styles.hiddenText}`}>
+            {attributes.showForTenants ? 'Visible for Tenants' : 'Hidden from Tenants'}
+          </span>
+        </div>
+        <div className={styles.detailItem}>
           <span className={styles.detailLabel}>Description</span>
           <span className={styles.detailValue} title={attributes.description}>
             {attributes.description || 'No description provided.'}

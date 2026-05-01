@@ -7,6 +7,7 @@ const createRoleSchema = z.object({
   slug: z.string().min(2, 'Slug must be at least 2 characters').regex(/^[a-z0-9-]+$/, 'Slug must only contain lowercase letters, numbers, and hyphens'),
   description: z.string().optional(),
   status: z.enum(['active', 'inactive']).optional(),
+  showForTenants: z.boolean().optional(),
 });
 
 const updateRoleSchema = createRoleSchema.partial();
@@ -15,7 +16,7 @@ export class RoleController {
   constructor(private readonly service: RoleService) {}
 
   private transformRole = (role: any) => {
-    const { uuid, name, slug, description, status, permissions, createdAt, updatedAt } = role;
+    const { uuid, name, slug, description, status, showForTenants, permissions, createdAt, updatedAt } = role;
     return {
       id: uuid,
       type: 'role',
@@ -24,6 +25,7 @@ export class RoleController {
         slug,
         description,
         status,
+        showForTenants: Boolean(showForTenants),
         permissions: permissions?.map((p: any) => ({
           id: p.uuid,
           name: p.name,
@@ -61,7 +63,7 @@ export class RoleController {
     return {
       requestId: (req as any).requestId,
       timestamp: new Date().toISOString(),
-      version: 'v1.7.0',
+      version: '1.26.0',
       filters: appliedFilters,
       sort,
       ...extra
@@ -102,7 +104,8 @@ export class RoleController {
         ...filtersParam,
         ...filterParam,
         name: req.query.name || (filterParam.name || filtersParam.name),
-        status: req.query.status || (filterParam.status || filtersParam.status)
+        status: req.query.status || (filterParam.status || filtersParam.status),
+        showForTenants: req.query.showForTenants || (filterParam.showForTenants || filtersParam.showForTenants)
       };
 
       const sortParam = req.query.sort;
@@ -112,6 +115,7 @@ export class RoleController {
         limit: String(limit),
         status: filterObj.status,
         name: filterObj.name,
+        showForTenants: filterObj.showForTenants,
         sort: sortParam
       };
 

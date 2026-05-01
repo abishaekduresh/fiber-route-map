@@ -23,6 +23,7 @@ export default function RoleModal({ isOpen, onClose, onSuccess, role }: RoleModa
     name: '',
     slug: '',
     description: '',
+    showForTenants: false,
     permissionIds: [] as string[]
   });
 
@@ -47,6 +48,7 @@ export default function RoleModal({ isOpen, onClose, onSuccess, role }: RoleModa
           name: role.attributes?.name || '',
           slug: role.attributes?.slug || '',
           description: role.attributes?.description || '',
+          showForTenants: !!role.attributes?.showForTenants,
           permissionIds: role.attributes?.permissions?.map((p: any) => p.id) || []
         });
       } else {
@@ -54,6 +56,7 @@ export default function RoleModal({ isOpen, onClose, onSuccess, role }: RoleModa
           name: '',
           slug: '',
           description: '',
+          showForTenants: false,
           permissionIds: []
         });
       }
@@ -61,8 +64,9 @@ export default function RoleModal({ isOpen, onClose, onSuccess, role }: RoleModa
   }, [isOpen, role]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target;
+    const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
+    setFormData(prev => ({ ...prev, [name]: val }));
   };
 
   const handlePermissionToggle = (permissionId: string) => {
@@ -102,13 +106,15 @@ export default function RoleModal({ isOpen, onClose, onSuccess, role }: RoleModa
         result = await updateRole(role.id, {
           name: formData.name,
           slug: formData.slug,
-          description: formData.description
+          description: formData.description,
+          showForTenants: formData.showForTenants
         });
       } else {
         result = await createRole({
           name: formData.name,
           slug: formData.slug,
-          description: formData.description
+          description: formData.description,
+          showForTenants: formData.showForTenants
         });
       }
 
@@ -180,6 +186,22 @@ export default function RoleModal({ isOpen, onClose, onSuccess, role }: RoleModa
                   onChange={handleChange} 
                   placeholder="Describe what users with this role can do..."
                 />
+              </div>
+
+              <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
+                <label className={styles.checkboxLabel} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', padding: '0.5rem 0' }}>
+                  <input 
+                    type="checkbox" 
+                    name="showForTenants"
+                    checked={formData.showForTenants}
+                    onChange={handleChange}
+                    style={{ width: '18px', height: '18px', accentColor: 'var(--color-accent-blue)' }}
+                  />
+                  <div>
+                    <span style={{ fontWeight: 'bold', fontSize: '0.9rem', display: 'block' }}>Visible for Tenants</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>If checked, this role will be available when creating or managing tenants.</span>
+                  </div>
+                </label>
               </div>
 
               <div className={`${styles.inputGroup} ${styles.fullWidth}`}>

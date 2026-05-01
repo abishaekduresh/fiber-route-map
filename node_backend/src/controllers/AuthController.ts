@@ -203,7 +203,7 @@ export class AuthController {
     return {
       requestId: (req as any).requestId,
       timestamp: new Date().toISOString(),
-      version: 'v1.13.0'
+      version: '1.26.0'
     };
   };
 }
