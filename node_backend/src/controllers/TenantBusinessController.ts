@@ -81,7 +81,7 @@ export class TenantBusinessController {
 
   show = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const business = await this.service.getBusinessByUuid(req.params.uuid);
+      const business = await this.service.getBusinessByUuid(req.params.uuid as string);
       res.json({ success: true, statusCode: 200, data: this.transformBusiness(business), meta: this.getMeta(req, {}, null) });
     } catch (error) { next(error); }
   };
@@ -101,35 +101,35 @@ export class TenantBusinessController {
 
   update = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const business = await this.service.updateBusiness(req.params.uuid, req.body);
+      const business = await this.service.updateBusiness(req.params.uuid as string, req.body);
       res.json({ success: true, statusCode: 200, message: 'Tenant business updated successfully', data: this.transformBusiness(business), meta: this.getMeta(req, {}, null) });
     } catch (error) { next(error); }
   };
 
   delete = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await this.service.deleteBusiness(req.params.uuid);
+      await this.service.deleteBusiness(req.params.uuid as string);
       res.json({ success: true, statusCode: 200, message: 'Tenant business deleted successfully', meta: this.getMeta(req, {}, null) });
     } catch (error) { next(error); }
   };
 
   block = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const business = await this.service.blockBusiness(req.params.uuid);
+      const business = await this.service.blockBusiness(req.params.uuid as string);
       res.json({ success: true, statusCode: 200, message: 'Tenant business blocked successfully', data: this.transformBusiness(business), meta: this.getMeta(req, {}, null) });
     } catch (error) { next(error); }
   };
 
   unblock = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const business = await this.service.unblockBusiness(req.params.uuid);
+      const business = await this.service.unblockBusiness(req.params.uuid as string);
       res.json({ success: true, statusCode: 200, message: 'Tenant business unblocked successfully', data: this.transformBusiness(business), meta: this.getMeta(req, {}, null) });
     } catch (error) { next(error); }
   };
 
   suspend = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const business = await this.service.suspendBusiness(req.params.uuid);
+      const business = await this.service.suspendBusiness(req.params.uuid as string);
       res.json({ success: true, statusCode: 200, message: 'Tenant business suspended successfully', data: this.transformBusiness(business), meta: this.getMeta(req, {}, null) });
     } catch (error) { next(error); }
   };

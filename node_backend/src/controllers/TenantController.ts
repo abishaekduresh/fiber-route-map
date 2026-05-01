@@ -81,7 +81,7 @@ export class TenantController {
 
   show = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const tenant = await this.service.getTenantByUuid(req.params.uuid);
+      const tenant = await this.service.getTenantByUuid(req.params.uuid as string);
       res.json({ success: true, statusCode: 200, data: this.transformTenant(tenant), meta: this.getMeta(req, {}, null) });
     } catch (error) { next(error); }
   };
@@ -101,35 +101,35 @@ export class TenantController {
 
   update = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const tenant = await this.service.updateTenant(req.params.uuid, req.body);
+      const tenant = await this.service.updateTenant(req.params.uuid as string, req.body);
       res.json({ success: true, statusCode: 200, message: 'Tenant updated successfully', data: this.transformTenant(tenant), meta: this.getMeta(req, {}, null) });
     } catch (error) { next(error); }
   };
 
   delete = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await this.service.deleteTenant(req.params.uuid);
+      await this.service.deleteTenant(req.params.uuid as string);
       res.json({ success: true, statusCode: 200, message: 'Tenant deleted successfully', meta: this.getMeta(req, {}, null) });
     } catch (error) { next(error); }
   };
 
   block = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const tenant = await this.service.blockTenant(req.params.uuid);
+      const tenant = await this.service.blockTenant(req.params.uuid as string);
       res.json({ success: true, statusCode: 200, message: 'Tenant blocked successfully', data: this.transformTenant(tenant), meta: this.getMeta(req, {}, null) });
     } catch (error) { next(error); }
   };
 
   unblock = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const tenant = await this.service.unblockTenant(req.params.uuid);
+      const tenant = await this.service.unblockTenant(req.params.uuid as string);
       res.json({ success: true, statusCode: 200, message: 'Tenant unblocked successfully', data: this.transformTenant(tenant), meta: this.getMeta(req, {}, null) });
     } catch (error) { next(error); }
   };
 
   suspend = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const tenant = await this.service.suspendTenant(req.params.uuid);
+      const tenant = await this.service.suspendTenant(req.params.uuid as string);
       res.json({ success: true, statusCode: 200, message: 'Tenant suspended successfully', data: this.transformTenant(tenant), meta: this.getMeta(req, {}, null) });
     } catch (error) { next(error); }
   };
