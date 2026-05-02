@@ -27,10 +27,12 @@ export default function TenantCard({ tenant, onEdit, onDelete, onBlock, onUnbloc
       <div className={styles.cardHeader}>
         <div className={styles.avatar}>{attributes.name?.[0]?.toUpperCase() || 'T'}</div>
         <div className={styles.userInfo}>
-          <h3 className={styles.userName}>{attributes.name || 'Unknown Tenant'}</h3>
+          <div className={styles.userNameRow}>
+            <h3 className={styles.userName} title={attributes.name}>{attributes.name || 'Unknown Tenant'}</h3>
+            <div className={styles.roleBadge}>{attributes.role?.name || 'Tenant'}</div>
+          </div>
           <div className={styles.userHandle}>@{attributes.username || 'tenant'}</div>
         </div>
-        <div className={styles.roleBadge}>{attributes.role?.name || 'Tenant'}</div>
       </div>
 
       <div className={styles.detailsGrid}>
