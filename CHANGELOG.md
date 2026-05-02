@@ -2,6 +2,18 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.27.0] - 2026-05-02
+### Added
+- **Interactive API Docs Viewer** (`/manage/api-docs`): A fully custom, Swagger-style documentation page built in Next.js — fetches the live OpenAPI spec from the backend and renders it with tag-based sidebar navigation, endpoint accordion cards, schema tables, named response examples, and a built-in "Try it out" HTTP client.
+- **Sidebar API Docs Link**: Added "API Docs" nav item to the dashboard sidebar under the Management section, guarded by the `apidoc.view` permission.
+- **Responses Schema Doc** (`node_backend/src/docs/schemas/responses.doc.ts`): Centralised reusable OpenAPI response component definitions (`400BadRequest`, `401Unauthorized`, `403Forbidden`, `404NotFound`, `422ValidationError`, `500InternalError`, `ApiVersionHeader`).
+### Changed
+- **Swagger JSDoc — Full Example Rewrite**: Rewrote all nine path doc files (`auth`, `health`, `setup`, `roles`, `users`, `countries`, `permissions`, `tenants`, `tenant_business`) to use top-level `example`/`examples` fields (instead of nested `schema.example`) so the API Docs Viewer can display them correctly.
+- **Endpoint Accordion UX**: Endpoint cards now behave as an accordion — opening one automatically closes all others. State is lifted to the parent list component.
+- **API Docs Scroll Fix**: Tab content panels (Documentation / Try it out) now scroll vertically via the outer endpoint list rather than a fixed `max-height` container; code blocks have `max-height: 400px` with independent y-scroll.
+- **Try it out X-Axis Scroll**: The Try it out panel and URL row are now horizontally scrollable on narrow viewports.
+- **HTTP Status Codes**: Corrected all create endpoints from `200` to `201` in Swagger docs to match actual backend responses.
+
 ## [1.26.0] - 2026-05-01
 ### Added
 - **Role Tenant Visibility**: Added `showForTenants` boolean attribute to system roles. Administrators can now toggle whether a role should be available when managing tenants.

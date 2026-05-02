@@ -72,6 +72,7 @@ export const ROUTE_PERMISSIONS = [
   { resource: 'permission',       actions: ['view', 'create', 'update', 'delete'] },
   { resource: 'tenant',           actions: ['view', 'create', 'update', 'delete'] },
   { resource: 'tenant_business',  actions: ['view', 'create', 'update', 'delete'] },
+  { resource: 'apidoc',           actions: ['view'] },
 ];
 
 // ─── Helper ───────────────────────────────────────────────────────────────────

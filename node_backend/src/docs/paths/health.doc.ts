@@ -5,52 +5,28 @@
  *     tags:
  *       - Health
  *     summary: Check system health
- *     description: Returns the status of the API and its backend services.
+ *     description: Returns the live status of the API and its backend services (database connectivity).
  *     responses:
  *       200:
  *         description: System is healthy
  *         content:
  *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: ok
- *                 timestamp:
- *                   type: string
- *                   example: 2026-03-27T12:00:00.000Z
- *                 version:
- *                   type: string
- *                   example: v1
- *                 services:
- *                   type: object
- *                   properties:
- *                     database:
- *                       type: string
- *                       example: connected
- *       503:
- *         description: System is unhealthy
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: error
- *                 timestamp:
- *                   type: string
- *                   example: 2026-03-27T12:00:00.000Z
- *                 version:
- *                   type: string
- *                   example: v1
- *                 services:
- *                   type: object
- *                   properties:
- *                     database:
- *                       type: string
- *                       example: disconnected
- *                 error:
- *                   type: string
+ *             examples:
+ *               healthy:
+ *                 summary: All services operational
+ *                 value:
+ *                   status: "ok"
+ *                   timestamp: "2026-05-02T10:00:00.000Z"
+ *                   version: "v1"
+ *                   services:
+ *                     database: "connected"
+ *               degraded:
+ *                 summary: Database unreachable
+ *                 value:
+ *                   status: "error"
+ *                   timestamp: "2026-05-02T10:00:00.000Z"
+ *                   version: "v1"
+ *                   services:
+ *                     database: "disconnected"
+ *                   error: "ECONNREFUSED: Connection refused to 127.0.0.1:3306"
  */

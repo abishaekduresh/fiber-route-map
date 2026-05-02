@@ -2,6 +2,16 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
+## [1.27.0] - 2026-05-02
+### Added
+- **Interactive API Docs Viewer** (`src/app/(dashboard)/manage/api-docs/`): Fully custom Swagger-style docs page built in Next.js. Fetches the live OpenAPI spec from the backend and renders tag-based sidebar navigation, accordion endpoint cards, parameters/schema tables, named response examples with selectable tabs, and a built-in "Try it out" HTTP client.
+- **`ApiDocsViewer` Component** (`src/components/api-docs/ApiDocsViewer.tsx`): 1000-line self-contained viewer — resolves `$ref` pointers, generates request body examples, renders `examples` and `example` fields from OpenAPI operations, and executes live API calls with bearer token support.
+- **Sidebar API Docs Link**: "API Docs" nav item added to the dashboard sidebar under Management, guarded by `apidoc.view` permission.
+### Changed
+- **Accordion Endpoint Cards**: Endpoint cards now behave as a true accordion — only one can be open at a time. `expanded` state lifted from `EndpointCard` to `ApiDocsViewer`; switching tags also collapses any open card.
+- **Scroll Architecture**: Removed `max-height` from tab content panels; the outer endpoint list scrolls vertically. Code blocks are capped at `max-height: 400px` with independent overflow-y scroll.
+- **Try it out X-Axis Scroll**: The Try it out panel and URL row are horizontally scrollable on narrow viewports (`overflow-x: auto`).
+
 ## [1.24.0] - 2026-04-16
 ### Added
 - **Tenant & Business Management UI**: Complete frontend implementation for managing Tenants and Tenant Businesses (Operators/Distributors) at `/manage/tenants` and `/manage/tenant-businesses`.

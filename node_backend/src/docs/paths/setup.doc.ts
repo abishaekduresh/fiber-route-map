@@ -22,42 +22,35 @@
  *         description: Setup status retrieved successfully
  *         content:
  *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 statusCode:
- *                   type: integer
- *                   example: 200
- *                 message:
- *                   type: string
- *                   example: Setup is required
- *                 data:
- *                   type: object
- *                   properties:
- *                     isComplete:
- *                       type: boolean
- *                       example: false
+ *             examples:
+ *               notStarted:
+ *                 summary: Setup not started
+ *                 value:
+ *                   success: true
+ *                   statusCode: 200
+ *                   message: "Setup is required"
+ *                   data:
+ *                     isComplete: false
  *                     steps:
- *                       type: object
- *                       properties:
- *                         envConfigured:
- *                           type: boolean
- *                           example: false
- *                         dbConnected:
- *                           type: boolean
- *                           example: false
- *                         tablesMigrated:
- *                           type: boolean
- *                           example: false
- *                         permissionsSeeded:
- *                           type: boolean
- *                           example: false
- *                         adminCreated:
- *                           type: boolean
- *                           example: false
+ *                       envConfigured: false
+ *                       dbConnected: false
+ *                       tablesMigrated: false
+ *                       permissionsSeeded: false
+ *                       adminCreated: false
+ *               complete:
+ *                 summary: Setup already complete
+ *                 value:
+ *                   success: true
+ *                   statusCode: 200
+ *                   message: "Setup is complete"
+ *                   data:
+ *                     isComplete: true
+ *                     steps:
+ *                       envConfigured: true
+ *                       dbConnected: true
+ *                       tablesMigrated: true
+ *                       permissionsSeeded: true
+ *                       adminCreated: true
  *
  * /setup/test-connection:
  *   post:
@@ -76,40 +69,24 @@
  *             type: object
  *             required: [dbHost, dbName, dbUser]
  *             properties:
- *               dbHost:
- *                 type: string
- *                 example: localhost
- *               dbPort:
- *                 type: integer
- *                 default: 3306
- *                 example: 3306
- *               dbName:
- *                 type: string
- *                 example: fiber_route_map
- *               dbUser:
- *                 type: string
- *                 example: root
- *               dbPass:
- *                 type: string
- *                 example: ""
- *               dbCharset:
- *                 type: string
- *                 default: utf8mb4
- *                 example: utf8mb4
+ *               dbHost: { type: string, example: "localhost" }
+ *               dbPort: { type: integer, default: 3306, example: 3306 }
+ *               dbName: { type: string, example: "fiber_route_map" }
+ *               dbUser: { type: string, example: "root" }
+ *               dbPass: { type: string, example: "" }
+ *               dbCharset: { type: string, default: "utf8mb4", example: "utf8mb4" }
+ *           example:
+ *             dbHost: "localhost"
+ *             dbPort: 3306
+ *             dbName: "fiber_route_map"
+ *             dbUser: "root"
+ *             dbPass: ""
+ *             dbCharset: "utf8mb4"
  *     responses:
  *       200:
  *         description: Connection test result
  *         content:
  *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 statusCode:
- *                   type: integer
- *                 message:
- *                   type: string
  *             examples:
  *               success:
  *                 summary: Connection successful
@@ -122,7 +99,7 @@
  *                 value:
  *                   success: false
  *                   statusCode: 503
- *                   message: "Access denied for user 'root'@'localhost'"
+ *                   message: "Access denied for user 'root'@'localhost' (using password: NO)"
  *
  * /setup/run:
  *   post:
@@ -155,95 +132,50 @@
  *                 type: object
  *                 required: [dbHost, dbName, dbUser, timezone]
  *                 properties:
- *                   dbHost:
- *                     type: string
- *                     example: localhost
- *                   dbPort:
- *                     type: integer
- *                     default: 3306
- *                     example: 3306
- *                   dbName:
- *                     type: string
- *                     example: fiber_route_map
- *                   dbUser:
- *                     type: string
- *                     example: root
- *                   dbPass:
- *                     type: string
- *                     example: ""
- *                   dbCharset:
- *                     type: string
- *                     default: utf8mb4
- *                     example: utf8mb4
- *                   timezone:
- *                     type: string
- *                     example: Asia/Kolkata
- *                   port:
- *                     type: integer
- *                     default: 3001
- *                     example: 3001
- *                   apiVersion:
- *                     type: string
- *                     default: v1
- *                     example: v1
- *                   nodeEnv:
- *                     type: string
- *                     enum: [development, production, test]
- *                     default: development
+ *                   dbHost: { type: string, example: "localhost" }
+ *                   dbPort: { type: integer, default: 3306, example: 3306 }
+ *                   dbName: { type: string, example: "fiber_route_map" }
+ *                   dbUser: { type: string, example: "root" }
+ *                   dbPass: { type: string, example: "" }
+ *                   dbCharset: { type: string, default: "utf8mb4", example: "utf8mb4" }
+ *                   timezone: { type: string, example: "Asia/Kolkata" }
+ *                   port: { type: integer, default: 3001, example: 3001 }
+ *                   apiVersion: { type: string, default: "v1", example: "v1" }
+ *                   nodeEnv: { type: string, enum: [development, production, test], default: "development" }
  *               admin:
  *                 type: object
  *                 required: [name, username, email, phone, password, confirmPassword]
  *                 properties:
- *                   name:
- *                     type: string
- *                     example: John Doe
- *                   username:
- *                     type: string
- *                     example: admin
- *                   email:
- *                     type: string
- *                     format: email
- *                     example: admin@example.com
- *                   phone:
- *                     type: string
- *                     pattern: '^\d{10}$'
- *                     example: "9876543210"
- *                   password:
- *                     type: string
- *                     minLength: 8
- *                     example: "Admin@1234"
- *                   confirmPassword:
- *                     type: string
- *                     example: "Admin@1234"
+ *                   name: { type: string, example: "John Doe" }
+ *                   username: { type: string, example: "admin" }
+ *                   email: { type: string, format: email, example: "admin@example.com" }
+ *                   phone: { type: string, example: "9876543210" }
+ *                   password: { type: string, example: "Admin@1234" }
+ *                   confirmPassword: { type: string, example: "Admin@1234" }
+ *           example:
+ *             env:
+ *               dbHost: "localhost"
+ *               dbPort: 3306
+ *               dbName: "fiber_route_map"
+ *               dbUser: "root"
+ *               dbPass: ""
+ *               dbCharset: "utf8mb4"
+ *               timezone: "Asia/Kolkata"
+ *               port: 3001
+ *               apiVersion: "v1"
+ *               nodeEnv: "development"
+ *             admin:
+ *               name: "John Doe"
+ *               username: "admin"
+ *               email: "admin@example.com"
+ *               phone: "9876543210"
+ *               password: "Admin@1234"
+ *               confirmPassword: "Admin@1234"
  *     responses:
  *       200:
- *         description: "Setup completed (check `success` field — step failures return HTTP 200 with `success: false`)"
+ *         description: "Setup completed (step failures return HTTP 200 with success: false)"
  *         content:
  *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 statusCode:
- *                   type: integer
- *                 message:
- *                   type: string
- *                 data:
- *                   type: object
- *                   properties:
- *                     steps:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           step:
- *                             type: string
- *                             enum: [env, database, tables, permissions, role, admin]
- *                           success:
- *                             type: boolean
- *                           message:
- *                             type: string
  *             examples:
  *               success:
  *                 summary: Setup completed successfully
@@ -253,61 +185,45 @@
  *                   message: "Setup completed successfully! Your application is ready."
  *                   data:
  *                     steps:
- *                       - { step: env,         success: true, message: ".env file written successfully" }
- *                       - { step: database,    success: true, message: "Database 'fiber_route_map' created/verified" }
- *                       - { step: tables,      success: true, message: "7 tables created/verified successfully" }
- *                       - { step: permissions, success: true, message: "21 permissions seeded/verified" }
- *                       - { step: role,        success: true, message: "Super Admin role created/verified with all permissions" }
- *                       - { step: admin,       success: true, message: "Admin user 'admin' created and assigned Super Admin role" }
+ *                       - { step: "env",         success: true, message: ".env file written successfully" }
+ *                       - { step: "database",    success: true, message: "Database 'fiber_route_map' created/verified" }
+ *                       - { step: "tables",      success: true, message: "7 tables created/verified successfully" }
+ *                       - { step: "permissions", success: true, message: "21 permissions seeded/verified" }
+ *                       - { step: "role",        success: true, message: "Super Admin role created/verified with all permissions" }
+ *                       - { step: "admin",       success: true, message: "Admin user 'admin' created and assigned Super Admin role" }
+ *               dbFailure:
+ *                 summary: Database step failed
+ *                 value:
+ *                   success: false
+ *                   statusCode: 200
+ *                   message: "Setup failed at database step"
+ *                   data:
+ *                     steps:
+ *                       - { step: "env",      success: true,  message: ".env file written successfully" }
+ *                       - { step: "database", success: false, message: "Access denied for user 'root'@'localhost'" }
  *       409:
  *         description: Setup already complete
  *         content:
  *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 statusCode:
- *                   type: integer
- *                   example: 409
- *                 errorType:
- *                   type: string
- *                   example: SETUP_COMPLETE
- *                 message:
- *                   type: string
- *                   example: "Setup is already complete. Re-running setup is not allowed."
- *                 help:
- *                   type: string
- *                   example: "To re-run setup, remove SETUP_COMPLETE=true from your .env file and restart the server."
+ *             example:
+ *               success: false
+ *               statusCode: 409
+ *               errorType: "SETUP_COMPLETE"
+ *               message: "Setup is already complete. Re-running setup is not allowed."
+ *               help: "To re-run setup, remove SETUP_COMPLETE=true from your .env file and restart the server."
  *       422:
  *         description: Validation error
  *         content:
  *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 statusCode:
- *                   type: integer
- *                   example: 422
- *                 errorType:
- *                   type: string
- *                   example: VALIDATION_ERROR
- *                 message:
- *                   type: string
- *                   example: "Validation failed: admin.phone: Phone must be exactly 10 digits"
- *                 errors:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       field:
- *                         type: string
- *                       message:
- *                         type: string
+ *             example:
+ *               success: false
+ *               statusCode: 422
+ *               errorType: "VALIDATION_ERROR"
+ *               message: "Validation failed"
+ *               errors:
+ *                 - field: "admin.phone"
+ *                   message: "Phone must be exactly 10 digits"
+ *                 - field: "admin.password"
+ *                   message: "Password must be at least 8 characters"
  */
 export const SetupPathDoc = {};

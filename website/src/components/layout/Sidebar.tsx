@@ -80,6 +80,17 @@ export default function Sidebar({
         { name: 'Businesses', href: '/manage/tenant-businesses' },
         { name: 'Tenants', href: '/manage/tenants' },
       ]
+    },
+    {
+      name: 'Developer',
+      icon: (
+        <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
+        </svg>
+      ),
+      subItems: [
+        { name: 'API Docs', href: '/manage/api-docs', permission: 'apidoc.view' },
+      ]
     }
   ];
 

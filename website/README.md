@@ -4,9 +4,10 @@ A futuristic, high-performance web dashboard for managing fiber optic networks.
 Built with **Next.js 16 (Turbopack)** and **TypeScript**, featuring a stunning **Glassmorphism Design System**.
 
 ## Version
-**Current Version:** 1.26.0 (Role Tenant Visibility & Lifecycle)
+**Current Version:** 1.27.0 (Interactive API Docs Viewer)
 
 ## Features
+- **Interactive API Docs Viewer** (`/manage/api-docs`): Custom Swagger-style documentation page — live OpenAPI spec, tag sidebar, accordion endpoint cards, schema tables, named response examples, and a built-in "Try it out" HTTP client with x-axis scroll support.
 - **Tenant Management UI**: Comprehensive CRUD interface for managing Tenants and Business entities with dedicated visibility controls for roles and lifecycle actions (Block/Unblock/Suspend/Reactivate).
 - **ViewModal Component**: Reusable glassmorphism modal for non-destructive data inspection.
 - **First-Time Setup Wizard**: 5-step web wizard at `/setup` — configures the database, seeds all permissions, creates a Super Admin role, and sets up the first admin account automatically.

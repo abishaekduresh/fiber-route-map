@@ -69,6 +69,7 @@ app.use('/api/permissions', permissionRoutes);
 app.use('/api/tenants', auth(authService), tenantRoutes);
 app.use('/api/tenant-business', auth(authService), tenantBusinessRoutes);
 app.use('/api/health', healthRoutes);
+app.get('/api/docs/spec', (_req: express.Request, res: express.Response) => res.json(swaggerSpec));
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Root route
