@@ -1,0 +1,51 @@
+# Dependency directories
+node_modules/
+**/node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+**/.env
+**/.env.*
+
+# Build outputs
+dist/
+**/dist/
+build/
+**/build/
+.next/
+**/ .next/
+out/
+**/out/
+
+# Antigravity / AI tools
+.antigravity/
+.gemini/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDE/Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# OS related
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Deployment / Testing
+coverage/
+**/coverage/
+.vercel
+.turbo
