@@ -2,6 +2,16 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.29.0] - 2026-05-02
+### Added
+- **Audit Logs Management UI**: Implemented a comprehensive audit log viewer with server-side pagination, advanced filtering (by actor, action, resource, date, status), and detailed inspection modals.
+- **Audit Logging Middleware**: Developed a high-fidelity logging system that captures actor metadata, request/response bodies (sanitized), IP addresses, and performance metrics for all API requests.
+- **Auto-Migration for Audit Logs**: Backend now automatically creates and seeds the `audit_logs` table and associated permissions on startup if they don't exist.
+### Fixed
+- **Audit Log Duplication**: Resolved a race condition where CORS preflight (OPTIONS) requests were being logged as separate audit entries.
+- **Audit Log Theme Support**: Fully integrated the audit log viewer with the global theme system, using unified CSS variables for all UI elements.
+- **Tenant Schema Synchronization**: Corrected discrepancies in the `tenants` table schema between the setup script and the manual SQL dump.
+
 ## [1.28.0] - 2026-05-02
 ### Added
 - **API Versioning Support**: Added an "API Version" field to the API Docs "Try it out" tool. It defaults to the spec version but can be modified manually; the version is sent via the `X-API-Version` header to prevent backend versioning errors.

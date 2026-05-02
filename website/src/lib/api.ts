@@ -559,6 +559,54 @@ export async function suspendTenantBusiness(uuid: string): Promise<ApiResponse> 
 }
 
 /**
+ * Audit Log query parameters shape.
+ */
+export interface AuditLogFilter {
+  actorUuid?: string;
+  actorEmail?: string;
+  actorType?: 'user' | 'system' | 'anonymous';
+  action?: string;
+  resource?: string;
+  success?: boolean | string;
+  statusCode?: number;
+  ipAddress?: string;
+  requestId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+/**
+ * Fetch a paginated list of audit logs with optional filters.
+ */
+export async function getAuditLogs(params?: {
+  page?: number;
+  limit?: number;
+  sort?: string;
+  filter?: AuditLogFilter;
+}): Promise<ApiResponse<any[]>> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set('page', String(params.page));
+  if (params?.limit) qs.set('limit', String(params.limit));
+  if (params?.sort) qs.set('sort', params.sort);
+  if (params?.filter) {
+    for (const [key, value] of Object.entries(params.filter)) {
+      if (value !== undefined && value !== '') {
+        qs.set(`filter[${key}]`, String(value));
+      }
+    }
+  }
+  const query = qs.toString() ? `?${qs.toString()}` : '';
+  return apiFetch(`/api/audit-logs${query}`);
+}
+
+/**
+ * Fetch a single audit log entry by UUID.
+ */
+export async function getAuditLogByUuid(uuid: string): Promise<ApiResponse<any>> {
+  return apiFetch(`/api/audit-logs/${uuid}`);
+}
+
+/**
  * Check the system health status.
  */
 export async function checkHealth(): Promise<any> {

@@ -89,10 +89,12 @@ CREATE TABLE IF NOT EXISTS `tenants` (
   `email` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `username` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `phone` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `password` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `countryId` int unsigned DEFAULT NULL,
   `roleId` int unsigned DEFAULT NULL,
+  `tenantBusinessId` int unsigned DEFAULT NULL,
   `status` enum('active','blocked','suspended','deleted') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
   `createdAt` datetime NOT NULL DEFAULT (now()),
   `updatedAt` datetime NOT NULL DEFAULT (now()),
@@ -105,8 +107,10 @@ CREATE TABLE IF NOT EXISTS `tenants` (
   KEY `idx_tenants_name` (`name`),
   KEY `FK_tenants_countries` (`countryId`),
   KEY `FK_tenants_roles` (`roleId`),
+  KEY `FK_tenants_tenant_business` (`tenantBusinessId`),
   CONSTRAINT `FK_tenants_countries` FOREIGN KEY (`countryId`) REFERENCES `countries` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `FK_tenants_roles` FOREIGN KEY (`roleId`) REFERENCES `roles` (`id`) ON DELETE SET NULL
+  CONSTRAINT `FK_tenants_roles` FOREIGN KEY (`roleId`) REFERENCES `roles` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `FK_tenants_tenant_business` FOREIGN KEY (`tenantBusinessId`) REFERENCES `tenant_business` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
@@ -204,6 +208,45 @@ CREATE TABLE IF NOT EXISTS `user_sessions` (
   UNIQUE KEY `user_sessions_sessiontoken_unique` (`sessionToken`),
   KEY `user_sessions_userid_foreign` (`userId`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Data exporting was unselected.
+
+-- Dumping structure for table fiber_route_map.audit_logs
+CREATE TABLE IF NOT EXISTS `audit_logs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `uuid` varchar(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `actorType` enum('user','system','anonymous') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'anonymous',
+  `actorUuid` varchar(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `actorName` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `actorEmail` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `actorRoles` json DEFAULT NULL,
+  `action` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `resource` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `resourceUuid` varchar(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `resourceName` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `httpMethod` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `endpoint` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `statusCode` smallint unsigned NOT NULL,
+  `success` tinyint(1) NOT NULL DEFAULT '1',
+  `requestBody` json DEFAULT NULL,
+  `responseBody` json DEFAULT NULL,
+  `ipAddress` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `userAgent` text COLLATE utf8mb4_unicode_ci,
+  `requestId` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sessionUuid` varchar(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `durationMs` int unsigned NOT NULL DEFAULT '0',
+  `errorMessage` text COLLATE utf8mb4_unicode_ci,
+  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `audit_logs_uuid_unique` (`uuid`),
+  KEY `idx_audit_actor_uuid` (`actorUuid`),
+  KEY `idx_audit_action` (`action`),
+  KEY `idx_audit_resource` (`resource`),
+  KEY `idx_audit_created` (`createdAt`),
+  KEY `idx_audit_status_code` (`statusCode`),
+  KEY `idx_audit_ip` (`ipAddress`),
+  KEY `idx_audit_request_id` (`requestId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 

@@ -29,6 +29,8 @@ import { authRoutes } from './routes/authRoutes.js';
 import setupRoutes from './routes/setupRoutes.js';
 import tenantRoutes from './routes/tenantRoutes.js';
 import tenantBusinessRoutes from './routes/tenantBusinessRoutes.js';
+import auditLogRoutes, { auditLogService } from './routes/auditLogRoutes.js';
+import { auditLog } from './middleware/auditLog.js';
 import logger from './utils/logger.js';
 import db from './config/database.js';
 import swaggerUi from 'swagger-ui-express';
@@ -60,6 +62,9 @@ app.use('/api/setup', setupRoutes);
 app.use(versionCheck);
 app.use(dbCheck);
 
+// Audit log middleware — runs on all API routes (after auth is available per-route)
+app.use('/api', auditLog(auditLogService));
+
 // Routes
 app.use('/api/auth', authRoutes(authService));
 app.use('/api/users', auth(authService), userRoutes);
@@ -68,6 +73,7 @@ app.use('/api/roles', auth(authService), roleRoutes);
 app.use('/api/permissions', permissionRoutes);
 app.use('/api/tenants', auth(authService), tenantRoutes);
 app.use('/api/tenant-business', auth(authService), tenantBusinessRoutes);
+app.use('/api/audit-logs', auth(authService), auditLogRoutes);
 app.use('/api/health', healthRoutes);
 app.get('/api/docs/spec', (_req: express.Request, res: express.Response) => res.json(swaggerSpec));
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
@@ -80,12 +86,99 @@ app.get('/', (req: express.Request, res: express.Response) => {
 // Error handling
 app.use(errorHandler);
 
+// Ensure audit_logs table exists (auto-migration for existing installs)
+const ensureAuditLogsTable = async () => {
+  try {
+    const exists = await db.schema.hasTable('audit_logs');
+    if (!exists) {
+      await db.schema.createTable('audit_logs', (t) => {
+        t.bigIncrements('id').primary();
+        t.string('uuid', 36).notNullable().unique();
+        t.enum('actorType', ['user', 'system', 'anonymous']).notNullable().defaultTo('anonymous');
+        t.string('actorUuid', 36).nullable();
+        t.string('actorName', 255).nullable();
+        t.string('actorEmail', 191).nullable();
+        t.json('actorRoles').nullable();
+        t.string('action', 100).notNullable();
+        t.string('resource', 100).notNullable();
+        t.string('resourceUuid', 36).nullable();
+        t.string('resourceName', 255).nullable();
+        t.string('httpMethod', 10).notNullable();
+        t.string('endpoint', 500).notNullable();
+        t.smallint('statusCode').unsigned().notNullable();
+        t.boolean('success').notNullable().defaultTo(true);
+        t.json('requestBody').nullable();
+        t.json('responseBody').nullable();
+        t.string('ipAddress', 45).nullable();
+        t.text('userAgent').nullable();
+        t.string('requestId', 100).nullable();
+        t.string('sessionUuid', 36).nullable();
+        t.integer('durationMs').unsigned().notNullable().defaultTo(0);
+        t.text('errorMessage').nullable();
+        t.timestamp('createdAt').notNullable().defaultTo(db.fn.now());
+        t.index(['actorUuid'], 'idx_audit_actor_uuid');
+        t.index(['action'], 'idx_audit_action');
+        t.index(['resource'], 'idx_audit_resource');
+        t.index(['createdAt'], 'idx_audit_created');
+        t.index(['statusCode'], 'idx_audit_status_code');
+        t.index(['ipAddress'], 'idx_audit_ip');
+        t.index(['requestId'], 'idx_audit_request_id');
+      });
+      logger.info('Auto-migration: audit_logs table created');
+
+      // Seed audit_log permissions if the permissions table exists
+      const hasPermissions = await db.schema.hasTable('permissions');
+      if (hasPermissions) {
+        const { generateUuidV7 } = await import('./utils/uuid.js');
+        const { nowDb } = await import('./utils/time.js');
+        const now = nowDb();
+        for (const action of ['view', 'export']) {
+          const slug = `audit_log.${action}`;
+          const existing = await db('permissions').where('slug', slug).first();
+          if (!existing) {
+            await db('permissions').insert({
+              uuid: generateUuidV7(),
+              name: `${action.charAt(0).toUpperCase() + action.slice(1)} Audit Logs`,
+              slug,
+              resource: 'audit_log',
+              description: `Can ${action} audit logs`,
+              createdAt: now,
+              updatedAt: now,
+            });
+            logger.info(`Auto-migration: seeded permission '${slug}'`);
+          }
+        }
+
+        // Assign new permissions to Super Admin role if it exists
+        const superAdminRole = await db('roles').where('slug', 'super-admin').select('id').first();
+        if (superAdminRole) {
+          const newPerms = await db('permissions')
+            .whereIn('slug', ['audit_log.view', 'audit_log.export'])
+            .select('id');
+          for (const perm of newPerms) {
+            await db.raw(
+              'INSERT IGNORE INTO role_permissions (roleId, permissionId) VALUES (?, ?)',
+              [superAdminRole.id, perm.id]
+            );
+          }
+          logger.info('Auto-migration: audit_log permissions assigned to Super Admin role');
+        }
+      }
+    }
+  } catch (err: any) {
+    logger.warn('Auto-migration for audit_logs skipped or failed', { error: err.message });
+  }
+};
+
 // Start server
 const startServer = async () => {
   try {
     // Verify database connection on startup
     await db.raw('SELECT 1');
     logger.info('Database connection established successfully');
+
+    // Ensure audit_logs table exists (handles existing installs that predate v1.29.0)
+    await ensureAuditLogsTable();
   } catch (error: any) {
     logger.error('Initial database connection failed. Server is starting but database-dependent routes will return connectivity errors.', {
       error: error.message,

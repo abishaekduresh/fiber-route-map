@@ -66,13 +66,14 @@ export interface SetupResult {
 // ─── Permission Definitions ───────────────────────────────────────────────────
 
 export const ROUTE_PERMISSIONS = [
-  { resource: 'user',       actions: ['view', 'create', 'update', 'delete', 'export'] },
-  { resource: 'role',       actions: ['view', 'create', 'update', 'delete'] },
-  { resource: 'country',    actions: ['view', 'create', 'update', 'delete'] },
-  { resource: 'permission',       actions: ['view', 'create', 'update', 'delete'] },
-  { resource: 'tenant',           actions: ['view', 'create', 'update', 'delete'] },
-  { resource: 'tenant_business',  actions: ['view', 'create', 'update', 'delete'] },
-  { resource: 'apidoc',           actions: ['view'] },
+  { resource: 'user',            actions: ['view', 'create', 'update', 'delete', 'export'] },
+  { resource: 'role',            actions: ['view', 'create', 'update', 'delete'] },
+  { resource: 'country',         actions: ['view', 'create', 'update', 'delete'] },
+  { resource: 'permission',      actions: ['view', 'create', 'update', 'delete'] },
+  { resource: 'tenant',          actions: ['view', 'create', 'update', 'delete'] },
+  { resource: 'tenant_business', actions: ['view', 'create', 'update', 'delete'] },
+  { resource: 'audit_log',       actions: ['view', 'export'] },
+  { resource: 'apidoc',          actions: ['view'] },
 ];
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
@@ -126,7 +127,8 @@ export class SetupService {
 
         const hasUsers = await db.schema.hasTable('users');
         const hasPermissions = await db.schema.hasTable('permissions');
-        tablesMigrated = hasUsers && hasPermissions;
+        const hasAuditLogs = await db.schema.hasTable('audit_logs');
+        tablesMigrated = hasUsers && hasPermissions && hasAuditLogs;
 
         if (tablesMigrated) {
           const permCount = await db('permissions').count('* as cnt').first();
@@ -453,6 +455,41 @@ export class SetupService {
         t.foreign('countryId').references('id').inTable('countries').onDelete('SET NULL');
       });
     } catch { /* FK may already exist */ }
+
+    // 12. audit_logs
+    await db.schema.createTableIfNotExists('audit_logs', (t: Knex.CreateTableBuilder) => {
+      t.bigIncrements('id').primary();
+      t.string('uuid', 36).notNullable().unique();
+      t.enum('actorType', ['user', 'system', 'anonymous']).notNullable().defaultTo('anonymous');
+      t.string('actorUuid', 36).nullable();
+      t.string('actorName', 255).nullable();
+      t.string('actorEmail', 191).nullable();
+      t.json('actorRoles').nullable();
+      t.string('action', 100).notNullable();
+      t.string('resource', 100).notNullable();
+      t.string('resourceUuid', 36).nullable();
+      t.string('resourceName', 255).nullable();
+      t.string('httpMethod', 10).notNullable();
+      t.string('endpoint', 500).notNullable();
+      t.smallint('statusCode').unsigned().notNullable();
+      t.boolean('success').notNullable().defaultTo(true);
+      t.json('requestBody').nullable();
+      t.json('responseBody').nullable();
+      t.string('ipAddress', 45).nullable();
+      t.text('userAgent').nullable();
+      t.string('requestId', 100).nullable();
+      t.string('sessionUuid', 36).nullable();
+      t.integer('durationMs').unsigned().notNullable().defaultTo(0);
+      t.text('errorMessage').nullable();
+      t.timestamp('createdAt').notNullable().defaultTo(db.fn.now());
+      t.index(['actorUuid'], 'idx_audit_actor_uuid');
+      t.index(['action'], 'idx_audit_action');
+      t.index(['resource'], 'idx_audit_resource');
+      t.index(['createdAt'], 'idx_audit_created');
+      t.index(['statusCode'], 'idx_audit_status_code');
+      t.index(['ipAddress'], 'idx_audit_ip');
+      t.index(['requestId'], 'idx_audit_request_id');
+    });
 
     logger.info('Setup: All tables created/verified');
   }
