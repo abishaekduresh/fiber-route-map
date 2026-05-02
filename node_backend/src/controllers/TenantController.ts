@@ -10,11 +10,11 @@ export class TenantController {
   }
 
   private transformTenant = (tenant: Tenant) => {
-    const { uuid, email, username, name, address, status, createdAt, updatedAt, country, role } = tenant;
+    const { uuid, email, username, name, phone, address, status, createdAt, updatedAt, country, role, business } = tenant;
     return {
       id: uuid,
       type: 'tenant',
-      attributes: { email, username, name, address, status, country: country ?? null, role: role ?? null },
+      attributes: { email, username, name, phone, address, status, country: country ?? null, role: role ?? null, business: business ?? null },
       meta: { createdAt, updatedAt },
       links: { self: `/api/tenants/${uuid}` },
     };

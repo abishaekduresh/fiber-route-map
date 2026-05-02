@@ -5,7 +5,7 @@ All notable changes to the Fiber Route Map Website will be documented in this fi
 ## [1.28.0] - 2026-05-02
 ### Added
 - **API Versioning Support**: Added an "API Version" field to the "Try it out" section of `ApiDocsViewer`. It automatically resolves the default version from the OpenAPI spec and sends it as the `X-API-Version` header.
-- **Tenant Management Fields**: Added "Phone Number" and "Tenant Business" fields to `TenantModal`. Businesses are dynamically fetched from the backend to allow for proper tenant-to-business association.
+- **Full-Stack Tenant Improvements**: Added `phone` and `tenantBusinessUuid` support to the Tenant API and Frontend. Modals now correctly display and save phone numbers and business assignments, with full backend persistence and join support.
 ### Changed
 - **Full-Height API Docs**: Optimized the API Documentation layout to eliminate internal scrollbars. Content now expands to its full height, utilizing the main dashboard scrollbar.
 - **Sticky Sidebar**: The API Docs tag sidebar now uses sticky positioning to remain visible during deep-page scrolling.

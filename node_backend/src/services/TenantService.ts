@@ -28,8 +28,8 @@ export class TenantService {
   }
 
   async createTenant(data: CreateTenantDTO): Promise<Tenant> {
-    if (!data.email || !data.username || !data.name || !data.address || !data.password) {
-      const error = new Error('email, username, name, address, and password are required');
+    if (!data.email || !data.username || !data.name || !data.phone || !data.address || !data.password) {
+      const error = new Error('email, username, name, phone, address, and password are required');
       (error as any).status = 400;
       throw error;
     }
@@ -72,16 +72,29 @@ export class TenantService {
       roleId = row.id;
     }
 
+    let tenantBusinessId: number | null = null;
+    if (data.tenantBusinessUuid) {
+      const row = await db('tenant_business').where('uuid', data.tenantBusinessUuid).select('id').first();
+      if (!row) {
+        const error = new Error('Selected tenant business does not exist');
+        (error as any).status = 404;
+        throw error;
+      }
+      tenantBusinessId = row.id;
+    }
+
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
     return this.repo.create({
       email: data.email,
       username: data.username,
       name: data.name,
+      phone: data.phone,
       address: data.address,
       password: hashedPassword,
       countryId,
       roleId,
+      tenantBusinessId,
     });
   }
 
@@ -112,6 +125,7 @@ export class TenantService {
     if (data.name !== undefined) updatePayload.name = data.name;
     if (data.email !== undefined) updatePayload.email = data.email;
     if (data.username !== undefined) updatePayload.username = data.username;
+    if (data.phone !== undefined) updatePayload.phone = data.phone;
     if (data.address !== undefined) updatePayload.address = data.address;
 
     if (data.countryUuid !== undefined) {
@@ -139,6 +153,20 @@ export class TenantService {
           throw error;
         }
         updatePayload.roleId = row.id;
+      }
+    }
+
+    if (data.tenantBusinessUuid !== undefined) {
+      if (data.tenantBusinessUuid === null) {
+        updatePayload.tenantBusinessId = null;
+      } else {
+        const row = await db('tenant_business').where('uuid', data.tenantBusinessUuid).select('id').first();
+        if (!row) {
+          const error = new Error('Selected tenant business does not exist');
+          (error as any).status = 404;
+          throw error;
+        }
+        updatePayload.tenantBusinessId = row.id;
       }
     }
 

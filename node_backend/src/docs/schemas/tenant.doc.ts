@@ -25,6 +25,9 @@
  *             name:
  *               type: string
  *               example: "ACME Corporation"
+ *             phone:
+ *               type: string
+ *               example: "1234567890"
  *             address:
  *               type: string
  *               example: "123 Main St, City"
@@ -47,6 +50,13 @@
  *                 uuid: { type: string, format: uuid }
  *                 name: { type: string, example: "Super Admin" }
  *                 slug: { type: string, example: "super-admin" }
+ *             business:
+ *               type: object
+ *               nullable: true
+ *               properties:
+ *                 uuid: { type: string, format: uuid }
+ *                 name: { type: string, example: "ACME ISP" }
+ *                 type: { type: string, enum: [operator, distributor] }
  *         meta:
  *           type: object
  *           properties:

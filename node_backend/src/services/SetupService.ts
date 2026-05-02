@@ -407,10 +407,12 @@ export class SetupService {
       t.string('email', 191).notNullable().unique();
       t.string('username', 100).notNullable().unique();
       t.string('name', 100).notNullable();
+      t.string('phone', 30).notNullable();
       t.string('address', 255).notNullable();
       t.text('password').notNullable();
       t.integer('countryId').unsigned().nullable();
       t.integer('roleId').unsigned().nullable();
+      t.integer('tenantBusinessId').unsigned().nullable();
       t.enum('status', ['active', 'blocked', 'suspended', 'deleted']).notNullable().defaultTo('active');
       t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
       t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
@@ -423,6 +425,7 @@ export class SetupService {
       await db.schema.alterTable('tenants', (t: Knex.CreateTableBuilder) => {
         t.foreign('countryId').references('id').inTable('countries').onDelete('SET NULL');
         t.foreign('roleId').references('id').inTable('roles').onDelete('SET NULL');
+        t.foreign('tenantBusinessId').references('id').inTable('tenant_business').onDelete('SET NULL');
       });
     } catch { /* FKs may already exist */ }
 

@@ -5,7 +5,7 @@ All notable changes to the Fiber Route Map project will be documented in this fi
 ## [1.28.0] - 2026-05-02
 ### Added
 - **API Versioning Support**: Added an "API Version" field to the API Docs "Try it out" tool. It defaults to the spec version but can be modified manually; the version is sent via the `X-API-Version` header to prevent backend versioning errors.
-- **Enhanced Tenant Form**: Added a "Phone Number" field and a "Tenant Business" assignment dropdown to the Create/Edit Tenant modal, allowing for better resource categorization during tenant setup.
+- **Enhanced Tenant Management (Full Stack)**: Implemented `phone` and `tenantBusinessId` support across the entire stack. This includes database schema updates, repository joins, service validation, and controller transformations for seamless data flow from the frontend to the database.
 ### Changed
 - **API Docs UX Optimization**: Redesigned the API Documentation viewer to "show full" content. Removed the internal fixed-height scroll container for the endpoint list and the `max-height` constraint on code blocks. The documentation now flows naturally with the page scroll.
 - **Sticky API Docs Sidebar**: Converted the API Docs tag sidebar to `position: sticky` so it remains accessible while scrolling through long documentation pages.

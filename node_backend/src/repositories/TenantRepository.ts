@@ -8,7 +8,7 @@ const SAFE_COLUMNS = [
   'tenants.email',
   'tenants.username',
   'tenants.name',
-  'tenants.address',
+  'tenants.phone',
   'tenants.status',
   'tenants.createdAt',
   'tenants.updatedAt',
@@ -20,12 +20,16 @@ const SAFE_COLUMNS = [
   'roles.uuid as roleUuid',
   'roles.name as roleName',
   'roles.slug as roleSlug',
+  'tenant_business.uuid as businessUuid',
+  'tenant_business.name as businessName',
+  'tenant_business.type as businessType',
 ];
 
 function mapRow(row: any): Tenant {
   const {
     countryUuid, countryName, countryCode, countryPhoneCode,
     roleUuid, roleName, roleSlug,
+    businessUuid, businessName, businessType,
     ...rest
   } = row;
   return {
@@ -35,6 +39,9 @@ function mapRow(row: any): Tenant {
       : null,
     role: roleUuid
       ? { uuid: roleUuid, name: roleName, slug: roleSlug }
+      : null,
+    business: businessUuid
+      ? { uuid: businessUuid, name: businessName, type: businessType }
       : null,
   } as Tenant;
 }
@@ -50,6 +57,7 @@ export class TenantRepository {
     let query = db(this.table)
       .leftJoin('countries', 'tenants.countryId', 'countries.id')
       .leftJoin('roles', 'tenants.roleId', 'roles.id')
+      .leftJoin('tenant_business', 'tenants.tenantBusinessId', 'tenant_business.id')
       .select(SAFE_COLUMNS);
     let countQuery = db(this.table);
 
@@ -126,6 +134,7 @@ export class TenantRepository {
     const row = await db(this.table)
       .leftJoin('countries', 'tenants.countryId', 'countries.id')
       .leftJoin('roles', 'tenants.roleId', 'roles.id')
+      .leftJoin('tenant_business', 'tenants.tenantBusinessId', 'tenant_business.id')
       .select(SAFE_COLUMNS)
       .where('tenants.uuid', uuid)
       .first();
@@ -146,8 +155,9 @@ export class TenantRepository {
   }
 
   async create(data: {
-    email: string; username: string; name: string; address: string;
+    email: string; username: string; name: string; phone: string; address: string;
     password: string; countryId: number | null; roleId: number | null;
+    tenantBusinessId: number | null;
   }): Promise<Tenant> {
     const uuid = uuidv4();
     const now = nowDb();
@@ -156,10 +166,12 @@ export class TenantRepository {
       email: data.email,
       username: data.username,
       name: data.name,
+      phone: data.phone,
       address: data.address,
       password: data.password,
       countryId: data.countryId,
       roleId: data.roleId,
+      tenantBusinessId: data.tenantBusinessId,
       status: 'active',
       createdAt: now,
       updatedAt: now,
@@ -167,8 +179,8 @@ export class TenantRepository {
     return this.findByUuid(uuid) as Promise<Tenant>;
   }
 
-  async update(uuid: string, data: Omit<UpdateTenantDTO, 'countryUuid' | 'roleUuid'> & {
-    countryId?: number | null; roleId?: number | null;
+  async update(uuid: string, data: Omit<UpdateTenantDTO, 'countryUuid' | 'roleUuid' | 'tenantBusinessUuid'> & {
+    countryId?: number | null; roleId?: number | null; tenantBusinessId?: number | null;
   }): Promise<boolean> {
     const result = await db(this.table).where('uuid', uuid).update({
       ...data,

@@ -7,7 +7,7 @@ export interface Tenant {
   status: 'active' | 'blocked' | 'suspended' | 'deleted';
   createdAt: string;
   updatedAt: string;
-  deletedAt?: string | null;
+  phone: string;
   country?: {
     uuid: string;
     name: string;
@@ -19,16 +19,23 @@ export interface Tenant {
     name: string;
     slug: string;
   } | null;
+  business?: {
+    uuid: string;
+    name: string;
+    type: 'operator' | 'distributor';
+  } | null;
 }
 
 export type CreateTenantDTO = {
   email: string;
   username: string;
   name: string;
+  phone: string;
   address: string;
   password: string;
   countryUuid?: string;
   roleUuid?: string;
+  tenantBusinessUuid?: string;
 };
 
 export type UpdateTenantDTO = Partial<Omit<CreateTenantDTO, 'password'>>;
