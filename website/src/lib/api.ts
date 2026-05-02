@@ -112,6 +112,29 @@ export interface SessionLimitData {
   sessionLimit: number;
 }
 
+/** Shape of the tenant login response data */
+export interface TenantLoginData {
+  tenant: {
+    id: string;
+    type: string;
+    attributes: {
+      name: string;
+      phone: string;
+      status: string;
+      email?: string;
+      username?: string;
+    };
+  };
+  accessToken: string;
+  refreshToken: string;
+}
+
+/** Shape of the tenant token refresh response data */
+export interface TenantRefreshData {
+  accessToken: string;
+  refreshToken: string;
+}
+
 /**
  * Core fetch wrapper for all API calls.
  */
@@ -167,6 +190,46 @@ export async function login(
   if (result.success && result.data && 'token' in result.data) {
     localStorage.setItem('fiber_auth_token', result.data.token);
     localStorage.setItem('fiber_auth_user', JSON.stringify(result.data.user));
+  }
+
+  return result;
+}
+
+/**
+ * Authenticate a tenant with their phone number and password.
+ * On success, stores the tokens in localStorage.
+ */
+export async function tenantLogin(
+  phone: string,
+  password: string
+): Promise<ApiResponse<TenantLoginData>> {
+  const result = await apiFetch<TenantLoginData>('/api/auth/tenant/login', {
+    method: 'POST',
+    body: JSON.stringify({ phone, password }),
+  });
+
+  // Store tokens on successful login
+  if (result.success && result.data) {
+    localStorage.setItem('fiber_tenant_token', result.data.accessToken);
+    localStorage.setItem('fiber_tenant_refresh', result.data.refreshToken);
+    localStorage.setItem('fiber_tenant_data', JSON.stringify(result.data.tenant));
+  }
+
+  return result;
+}
+
+/**
+ * Refresh a tenant's access token using their refresh token.
+ */
+export async function refreshTenantToken(refreshToken: string): Promise<ApiResponse<TenantRefreshData>> {
+  const result = await apiFetch<TenantRefreshData>('/api/auth/tenant/refresh', {
+    method: 'POST',
+    body: JSON.stringify({ refreshToken }),
+  });
+
+  if (result.success && result.data) {
+    localStorage.setItem('fiber_tenant_token', result.data.accessToken);
+    localStorage.setItem('fiber_tenant_refresh', result.data.refreshToken);
   }
 
   return result;

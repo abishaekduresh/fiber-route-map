@@ -1,0 +1,198 @@
+.container {
+  min-height: 100vh;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-family);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 2.5rem;
+  background: var(--color-bg-glass);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.brand h1 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.userSection {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.tenantInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.tenantName {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.tenantPhone {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.logoutBtn {
+  padding: 0.5rem 1rem;
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--color-danger);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.logoutBtn:hover {
+  background: var(--color-danger);
+  color: #ffffff;
+}
+
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2.5rem;
+}
+
+.welcomeCard {
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.welcomeCard h2 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.welcomeCard p {
+  color: var(--color-text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 1rem;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  transition: all var(--transition-base);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: #10b981;
+  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.1);
+}
+
+.card h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.stat {
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  color: var(--color-text-primary);
+}
+
+.cardDesc {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 1rem;
+  }
+  
+  .brand h1 {
+    display: none;
+  }
+  
+  .main {
+    padding: 1.5rem;
+  }
+  
+  .welcomeCard {
+    padding: 1.5rem;
+  }
+  
+  .welcomeCard h2 {
+    font-size: 1.5rem;
+  }
+}

@@ -2,6 +2,13 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.33.0] - 2026-05-02
+### Added
+- **Secure Tenant Login Frontend**: Developed a premium emerald-themed login portal for tenants at `/tenant-login`.
+- **Tenant Session Management**: Implemented `TenantAuthContext` and specialized API client methods for managing tenant-specific JWT tokens and metadata.
+- **Tenant Dashboard**: Created a responsive placeholder dashboard for authenticated tenants at `/tenant/dashboard`.
+- **Integrated Feedback**: Integrated `sonner` toasts for comprehensive authentication status messaging in the tenant portal.
+
 ## [1.32.0] - 2026-05-02
 ### Added
 - **Secure Tenant Authentication**: Implemented a robust JWT-based login system for tenants using phone number and password.

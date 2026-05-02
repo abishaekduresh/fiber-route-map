@@ -4,6 +4,7 @@ import "./globals.css";
 import HealthStatus from "@/components/HealthStatus";
 import { ThemeProvider } from '@/components/providers/ThemeContext';
 import { AuthProvider } from '@/components/providers/AuthContext';
+import { TenantAuthProvider } from '@/components/providers/TenantAuthContext';
 import { Toaster } from 'sonner';
 
 const inter = Inter({ subsets: ["latin"] });
@@ -26,9 +27,11 @@ export default function RootLayout({
       <body className={inter.className} suppressHydrationWarning>
         <ThemeProvider>
           <AuthProvider>
-            <Toaster position="bottom-right" richColors closeButton duration={3000} />
-            <HealthStatus />
-            {children}
+            <TenantAuthProvider>
+              <Toaster position="bottom-right" richColors closeButton duration={3000} />
+              <HealthStatus />
+              {children}
+            </TenantAuthProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
