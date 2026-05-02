@@ -35,9 +35,10 @@ import logger from './utils/logger.js';
 import db from './config/database.js';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './docs/swaggerConfig.js';
-import { AuthService } from './services/AuthService.js';
 import { AuthRepository } from './repositories/AuthRepository.js';
 import { UserRepository } from './repositories/UserRepository.js';
+import { TenantRepository } from './repositories/TenantRepository.js';
+import { AuthService } from './services/AuthService.js';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -45,7 +46,8 @@ const port = process.env.PORT || 3001;
 // Initialize repositories and services
 const authRepo = new AuthRepository();
 const userRepo = new UserRepository();
-const authService = new AuthService(authRepo, userRepo);
+const tenantRepo = new TenantRepository();
+const authService = new AuthService(authRepo, userRepo, tenantRepo);
 
 // Use extended query parser (qs) to support nested bracket notation like filter[status]=active
 app.set('query parser', 'extended');

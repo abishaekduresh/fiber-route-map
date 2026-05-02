@@ -2,6 +2,15 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.32.0] - 2026-05-02
+### Added
+- **Secure Tenant Authentication**: Implemented a robust JWT-based login system for tenants using phone number and password.
+- **JWT Token Rotation**: Added support for short-lived access tokens and long-lived refresh tokens with automatic rotation for enhanced security.
+- **Tenant Session Management**: Created a dedicated `tenant_refresh_tokens` database table to track valid sessions and device metadata.
+- **Modular Swagger Documentation**: Refactored the authentication OpenAPI definitions into individual blocks and modular schemas (`auth_schemas.doc.ts`) to resolve parsing issues and improve documentation clarity.
+### Fixed
+- **Swagger Visibility**: Resolved an issue where tenant login and refresh token endpoints were not appearing in the interactive API documentation.
+
 ## [1.31.0] - 2026-05-02
 ### Added
 - **Unified Card Design System**: Redesigned User, Tenant, and Business cards with a premium, boxy aesthetic featuring avatar glows, role-specific pill badges, and theme-colored action buttons.

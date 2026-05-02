@@ -16,6 +16,12 @@ export const authRoutes = (authService: AuthService) => {
   userRouter.delete('/sessions/:uuid', auth(authService), controller.terminateSession);
 
   router.use('/users', userRouter);
+  
+  const tenantRouter = Router();
+  tenantRouter.post('/login', controller.tenantLogin);
+  tenantRouter.post('/refresh', controller.refreshTenantToken);
+  router.use('/tenant', tenantRouter);
+
   router.get('/me', auth(authService), controller.me);
 
   return router;

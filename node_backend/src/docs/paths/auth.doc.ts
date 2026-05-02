@@ -241,4 +241,77 @@
  *       500:
  *         $ref: '#/components/responses/500InternalError'
  */
+
+/**
+ * @openapi
+ * /auth/tenant/login:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Tenant Login (Phone + JWT)
+ *     description: >
+ *       Dedicated authentication for tenants using their phone number and password.
+ *       Returns an Access Token (JWT) and a Refresh Token.
+ *     parameters:
+ *       - $ref: '#/components/parameters/ApiVersionHeader'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [phone, password]
+ *             properties:
+ *               phone:
+ *                 type: string
+ *                 description: Tenant phone number
+ *                 example: "9876543210"
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: "Password123"
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/TenantLoginResponse'
+ *       401:
+ *         description: Invalid credentials
+ *       403:
+ *         description: Account blocked or suspended
+ */
+
+/**
+ * @openapi
+ * /auth/tenant/refresh:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Refresh Tenant Token
+ *     description: Exchange a Refresh Token for a new Access Token and a rotated Refresh Token.
+ *     parameters:
+ *       - $ref: '#/components/parameters/ApiVersionHeader'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [refreshToken]
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 example: "eyJhbGciOiJIUzI1NiJ..."
+ *     responses:
+ *       200:
+ *         description: Token refreshed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/RefreshTokenResponse'
+ *       401:
+ *         description: Invalid or expired refresh token
+ */
 export const AuthPathDoc = {};

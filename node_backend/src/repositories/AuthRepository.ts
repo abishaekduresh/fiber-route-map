@@ -76,4 +76,29 @@ export class AuthRepository {
       .where({ provider, providerUserId })
       .first();
   }
+
+  // Tenant Refresh Token methods
+  async createTenantRefreshToken(data: { tenantId: number; token: string; expiresAt: Date; ipAddress?: string; userAgent?: string; deviceId?: string; deviceName?: string }): Promise<void> {
+    await db('tenant_refresh_tokens').insert({
+      ...data,
+      createdAt: nowDb(),
+      updatedAt: nowDb(),
+    });
+  }
+
+  async findTenantRefreshToken(token: string): Promise<any | null> {
+    return db('tenant_refresh_tokens')
+      .where('token', token)
+      .andWhere('expiresAt', '>', nowDb())
+      .first();
+  }
+
+  async deleteTenantRefreshToken(token: string): Promise<boolean> {
+    const result = await db('tenant_refresh_tokens').where('token', token).del();
+    return result > 0;
+  }
+
+  async deleteTenantRefreshTokensByTenantId(tenantId: number): Promise<number> {
+    return db('tenant_refresh_tokens').where('tenantId', tenantId).del();
+  }
 }

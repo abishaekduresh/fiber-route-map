@@ -155,6 +155,10 @@ export class TenantRepository {
     return db(this.table).where('username', username).select('uuid').first() ?? null;
   }
 
+  async findByPhoneWithPassword(phone: string): Promise<any | null> {
+    return db(this.table).where('phone', String(phone)).first();
+  }
+
   async create(data: {
     email: string; username: string; name: string; phone: string; address: string;
     password: string; countryId: number | null; roleId: number | null;

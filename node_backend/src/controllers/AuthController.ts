@@ -7,6 +7,15 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
+const tenantLoginSchema = z.object({
+  phone: z.string().min(1, 'Phone number is required'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+const refreshTokenSchema = z.object({
+  refreshToken: z.string().min(1, 'Refresh token is required'),
+});
+
 export class AuthController {
   constructor(private authService: AuthService) {}
 
@@ -152,6 +161,78 @@ export class AuthController {
     }
   };
 
+  tenantLogin = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { phone, password } = tenantLoginSchema.parse(req.body);
+
+      const deviceInfo = {
+        deviceId: (Array.isArray(req.headers['x-device-id']) ? req.headers['x-device-id'][0] : req.headers['x-device-id'] as string) || undefined,
+        deviceName: (Array.isArray(req.headers['x-device-name']) ? req.headers['x-device-name'][0] : req.headers['x-device-name'] as string) || undefined,
+        ipAddress: req.ip || undefined,
+        userAgent: (Array.isArray(req.headers['user-agent']) ? req.headers['user-agent'][0] : req.headers['user-agent'] as string) || undefined
+      };
+
+      const { tenant, accessToken, refreshToken } = await this.authService.tenantLogin(phone, password, deviceInfo);
+
+      res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: 'Tenant login successful',
+        data: {
+          tenant: this.transformTenant(tenant),
+          accessToken,
+          refreshToken
+        },
+        meta: this.getMeta(req)
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  refreshTenantToken = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { refreshToken: oldToken } = refreshTokenSchema.parse(req.body);
+      const { accessToken, refreshToken } = await this.authService.refreshTenantToken(oldToken);
+
+      res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: 'Token refreshed successfully',
+        data: {
+          accessToken,
+          refreshToken
+        },
+        meta: this.getMeta(req)
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  private transformTenant = (tenant: any) => {
+    const { uuid, createdAt, updatedAt, email, username, name, phone, status, address, country, role, business } = tenant;
+    return {
+      id: uuid,
+      type: 'tenant',
+      attributes: {
+        email,
+        username,
+        name,
+        phone,
+        status,
+        address,
+        country,
+        role,
+        business
+      },
+      meta: {
+        createdAt,
+        updatedAt
+      }
+    };
+  };
+
   private transformUser = (user: any) => {
     const { uuid, createdAt, updatedAt, email, username, name, phone, status, country, roles, permissions } = user;
     return {
@@ -203,7 +284,7 @@ export class AuthController {
     return {
       requestId: (req as any).requestId,
       timestamp: new Date().toISOString(),
-      version: '1.31.0'
+      version: '1.32.0'
     };
   };
 }
