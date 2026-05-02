@@ -16,6 +16,7 @@ export default function TenantModal({ isOpen, onClose, onSuccess, tenant }: Tena
   const isEdit = !!tenant;
   const [countries, setCountries] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
+  const [businesses, setBusinesses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingData, setIsFetchingData] = useState(true);
 
@@ -23,11 +24,13 @@ export default function TenantModal({ isOpen, onClose, onSuccess, tenant }: Tena
     name: '',
     username: '',
     email: '',
+    phone: '',
     address: '',
     password: '',
     confirmPassword: '',
     countryUuid: '',
     roleUuid: '',
+    tenantBusinessUuid: '',
   });
 
   useEffect(() => {
@@ -36,9 +39,14 @@ export default function TenantModal({ isOpen, onClose, onSuccess, tenant }: Tena
     const fetchData = async () => {
       setIsFetchingData(true);
       try {
-        const [countriesRes, rolesRes] = await Promise.all([getCountries(), getRoles()]);
+        const [countriesRes, rolesRes, businessesRes] = await Promise.all([
+          getCountries(), 
+          getRoles(),
+          import('@/lib/api').then(m => m.getTenantBusinesses())
+        ]);
         if (countriesRes.success) setCountries(countriesRes.data || []);
         if (rolesRes.success) setRoles(rolesRes.data || []);
+        if (businessesRes.success) setBusinesses(businessesRes.data || []);
       } catch (err) {
         console.error('Error fetching form data:', err);
       } finally {
@@ -53,14 +61,27 @@ export default function TenantModal({ isOpen, onClose, onSuccess, tenant }: Tena
         name: tenant.attributes?.name || '',
         username: tenant.attributes?.username || '',
         email: tenant.attributes?.email || '',
+        phone: tenant.attributes?.phone || '',
         address: tenant.attributes?.address || '',
         password: '',
         confirmPassword: '',
         countryUuid: tenant.attributes?.country?.uuid || '',
         roleUuid: tenant.attributes?.role?.uuid || '',
+        tenantBusinessUuid: tenant.attributes?.business?.uuid || '',
       });
     } else {
-      setFormData({ name: '', username: '', email: '', address: '', password: '', confirmPassword: '', countryUuid: '', roleUuid: '' });
+      setFormData({ 
+        name: '', 
+        username: '', 
+        email: '', 
+        phone: '', 
+        address: '', 
+        password: '', 
+        confirmPassword: '', 
+        countryUuid: '', 
+        roleUuid: '',
+        tenantBusinessUuid: '',
+      });
     }
   }, [isOpen, tenant]);
 
@@ -79,7 +100,16 @@ export default function TenantModal({ isOpen, onClose, onSuccess, tenant }: Tena
     try {
       let result: ApiResponse;
       if (isEdit) {
-        const updateData: any = { name: formData.name, username: formData.username, email: formData.email, address: formData.address, countryUuid: formData.countryUuid || undefined, roleUuid: formData.roleUuid || undefined };
+        const updateData: any = { 
+          name: formData.name, 
+          username: formData.username, 
+          email: formData.email, 
+          phone: formData.phone,
+          address: formData.address, 
+          countryUuid: formData.countryUuid || undefined, 
+          roleUuid: formData.roleUuid || undefined,
+          tenantBusinessUuid: formData.tenantBusinessUuid || undefined,
+        };
         if (formData.password) updateData.password = formData.password;
         result = await updateTenant(tenant.id, updateData);
       } else {
@@ -87,10 +117,12 @@ export default function TenantModal({ isOpen, onClose, onSuccess, tenant }: Tena
           name: formData.name,
           username: formData.username,
           email: formData.email,
+          phone: formData.phone,
           address: formData.address,
           password: formData.password,
           countryUuid: formData.countryUuid || undefined,
           roleUuid: formData.roleUuid || undefined,
+          tenantBusinessUuid: formData.tenantBusinessUuid || undefined,
         });
       }
 
@@ -139,6 +171,11 @@ export default function TenantModal({ isOpen, onClose, onSuccess, tenant }: Tena
                 <label className={styles.label}>Email Address</label>
                 <input type="email" name="email" className={styles.input} required value={formData.email} onChange={handleChange} placeholder="john@example.com" />
               </div>
+              
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>Phone Number</label>
+                <input type="text" name="phone" className={styles.input} value={formData.phone} onChange={handleChange} placeholder="000-0000" />
+              </div>
 
               <div className={styles.inputGroup}>
                 <label className={styles.label}>{isEdit ? 'New Password (Optional)' : 'Password'}</label>
@@ -173,6 +210,16 @@ export default function TenantModal({ isOpen, onClose, onSuccess, tenant }: Tena
                   <option value="">Select a role</option>
                   {roles.filter(r => r.attributes?.showForTenants).map(r => (
                     <option key={r.id} value={r.id}>{r.attributes?.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>Tenant Business</label>
+                <select name="tenantBusinessUuid" className={styles.select} value={formData.tenantBusinessUuid} onChange={handleChange}>
+                  <option value="">Select a business</option>
+                  {businesses.map(b => (
+                    <option key={b.id} value={b.id}>{b.attributes?.name}</option>
                   ))}
                 </select>
               </div>

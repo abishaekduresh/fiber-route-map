@@ -4,7 +4,7 @@ A futuristic, high-performance web dashboard for managing fiber optic networks.
 Built with **Next.js 16 (Turbopack)** and **TypeScript**, featuring a stunning **Glassmorphism Design System**.
 
 ## Version
-**Current Version:** 1.27.0 (Interactive API Docs Viewer)
+**Current Version:** 1.28.0 (API Docs UX & Tenant Form Enhancements)
 
 ## Features
 - **Interactive API Docs Viewer** (`/manage/api-docs`): Custom Swagger-style documentation page — live OpenAPI spec, tag sidebar, accordion endpoint cards, schema tables, named response examples, and a built-in "Try it out" HTTP client with x-axis scroll support.

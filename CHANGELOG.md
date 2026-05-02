@@ -2,6 +2,15 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.28.0] - 2026-05-02
+### Added
+- **API Versioning Support**: Added an "API Version" field to the API Docs "Try it out" tool. It defaults to the spec version but can be modified manually; the version is sent via the `X-API-Version` header to prevent backend versioning errors.
+- **Enhanced Tenant Form**: Added a "Phone Number" field and a "Tenant Business" assignment dropdown to the Create/Edit Tenant modal, allowing for better resource categorization during tenant setup.
+### Changed
+- **API Docs UX Optimization**: Redesigned the API Documentation viewer to "show full" content. Removed the internal fixed-height scroll container for the endpoint list and the `max-height` constraint on code blocks. The documentation now flows naturally with the page scroll.
+- **Sticky API Docs Sidebar**: Converted the API Docs tag sidebar to `position: sticky` so it remains accessible while scrolling through long documentation pages.
+- **Summary Wrapping**: Enabled multi-line wrapping for API endpoint summaries to ensure full visibility of descriptions on all screen sizes.
+
 ## [1.27.0] - 2026-05-02
 ### Added
 - **Interactive API Docs Viewer** (`/manage/api-docs`): A fully custom, Swagger-style documentation page built in Next.js — fetches the live OpenAPI spec from the backend and renders it with tag-based sidebar navigation, endpoint accordion cards, schema tables, named response examples, and a built-in "Try it out" HTTP client.
