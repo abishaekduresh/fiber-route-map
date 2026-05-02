@@ -163,16 +163,25 @@ export class AuthService {
       throw error;
     }
 
-    if (tenantWithPassword.status === 'blocked' || tenantWithPassword.status === 'suspended') {
+    // Step 1: Validate credentials
+    const isPasswordValid = await bcrypt.compare(password, tenantWithPassword.password);
+    if (!isPasswordValid) {
+      const error = new Error('Invalid phone or password');
+      (error as any).status = 401;
+      throw error;
+    }
+
+    // Step 2: Check tenant status is active
+    if (tenantWithPassword.status !== 'active') {
       const error = new Error(`Your account is ${tenantWithPassword.status}. Please contact support.`);
       (error as any).status = 403;
       throw error;
     }
 
-    const isPasswordValid = await bcrypt.compare(password, tenantWithPassword.password);
-    if (!isPasswordValid) {
-      const error = new Error('Invalid phone or password');
-      (error as any).status = 401;
+    // Step 3: Check tenant business is active
+    if (tenantWithPassword.businessStatus && tenantWithPassword.businessStatus !== 'active') {
+      const error = new Error(`Your business account is ${tenantWithPassword.businessStatus}. Please contact support.`);
+      (error as any).status = 403;
       throw error;
     }
 
@@ -209,6 +218,19 @@ export class AuthService {
       const tenant = await this.tenantRepo.findByUuid(payload.id);
       
       if (!tenant) throw new Error('Tenant not found');
+
+      // Check tenant and business status during refresh
+      if (tenant.status !== 'active') {
+        const error = new Error(`Your account is ${tenant.status}. Please login again.`);
+        (error as any).status = 403;
+        throw error;
+      }
+
+      if (tenant.business && tenant.business.status && tenant.business.status !== 'active') {
+        const error = new Error(`Your business account is ${tenant.business.status}. Please login again.`);
+        (error as any).status = 403;
+        throw error;
+      }
 
       const newAccessToken = this.generateAccessToken({ id: tenant.uuid, type: 'tenant', phone: tenant.phone });
       const newRefreshToken = this.generateRefreshToken({ id: tenant.uuid, type: 'tenant' });

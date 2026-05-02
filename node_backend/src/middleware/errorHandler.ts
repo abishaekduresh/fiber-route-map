@@ -84,7 +84,7 @@ export const errorHandler = (
     meta: {
       requestId: (req as any).requestId,
       timestamp: new Date().toISOString(),
-      version: '1.33.0'
+      version: '1.34.0'
     },
     ...(process.env.NODE_ENV === 'development' && status >= 500 && { stack: err.stack }),
   });

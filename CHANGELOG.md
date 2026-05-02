@@ -2,6 +2,15 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.34.0] - 2026-05-02
+### Added
+- **Enhanced Tenant Validation**: Implemented strict 3-step validation for tenant authentication:
+  1. Credential verification (Phone + Password).
+  2. Individual tenant status check (`active`).
+  3. Associated business status check (`active`).
+- **Secure Token Refresh**: Integrated status validation into the tenant token refresh flow to proactively terminate sessions if account/business status changes.
+- **Improved Data Modeling**: Extended Tenant repository and models to include comprehensive business status information.
+
 ## [1.33.0] - 2026-05-02
 ### Added
 - **Secure Tenant Login Frontend**: Developed a premium emerald-themed login portal for tenants at `/tenant-login`.

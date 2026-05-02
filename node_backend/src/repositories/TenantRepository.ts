@@ -24,13 +24,14 @@ const SAFE_COLUMNS = [
   'tenant_business.uuid as businessUuid',
   'tenant_business.name as businessName',
   'tenant_business.type as businessType',
+  'tenant_business.status as businessStatus',
 ];
 
 function mapRow(row: any): Tenant {
   const {
     countryUuid, countryName, countryCode, countryPhoneCode,
     roleUuid, roleName, roleSlug,
-    businessUuid, businessName, businessType,
+    businessUuid, businessName, businessType, businessStatus,
     ...rest
   } = row;
   return {
@@ -42,7 +43,7 @@ function mapRow(row: any): Tenant {
       ? { uuid: roleUuid, name: roleName, slug: roleSlug }
       : null,
     business: businessUuid
-      ? { uuid: businessUuid, name: businessName, type: businessType }
+      ? { uuid: businessUuid, name: businessName, type: businessType, status: businessStatus }
       : null,
   } as Tenant;
 }
@@ -156,7 +157,11 @@ export class TenantRepository {
   }
 
   async findByPhoneWithPassword(phone: string): Promise<any | null> {
-    return db(this.table).where('phone', String(phone)).first();
+    return db(this.table)
+      .leftJoin('tenant_business', 'tenants.tenantBusinessId', 'tenant_business.id')
+      .where('tenants.phone', String(phone))
+      .select('tenants.*', 'tenant_business.status as businessStatus')
+      .first();
   }
 
   async create(data: {

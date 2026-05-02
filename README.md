@@ -4,7 +4,7 @@ A comprehensive system for mapping and managing fiber optic routes.
 
 ## Project Structure
 - `website/`: Premium Next.js 16 Frontend (Glassmorphism, Unified Multi-Theme UI, Multi-Identifier Auth, RBAC Management, Paginated Grid Standards, Responsive Dashboard, Enhanced User Management, Tenant & Business Management UI, Role Tenant Visibility, Tenant Reactivation, Tenant Login Portal, Interactive API Docs Viewer).
-- `node_backend/`: Node.js based REST API (Express, TypeScript, Knex) with Granular RBAC, Interactive Swagger Docs, Health Monitoring, Tenant Lifecycle Management, Secure Tenant Authentication (Phone + JWT), and Complete OpenAPI 3.0 documentation with realistic request/response examples across all endpoints.
+- `node_backend/`: Node.js based REST API (Express, TypeScript, Knex) with Granular RBAC, Interactive Swagger Docs, Health Monitoring, Tenant Lifecycle Management, Secure Tenant Authentication (Phone + JWT), Enhanced Tenant Security (3-step validation), and Complete OpenAPI 3.0 documentation with realistic request/response examples across all endpoints.
 - `(Other components will be listed here as they are developed)`
 
 ## Prerequisites

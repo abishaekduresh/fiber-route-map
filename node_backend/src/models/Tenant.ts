@@ -23,6 +23,7 @@ export interface Tenant {
     uuid: string;
     name: string;
     type: 'operator' | 'distributor';
+    status: 'active' | 'blocked' | 'suspended' | 'deleted';
   } | null;
 }
 
