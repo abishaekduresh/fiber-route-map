@@ -232,7 +232,7 @@ export default function LoginPage() {
           </p>
           <div className={styles.version}>
             <div className={styles.versionDot} />
-            <span>v1.13.0 • System Online</span>
+            <span>v1.33.0 • System Online</span>
           </div>
         </footer>
       </div>
