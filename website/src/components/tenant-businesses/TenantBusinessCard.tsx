@@ -30,10 +30,10 @@ export default function TenantBusinessCard({ business, onEdit, onDelete, onBlock
       <div className={styles.cardHeader}>
         <div className={styles.avatar}>{attributes.name?.[0]?.toUpperCase() || 'B'}</div>
         <div className={styles.userInfo}>
-          <h3 className={styles.userName}>{attributes.name || 'Unknown Business'}</h3>
+          <h3 className={styles.userName} title={attributes.name}>{attributes.name || 'Unknown Business'}</h3>
+          <div className={styles.roleBadge} style={operatorStyle}>{typeLabel}</div>
           <div className={styles.userHandle}>{attributes.email || ''}</div>
         </div>
-        <div className={styles.roleBadge} style={operatorStyle}>{typeLabel}</div>
       </div>
 
       <div className={styles.detailsGrid}>
@@ -73,7 +73,7 @@ export default function TenantBusinessCard({ business, onEdit, onDelete, onBlock
       )}
 
       <div className={styles.cardFooter}>
-        <button className={styles.actionBtn} onClick={() => setIsViewOpen(true)} title="View Details" style={{ color: 'var(--color-accent-blue)', borderColor: 'rgba(59,130,246,0.2)' }}>
+        <button className={`${styles.actionBtn} ${styles.viewBtn}`} onClick={() => setIsViewOpen(true)} title="View Details">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
           </svg>
@@ -87,13 +87,13 @@ export default function TenantBusinessCard({ business, onEdit, onDelete, onBlock
 
         <Can I="tenant_business.update">
           {status === 'active' ? (
-            <button className={styles.actionBtn} onClick={() => onBlock(business)} title="Block Business" style={{ color: '#f59e0b', borderColor: 'rgba(245,158,11,0.2)' }}>
+            <button className={`${styles.actionBtn} ${styles.blockBtn}`} onClick={() => onBlock(business)} title="Block Business">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0110 0v4" />
               </svg>
             </button>
           ) : status === 'blocked' ? (
-            <button className={styles.actionBtn} onClick={() => onUnblock(business)} title="Unblock Business" style={{ color: '#10b981', borderColor: 'rgba(16,185,129,0.2)' }}>
+            <button className={`${styles.actionBtn} ${styles.unblockBtn}`} onClick={() => onUnblock(business)} title="Unblock Business">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 019.9-1" />
               </svg>
@@ -103,7 +103,7 @@ export default function TenantBusinessCard({ business, onEdit, onDelete, onBlock
 
         <Can I="tenant_business.update">
           {status === 'active' && (
-            <button className={styles.actionBtn} onClick={() => onSuspend(business)} title="Suspend Business" style={{ color: '#a855f7', borderColor: 'rgba(168,85,247,0.2)' }}>
+            <button className={`${styles.actionBtn} ${styles.suspendBtn}`} onClick={() => onSuspend(business)} title="Suspend Business">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="10" /><line x1="10" y1="15" x2="10" y2="9" /><line x1="14" y1="15" x2="14" y2="9" />
               </svg>

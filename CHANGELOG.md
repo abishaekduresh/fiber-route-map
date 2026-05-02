@@ -2,6 +2,13 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.31.0] - 2026-05-02
+### Added
+- **Unified Card Design System**: Redesigned User, Tenant, and Business cards with a premium, boxy aesthetic featuring avatar glows, role-specific pill badges, and theme-colored action buttons.
+### Fixed
+- **UI Inconsistency**: Synchronized the layout and styling across all management pages for a seamless user experience.
+- **Missing Imports**: Resolved a ReferenceError on the Tenant Businesses page.
+
 ## [1.30.0] - 2026-05-02
 ### Added
 - **Tenant Account Phone Capture**: Added a phone number field to the tenant account section when creating a new business, ensuring consistent contact data collection.

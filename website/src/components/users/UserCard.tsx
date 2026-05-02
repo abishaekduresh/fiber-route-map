@@ -28,11 +28,11 @@ export default function UserCard({ user, onEdit, onDelete, onBlock, onUnblock }:
           {attributes.name?.[0]?.toUpperCase() || 'U'}
         </div>
         <div className={styles.userInfo}>
-          <h3 className={styles.userName}>{attributes.name || 'Unknown User'}</h3>
+          <h3 className={styles.userName} title={attributes.name}>{attributes.name || 'Unknown User'}</h3>
+          <div className={styles.roleBadge}>
+            {attributes.roles?.[0]?.name || 'Member'}
+          </div>
           <div className={styles.userHandle}>@{attributes.username || 'user'}</div>
-        </div>
-        <div className={styles.roleBadge}>
-          {attributes.roles?.[0]?.name || 'Member'}
         </div>
       </div>
 
@@ -42,18 +42,22 @@ export default function UserCard({ user, onEdit, onDelete, onBlock, onUnblock }:
           <span className={styles.detailValue} title={attributes.email}>{attributes.email || 'N/A'}</span>
         </div>
         <div className={styles.detailItem}>
-          <span className={styles.detailLabel}>Phone</span>
-          <span className={styles.detailValue}>{attributes.phone || 'N/A'}</span>
-        </div>
-        <div className={styles.detailItem}>
           <span className={styles.detailLabel}>Status</span>
           <span className={`${styles.statusBadge} ${styles['status-' + status]}`}>
             {status.toUpperCase()}
           </span>
         </div>
         <div className={styles.detailItem}>
-          <span className={styles.detailLabel}>Sessions</span>
-          <span className={styles.detailValue}>{attributes.sessionLimit ?? 1} Max</span>
+          <span className={styles.detailLabel}>Country</span>
+          <span className={styles.detailValue}>
+            {attributes.country ? attributes.country.name : 'N/A'}
+          </span>
+        </div>
+        <div className={styles.detailItem}>
+          <span className={styles.detailLabel}>Joined</span>
+          <span className={styles.detailValue}>
+            {meta.createdAt ? new Date(meta.createdAt).toLocaleDateString() : 'N/A'}
+          </span>
         </div>
       </div>
 
@@ -78,10 +82,9 @@ export default function UserCard({ user, onEdit, onDelete, onBlock, onUnblock }:
 
       <div className={styles.cardFooter}>
         <button
-          className={styles.actionBtn}
+          className={`${styles.actionBtn} ${styles.viewBtn}`}
           onClick={() => setIsViewOpen(true)}
           title="View Details"
-          style={{ color: 'var(--color-accent-blue)', borderColor: 'rgba(59,130,246,0.2)' }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
@@ -100,13 +103,13 @@ export default function UserCard({ user, onEdit, onDelete, onBlock, onUnblock }:
 
         <Can I="user.update">
           {status === 'active' ? (
-            <button className={styles.actionBtn} onClick={() => onBlock(user)} title="Block User" style={{ color: '#f59e0b', borderColor: 'rgba(245,158,11,0.2)' }}>
+            <button className={`${styles.actionBtn} ${styles.blockBtn}`} onClick={() => onBlock(user)} title="Block User">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0110 0v4" />
               </svg>
             </button>
           ) : (
-            <button className={styles.actionBtn} onClick={() => onUnblock(user)} title="Unblock User" style={{ color: '#10b981', borderColor: 'rgba(16,185,129,0.2)' }}>
+            <button className={`${styles.actionBtn} ${styles.unblockBtn}`} onClick={() => onUnblock(user)} title="Unblock User">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 019.9-1" />
               </svg>
