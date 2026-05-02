@@ -9,6 +9,7 @@ const SAFE_COLUMNS = [
   'tenants.username',
   'tenants.name',
   'tenants.phone',
+  'tenants.address',
   'tenants.status',
   'tenants.createdAt',
   'tenants.updatedAt',
