@@ -45,10 +45,12 @@
  *                     name: "ACME Corporation"
  *                     email: "tenant@acme.com"
  *                     username: "acme_corp"
+ *                     phone: "1234567890"
  *                     address: "123 Main St, Mumbai"
  *                     status: "active"
  *                     country: { name: "India", code: "IN", phoneCode: "+91" }
  *                     role: { name: "Tenant Business Super Admin", slug: "tenant-business-super-admin" }
+ *                     business: { uuid: "019d1eb5-0000-7000-0000-000000000002", name: "ACME ISP", type: "operator" }
  *                   meta:
  *                     createdAt: "2026-03-24T06:44:05.000Z"
  *               meta:
@@ -80,22 +82,26 @@
  *         application/json:
  *           schema:
  *             type: object
- *             required: [email, username, name, address, password]
+ *             required: [email, username, name, phone, address, password]
  *             properties:
  *               email: { type: string, format: email, example: "tenant@acme.com" }
  *               username: { type: string, example: "acme_corp" }
  *               name: { type: string, example: "ACME Corporation" }
+ *               phone: { type: string, example: "1234567890" }
  *               address: { type: string, example: "123 Main St, Mumbai" }
  *               password: { type: string, format: password, example: "Tenant@1234" }
  *               countryUuid: { type: string, format: uuid, example: "019d1eb5-0000-7000-0000-000000000001" }
  *               roleUuid: { type: string, format: uuid, example: "019d1eb5-cccc-7000-0000-000000000001" }
+ *               tenantBusinessUuid: { type: string, format: uuid, example: "019d1eb5-0000-7000-0000-000000000002" }
  *           example:
  *             email: "tenant@acme.com"
  *             username: "acme_corp"
  *             name: "ACME Corporation"
+ *             phone: "1234567890"
  *             address: "123 Main St, Mumbai"
  *             password: "Tenant@1234"
  *             countryUuid: "019d1eb5-0000-7000-0000-000000000001"
+ *             tenantBusinessUuid: "019d1eb5-0000-7000-0000-000000000002"
  *     responses:
  *       201:
  *         description: Tenant created
@@ -111,10 +117,11 @@
  *                 attributes:
  *                   name: "ACME Corporation"
  *                   email: "tenant@acme.com"
- *                   username: "acme_corp"
+ *                   phone: "1234567890"
  *                   address: "123 Main St, Mumbai"
  *                   status: "active"
  *                   country: { name: "India", code: "IN", phoneCode: "+91" }
+ *                   business: { uuid: "019d1eb5-0000-7000-0000-000000000002", name: "ACME ISP", type: "operator" }
  *       400:
  *         $ref: '#/components/responses/400BadRequest'
  *       401:
@@ -175,10 +182,12 @@
  *                   name: "ACME Corporation"
  *                   email: "tenant@acme.com"
  *                   username: "acme_corp"
+ *                   phone: "1234567890"
  *                   address: "123 Main St, Mumbai"
  *                   status: "active"
  *                   country: { name: "India", code: "IN", phoneCode: "+91" }
  *                   role: { name: "Tenant Business Super Admin", slug: "tenant-business-super-admin" }
+ *                   business: { uuid: "019d1eb5-0000-7000-0000-000000000002", name: "ACME ISP", type: "operator" }
  *                 meta:
  *                   createdAt: "2026-03-24T06:44:05.000Z"
  *                   updatedAt: "2026-03-24T06:44:05.000Z"
@@ -222,12 +231,16 @@
  *               name: { type: string, example: "ACME Corp Updated" }
  *               email: { type: string, format: email, example: "newemail@acme.com" }
  *               username: { type: string, example: "acme_corp_v2" }
+ *               phone: { type: string, example: "9876543210" }
  *               address: { type: string, example: "456 New Street, Delhi" }
  *               countryUuid: { type: string, format: uuid }
  *               roleUuid: { type: string, format: uuid }
+ *               tenantBusinessUuid: { type: string, format: uuid }
  *           example:
  *             name: "ACME Corp Updated"
+ *             phone: "9876543210"
  *             address: "456 New Street, Delhi"
+ *             tenantBusinessUuid: "019d1eb5-0000-7000-0000-000000000002"
  *     responses:
  *       200:
  *         description: Tenant updated
@@ -244,8 +257,10 @@
  *                   name: "ACME Corp Updated"
  *                   email: "tenant@acme.com"
  *                   username: "acme_corp"
+ *                   phone: "9876543210"
  *                   address: "456 New Street, Delhi"
  *                   status: "active"
+ *                   business: { uuid: "019d1eb5-0000-7000-0000-000000000002", name: "ACME ISP", type: "operator" }
  *       400:
  *         $ref: '#/components/responses/400BadRequest'
  *       401:
