@@ -6,6 +6,7 @@ import { getTenantBusinesses, deleteTenantBusiness, blockTenantBusiness, unblock
 import TenantBusinessCard from '@/components/tenant-businesses/TenantBusinessCard';
 import TenantBusinessModal from '@/components/tenant-businesses/TenantBusinessModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { Can } from '@/components/auth/Can';
 import { toast } from 'sonner';
 import styles from '../../dashboard/dashboard.module.css';
 
