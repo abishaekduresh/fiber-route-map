@@ -85,7 +85,7 @@ export default function TenantBusinessCard({ business, onEdit, onDelete, onBlock
           </svg>
         </button>
 
-        <Can I="tenant-business.update">
+        <Can I="tenant_business.update">
           {status === 'active' ? (
             <button className={styles.actionBtn} onClick={() => onBlock(business)} title="Block Business" style={{ color: '#f59e0b', borderColor: 'rgba(245,158,11,0.2)' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -101,7 +101,7 @@ export default function TenantBusinessCard({ business, onEdit, onDelete, onBlock
           ) : null}
         </Can>
 
-        <Can I="tenant-business.update">
+        <Can I="tenant_business.update">
           {status === 'active' && (
             <button className={styles.actionBtn} onClick={() => onSuspend(business)} title="Suspend Business" style={{ color: '#a855f7', borderColor: 'rgba(168,85,247,0.2)' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -111,7 +111,7 @@ export default function TenantBusinessCard({ business, onEdit, onDelete, onBlock
           )}
         </Can>
 
-        <Can I="tenant-business.update">
+        <Can I="tenant_business.update">
           <button className={`${styles.actionBtn} ${styles.editBtn}`} onClick={() => onEdit(business)} title="Edit Business">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
@@ -120,7 +120,7 @@ export default function TenantBusinessCard({ business, onEdit, onDelete, onBlock
           </button>
         </Can>
 
-        <Can I="tenant-business.delete">
+        <Can I="tenant_business.delete">
           <button className={`${styles.actionBtn} ${styles.deleteBtn}`} onClick={() => onDelete(business)} title="Delete Business">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />

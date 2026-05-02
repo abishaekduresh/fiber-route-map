@@ -2,6 +2,14 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.30.0] - 2026-05-02
+### Added
+- **Tenant Account Phone Capture**: Added a phone number field to the tenant account section when creating a new business, ensuring consistent contact data collection.
+### Fixed
+- **RBAC Slug Consistency**: Resolved a naming mismatch between frontend permission guards and backend slugs (hyphen vs underscore) that was hiding action buttons on the Tenant Businesses page.
+- **Business Management Security**: Added missing permission gating to the "Add Business" button.
+- **Audit Log Refinement**: Fixed a TypeScript type error in the audit logger and optimized action derivation logic.
+
 ## [1.29.0] - 2026-05-02
 ### Added
 - **Audit Logs Management UI**: Implemented a comprehensive audit log viewer with server-side pagination, advanced filtering (by actor, action, resource, date, status), and detailed inspection modals.

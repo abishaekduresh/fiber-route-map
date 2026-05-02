@@ -70,6 +70,7 @@ export default function TenantBusinessModal({ isOpen, onClose, onSuccess, busine
     name: '',
     username: '',
     email: '',
+    phone: '',
     address: '',
     password: '',
     confirmPassword: '',
@@ -109,7 +110,7 @@ export default function TenantBusinessModal({ isOpen, onClose, onSuccess, busine
       });
     } else {
       setBizData({ name: '', email: '', phone: '', address: '', type: 'operator', countryUuid: '' });
-      setTenantData({ name: '', username: '', email: '', address: '', password: '', confirmPassword: '', countryUuid: '' });
+      setTenantData({ name: '', username: '', email: '', phone: '', address: '', password: '', confirmPassword: '', countryUuid: '' });
     }
   }, [isOpen, business]);
 
@@ -157,6 +158,7 @@ export default function TenantBusinessModal({ isOpen, onClose, onSuccess, busine
           name: tenantData.name,
           username: tenantData.username,
           email: tenantData.email,
+          phone: tenantData.phone,
           address: tenantData.address,
           password: tenantData.password,
         };
@@ -285,6 +287,11 @@ export default function TenantBusinessModal({ isOpen, onClose, onSuccess, busine
                   <div className={styles.inputGroup}>
                     <label className={styles.label}>Tenant Email</label>
                     <input type="email" name="email" className={styles.input} required value={tenantData.email} onChange={handleTenantChange} placeholder="john@example.com" />
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Tenant Phone</label>
+                    <input type="text" name="phone" className={styles.input} value={tenantData.phone} onChange={handleTenantChange} placeholder="000-0000" />
                   </div>
 
                   <div className={styles.inputGroup}>
