@@ -2,6 +2,16 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.35.0] - 2026-05-02
+### Added
+- **Tenant Session Limit Enforcement**: Implemented robust backend checking against `sessionLimit` during tenant login.
+- **Session Termination Modal**: Developed a premium glassmorphism modal for tenants to manage and terminate active sessions when the limit is reached.
+- **Management Token Flow**: Introduced short-lived, stateless management tokens for secure remote session termination without full authentication.
+- **Improved API Error Handling**: Enhanced the API client to gracefully handle non-JSON responses and provide detailed connectivity feedback.
+- **Dynamic 404 JSON Handler**: Implemented a catch-all API route handler to prevent HTML responses on undefined endpoints.
+- **CORS Optimization**: Refined security policies to allow custom session management headers (`X-Mgmt-Token`).
+- **Standardized Tenant Assets**: Integrated official branding and improved responsive layouts for the tenant portal.
+
 ## [1.34.0] - 2026-05-02
 ### Added
 - **Enhanced Tenant Validation**: Implemented strict 3-step validation for tenant authentication:

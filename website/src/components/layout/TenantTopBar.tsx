@@ -21,7 +21,7 @@ export default function TenantTopBar({
 
   return (
     <header className={styles.topBar}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div className={styles.topBarLeft}>
         <button 
           className={styles.menuBtn} 
           onClick={onMenuClick}
@@ -34,7 +34,7 @@ export default function TenantTopBar({
         <h2 className={styles.topBarTitle}>{title}</h2>
       </div>
       
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+      <div className={styles.topBarRight}>
         <ThemeToggle />
         
         <Link href="/tenant/profile" className={styles.userMenu}>

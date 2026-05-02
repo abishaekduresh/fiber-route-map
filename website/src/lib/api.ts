@@ -192,7 +192,16 @@ async function apiFetch<T = unknown>(
     headers,
   });
 
-  return response.json();
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return response.json();
+  }
+
+  // If not JSON, it's likely an HTML error page (404/500) from the server
+  const text = await response.text();
+  console.error(`[apiFetch] Non-JSON response from ${endpoint}:`, text.substring(0, 200));
+  
+  throw new Error(`Server returned non-JSON response (${response.status}). This usually means a 404 Not Found or 500 Internal Error. Check the URL and backend logs.`);
 }
 
 /**
@@ -224,8 +233,8 @@ export async function login(
 export async function tenantLogin(
   phone: string,
   password: string
-): Promise<ApiResponse<TenantLoginData>> {
-  const result = await apiFetch<TenantLoginData>('/api/auth/tenant/login', {
+): Promise<ApiResponse<TenantLoginData | SessionLimitData>> {
+  const result = await apiFetch<TenantLoginData | SessionLimitData>('/api/auth/tenant/login', {
     method: 'POST',
     body: JSON.stringify({ phone, password }),
   });
@@ -292,6 +301,15 @@ export async function logout(): Promise<ApiResponse> {
  */
 export async function terminateSession(uuid: string, mgmtToken?: string): Promise<ApiResponse> {
   return apiFetch(`/api/auth/users/sessions/${uuid}`, {
+    method: 'DELETE',
+  }, mgmtToken);
+}
+
+/**
+ * Terminate a specific tenant session (used when limit is reached)
+ */
+export async function terminateTenantSession(uuid: string, mgmtToken?: string): Promise<ApiResponse> {
+  return apiFetch(`/api/auth/tenant/sessions/${uuid}`, {
     method: 'DELETE',
   }, mgmtToken);
 }

@@ -11,6 +11,7 @@ const SAFE_COLUMNS = [
   'tenants.phone',
   'tenants.address',
   'tenants.status',
+  'tenants.sessionLimit',
   'tenants.createdAt',
   'tenants.updatedAt',
   'tenants.deletedAt',
@@ -168,6 +169,7 @@ export class TenantRepository {
     email: string; username: string; name: string; phone: string; address: string;
     password: string; countryId: number | null; roleId: number | null;
     tenantBusinessId: number | null;
+    sessionLimit?: number;
   }): Promise<Tenant> {
     const uuid = uuidv4();
     const now = nowDb();
@@ -182,6 +184,7 @@ export class TenantRepository {
       countryId: data.countryId,
       roleId: data.roleId,
       tenantBusinessId: data.tenantBusinessId,
+      sessionLimit: data.sessionLimit || 1,
       status: 'active',
       createdAt: now,
       updatedAt: now,

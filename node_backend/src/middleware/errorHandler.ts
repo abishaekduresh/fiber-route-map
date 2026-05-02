@@ -81,6 +81,11 @@ export const errorHandler = (
     errorType: getErrorType(status, err),
     message,
     help: getHelpMessage(status, message),
+    data: {
+      ...(err.activeSessions && { activeSessions: err.activeSessions }),
+      ...(err.mgmtToken && { mgmtToken: err.mgmtToken }),
+      ...(err.sessionLimit && { sessionLimit: err.sessionLimit }),
+    },
     meta: {
       requestId: (req as any).requestId,
       timestamp: new Date().toISOString(),

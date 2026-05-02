@@ -250,6 +250,29 @@ CREATE TABLE IF NOT EXISTS `audit_logs` (
 
 -- Data exporting was unselected.
 
+-- Dumping structure for table fiber_route_map.tenant_sessions
+CREATE TABLE IF NOT EXISTS `tenant_sessions` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `uuid` varchar(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tenantId` int unsigned NOT NULL,
+  `sessionToken` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `deviceId` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `deviceName` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ipAddress` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `userAgent` text COLLATE utf8mb4_unicode_ci,
+  `expiresAt` datetime NOT NULL,
+  `createdAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `tenant_sessions_uuid_unique` (`uuid`),
+  UNIQUE KEY `tenant_sessions_token_unique` (`sessionToken`),
+  KEY `idx_tenant_sessions_tenant_id` (`tenantId`),
+  KEY `idx_tenant_sessions_expires_at` (`expiresAt`),
+  CONSTRAINT `FK_tenant_sessions_tenants` FOREIGN KEY (`tenantId`) REFERENCES `tenants` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Data exporting was unselected.
+
 -- --------------------------------------------------------
 -- ALTER TABLE: Add foreign keys and indexes to existing databases
 -- Run these statements if upgrading an existing installation.

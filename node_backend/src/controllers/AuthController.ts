@@ -233,6 +233,53 @@ export class AuthController {
     }
   };
 
+  terminateTenantSession = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { uuid } = req.params;
+      const mgmtToken = req.headers['x-mgmt-token'] as string;
+
+      console.log(`[AuthController] Attempting to terminate tenant session: ${uuid}`);
+      
+      if (!mgmtToken) {
+        console.log(`[AuthController] Missing management token`);
+        const error = new Error('Management token is required');
+        (error as any).status = 401;
+        throw error;
+      }
+
+      const tenantId = await this.authService.validateTenantMgmtToken(mgmtToken);
+      if (!tenantId) {
+        console.log(`[AuthController] Invalid or expired management token`);
+        const error = new Error('Invalid or expired management token');
+        (error as any).status = 401;
+        throw error;
+      }
+
+      console.log(`[AuthController] Management token valid for tenantId: ${tenantId}`);
+
+      const success = await this.authService.terminateTenantSession(uuid, tenantId);
+      
+      if (!success) {
+        console.log(`[AuthController] Session ${uuid} not found for tenantId ${tenantId}`);
+        const error = new Error('Session not found or already terminated');
+        (error as any).status = 404;
+        throw error;
+      }
+
+      console.log(`[AuthController] Session ${uuid} terminated successfully`);
+
+      res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: 'Session terminated successfully',
+        meta: this.getMeta(req)
+      });
+    } catch (error) {
+      console.error(`[AuthController] Error in terminateTenantSession:`, error);
+      next(error);
+    }
+  };
+
   private transformTenant = (tenant: any) => {
     const { uuid, createdAt, updatedAt, email, username, name, phone, status, address, country, role, business } = tenant;
     return {

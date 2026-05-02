@@ -54,7 +54,12 @@ app.set('query parser', 'extended');
 
 // Middleware
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: '*', // For development, adjust for production
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Version', 'X-Mgmt-Token', 'X-Device-Id', 'X-Device-Name'],
+  exposedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(requestId);
 
@@ -84,6 +89,19 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get('/', (req: express.Request, res: express.Response) => {
   res.json({ message: 'Fiber Route Map Node.js API' });
 });
+
+/*
+// Catch-all for undefined /api routes
+app.all('/api/:path*', (req: express.Request, res: express.Response) => {
+  res.status(200).json({
+    success: false,
+    statusCode: 404,
+    errorType: 'NOT_FOUND',
+    message: `Route ${req.method} ${req.url} not found`,
+    help: 'Please verify the API endpoint and HTTP method.'
+  });
+});
+*/
 
 // Error handling
 app.use(errorHandler);
@@ -172,6 +190,33 @@ const ensureAuditLogsTable = async () => {
   }
 };
 
+// Ensure tenant_sessions table exists (auto-migration for existing installs using tenant_refresh_tokens)
+const ensureTenantSessionsTable = async () => {
+  try {
+    const exists = await db.schema.hasTable('tenant_sessions');
+    if (!exists) {
+      await db.schema.createTable('tenant_sessions', (t: any) => {
+        t.bigIncrements('id').primary();
+        t.string('uuid', 36).notNullable().unique();
+        t.integer('tenantId').unsigned().notNullable();
+        t.string('sessionToken', 500).notNullable().unique();
+        t.string('deviceId', 255).nullable();
+        t.string('deviceName', 255).nullable();
+        t.string('ipAddress', 45).nullable();
+        t.text('userAgent').nullable();
+        t.datetime('expiresAt').notNullable();
+        t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
+        t.index(['tenantId'], 'idx_tenant_sessions_tenant_id');
+        t.index(['expiresAt'], 'idx_tenant_sessions_expires_at');
+      });
+      logger.info('Auto-migration: tenant_sessions table created');
+    }
+  } catch (err: any) {
+    logger.warn('Auto-migration for tenant_sessions skipped or failed', { error: err.message });
+  }
+};
+
 // Start server
 const startServer = async () => {
   try {
@@ -181,6 +226,9 @@ const startServer = async () => {
 
     // Ensure audit_logs table exists (handles existing installs that predate v1.29.0)
     await ensureAuditLogsTable();
+
+    // Ensure tenant_sessions table exists (handles existing installs using tenant_refresh_tokens)
+    await ensureTenantSessionsTable();
   } catch (error: any) {
     logger.error('Initial database connection failed. Server is starting but database-dependent routes will return connectivity errors.', {
       error: error.message,

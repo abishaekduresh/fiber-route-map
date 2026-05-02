@@ -128,7 +128,8 @@ export class SetupService {
         const hasUsers = await db.schema.hasTable('users');
         const hasPermissions = await db.schema.hasTable('permissions');
         const hasAuditLogs = await db.schema.hasTable('audit_logs');
-        tablesMigrated = hasUsers && hasPermissions && hasAuditLogs;
+        const hasTenantSessions = await db.schema.hasTable('tenant_sessions');
+        tablesMigrated = hasUsers && hasPermissions && hasAuditLogs && hasTenantSessions;
 
         if (tablesMigrated) {
           const permCount = await db('permissions').count('* as cnt').first();
@@ -490,6 +491,29 @@ export class SetupService {
       t.index(['ipAddress'], 'idx_audit_ip');
       t.index(['requestId'], 'idx_audit_request_id');
     });
+
+    // 13. tenant_sessions
+    await db.schema.createTableIfNotExists('tenant_sessions', (t: Knex.CreateTableBuilder) => {
+      t.bigIncrements('id').primary();
+      t.string('uuid', 36).notNullable().unique();
+      t.integer('tenantId').unsigned().notNullable();
+      t.string('sessionToken', 500).notNullable().unique();
+      t.string('deviceId', 255).nullable();
+      t.string('deviceName', 255).nullable();
+      t.string('ipAddress', 45).nullable();
+      t.text('userAgent').nullable();
+      t.datetime('expiresAt').notNullable();
+      t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
+      t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
+      t.index(['tenantId'], 'idx_tenant_sessions_tenant_id');
+      t.index(['expiresAt'], 'idx_tenant_sessions_expires_at');
+    });
+
+    try {
+      await db.schema.alterTable('tenant_sessions', (t: Knex.CreateTableBuilder) => {
+        t.foreign('tenantId').references('id').inTable('tenants').onDelete('CASCADE');
+      });
+    } catch { /* FK may already exist */ }
 
     logger.info('Setup: All tables created/verified');
   }

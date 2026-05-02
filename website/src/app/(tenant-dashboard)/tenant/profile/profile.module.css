@@ -212,19 +212,77 @@
 }
 
 /* --- Responsive --- */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .container {
-    padding: 1rem 1.5rem;
+    padding: 1rem 1.5rem 2rem;
   }
-  
+}
+
+@media (max-width: 768px) {
+  .header {
+    margin-bottom: 2rem;
+  }
+
+  .coverPhoto {
+    height: 120px;
+  }
+
   .profileMeta {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    margin-top: -60px;
+    margin-top: -50px;
+    padding: 0 1.5rem 1.5rem;
+    gap: 1rem;
   }
-  
+
+  .avatarLarge {
+    width: 100px;
+    height: 100px;
+    font-size: 2.5rem;
+  }
+
   .name {
     font-size: 1.75rem;
+  }
+
+  .contentGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: 1.5rem;
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .actionBtn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0.75rem 1rem 1.5rem;
+  }
+
+  .name {
+    font-size: 1.5rem;
+  }
+
+  .subtitle {
+    font-size: 0.875rem;
+  }
+
+  .detailItem {
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-border-glass);
+  }
+
+  .detailItem:last-child {
+    border-bottom: none;
   }
 }

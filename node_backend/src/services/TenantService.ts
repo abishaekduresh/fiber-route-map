@@ -95,6 +95,7 @@ export class TenantService {
       countryId,
       roleId,
       tenantBusinessId,
+      sessionLimit: data.sessionLimit,
     });
   }
 
@@ -169,6 +170,8 @@ export class TenantService {
         updatePayload.tenantBusinessId = row.id;
       }
     }
+
+    if (data.sessionLimit !== undefined) updatePayload.sessionLimit = data.sessionLimit;
 
     await this.repo.update(uuid, updatePayload);
     return this.getTenantByUuid(uuid);

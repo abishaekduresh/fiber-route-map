@@ -5,6 +5,7 @@ export interface Tenant {
   name: string;
   address: string;
   status: 'active' | 'blocked' | 'suspended' | 'deleted';
+  sessionLimit: number;
   createdAt: string;
   updatedAt: string;
   phone: string;
@@ -37,6 +38,7 @@ export type CreateTenantDTO = {
   countryUuid?: string;
   roleUuid?: string;
   tenantBusinessUuid?: string;
+  sessionLimit?: number;
 };
 
 export type UpdateTenantDTO = Partial<Omit<CreateTenantDTO, 'password'>>;

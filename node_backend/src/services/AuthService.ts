@@ -154,6 +154,37 @@ export class AuthService {
     }
   }
 
+  async validateTenantMgmtToken(token: string): Promise<number | null> {
+    try {
+      const decoded = Buffer.from(token, 'base64').toString('utf8');
+      const [tenantId, expiresAt, signature] = decoded.split(':');
+      
+      if (!tenantId || !expiresAt || !signature) return null;
+
+      const payload = `${tenantId}:${expiresAt}`;
+      const secret = process.env.MGMT_TOKEN_SECRET || 'fallback-secret-for-dev-only';
+      const expectedSignature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+
+      if (signature !== expectedSignature) return null;
+
+      const expiryTime = parseInt(expiresAt, 10);
+      if (expiryTime < Math.floor(Date.now() / 1000)) return null;
+
+      return parseInt(tenantId, 10);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async getTenantSessions(tenantId: number): Promise<any[]> {
+    return this.authRepo.getTenantSessionsByTenantId(tenantId);
+  }
+
+  async terminateTenantSession(uuid: string, tenantId: number): Promise<boolean> {
+    const result = await db('tenant_sessions').where({ uuid, tenantId }).del();
+    return result > 0;
+  }
+
   // Tenant Authentication Methods
   async tenantLogin(phone: string, password: string, deviceInfo?: { deviceId?: string; deviceName?: string; ipAddress?: string; userAgent?: string }): Promise<{ tenant: Tenant; accessToken: string; refreshToken: string }> {
     const tenantWithPassword = await this.tenantRepo.findByPhoneWithPassword(phone);
@@ -189,6 +220,33 @@ export class AuthService {
     const tenant = await this.tenantRepo.findByUuid(tenantWithPassword.uuid);
     if (!tenant) throw new Error('Tenant not found');
 
+    // Step 4: Enforce session limit
+    const activeSessionsCount = await this.authRepo.countTenantActiveSessions(tenantWithPassword.id);
+    const sessionLimit = tenantWithPassword.sessionLimit || 1;
+
+    if (activeSessionsCount >= sessionLimit) {
+      const activeSessions = await this.authRepo.getTenantSessionsByTenantId(tenantWithPassword.id);
+      
+      // Generate a short-lived STATELESS management token for tenant
+      const expiresAt = Math.floor(Date.now() / 1000) + (10 * 60); // 10 minutes
+      const payload = `${tenantWithPassword.id}:${expiresAt}`;
+      const secret = process.env.MGMT_TOKEN_SECRET || 'fallback-secret-for-dev-only';
+      const signature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+      const mgmtToken = Buffer.from(`${payload}:${signature}`).toString('base64');
+
+      const error = new Error(`Session limit reached (${sessionLimit}). Please logout from another device.`);
+      (error as any).status = 403;
+      (error as any).code = 'SESSION_LIMIT_REACHED';
+      (error as any).activeSessions = activeSessions.map(s => ({
+        uuid: s.uuid,
+        deviceName: s.deviceName || 'Unknown Device',
+        lastActive: s.createdAt
+      }));
+      (error as any).mgmtToken = mgmtToken;
+      (error as any).sessionLimit = sessionLimit;
+      throw error;
+    }
+
     const accessToken = this.generateAccessToken({ id: tenant.uuid, type: 'tenant', phone: tenant.phone });
     const refreshToken = this.generateRefreshToken({ id: tenant.uuid, type: 'tenant' });
 
@@ -196,7 +254,7 @@ export class AuthService {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days matching JWT_REFRESH_EXPIRATION
 
-    await this.authRepo.createTenantRefreshToken({
+    await this.authRepo.createTenantSession({
       tenantId: tenantWithPassword.id,
       token: refreshToken,
       expiresAt,
@@ -207,7 +265,7 @@ export class AuthService {
   }
 
   async refreshTenantToken(token: string): Promise<{ accessToken: string; refreshToken: string }> {
-    const storedToken = await this.authRepo.findTenantRefreshToken(token);
+    const storedToken = await this.authRepo.findTenantSession(token);
     if (!storedToken) {
       const error = new Error('Invalid or expired refresh token');
       (error as any).status = 401;
@@ -237,12 +295,12 @@ export class AuthService {
       const newRefreshToken = this.generateRefreshToken({ id: tenant.uuid, type: 'tenant' });
 
       // Rotate refresh token: delete old, create new
-      await this.authRepo.deleteTenantRefreshToken(token);
+      await this.authRepo.deleteTenantSession(token);
       
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
       
-      await this.authRepo.createTenantRefreshToken({
+      await this.authRepo.createTenantSession({
         tenantId: storedToken.tenantId,
         token: newRefreshToken,
         expiresAt,

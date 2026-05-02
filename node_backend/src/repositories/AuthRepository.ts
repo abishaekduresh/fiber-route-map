@@ -77,28 +77,51 @@ export class AuthRepository {
       .first();
   }
 
-  // Tenant Refresh Token methods
-  async createTenantRefreshToken(data: { tenantId: number; token: string; expiresAt: Date; ipAddress?: string; userAgent?: string; deviceId?: string; deviceName?: string }): Promise<void> {
-    await db('tenant_refresh_tokens').insert({
-      ...data,
+  // Tenant Session methods
+  async createTenantSession(data: { tenantId: number; token: string; expiresAt: Date; ipAddress?: string; userAgent?: string; deviceId?: string; deviceName?: string }): Promise<void> {
+    await db('tenant_sessions').insert({
+      uuid: generateUuidV7(),
+      tenantId: data.tenantId,
+      sessionToken: data.token,
+      expiresAt: data.expiresAt,
+      ipAddress: data.ipAddress,
+      userAgent: data.userAgent,
+      deviceId: data.deviceId,
+      deviceName: data.deviceName,
       createdAt: nowDb(),
       updatedAt: nowDb(),
     });
   }
 
-  async findTenantRefreshToken(token: string): Promise<any | null> {
-    return db('tenant_refresh_tokens')
-      .where('token', token)
+  async findTenantSession(token: string): Promise<any | null> {
+    return db('tenant_sessions')
+      .where('sessionToken', token)
       .andWhere('expiresAt', '>', nowDb())
       .first();
   }
 
-  async deleteTenantRefreshToken(token: string): Promise<boolean> {
-    const result = await db('tenant_refresh_tokens').where('token', token).del();
+  async deleteTenantSession(token: string): Promise<boolean> {
+    const result = await db('tenant_sessions').where('sessionToken', token).del();
     return result > 0;
   }
 
-  async deleteTenantRefreshTokensByTenantId(tenantId: number): Promise<number> {
-    return db('tenant_refresh_tokens').where('tenantId', tenantId).del();
+  async deleteTenantSessionsByTenantId(tenantId: number): Promise<number> {
+    return db('tenant_sessions').where('tenantId', tenantId).del();
+  }
+
+  async countTenantActiveSessions(tenantId: number): Promise<number> {
+    const result = await db('tenant_sessions')
+      .where('tenantId', tenantId)
+      .andWhere('expiresAt', '>', nowDb())
+      .count('* as total')
+      .first();
+    return Number(result?.total || 0);
+  }
+
+  async getTenantSessionsByTenantId(tenantId: number): Promise<any[]> {
+    return db('tenant_sessions')
+      .where('tenantId', tenantId)
+      .andWhere('expiresAt', '>', nowDb())
+      .orderBy('createdAt', 'desc');
   }
 }

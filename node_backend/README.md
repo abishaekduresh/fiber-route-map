@@ -4,7 +4,7 @@ The authoritative backend REST API for the Fiber Route Map system, replicated in
 Built using [Express](https://expressjs.com/) and [TypeScript](https://www.typescriptlang.org/), leveraging [Knex.js](https://knexjs.org/) for database interaction.
 
 ## Version
-**Current Version:** 1.26.0 (Tenant Lifecycle & Role Visibility)
+**Current Version:** 1.35.0 (Tenant Session Limit Management)
 
 ## Interactive Documentation
 The API is fully documented using Swagger/OpenAPI 3.0.
@@ -64,7 +64,9 @@ The API uses a secure, database-backed session system and a granular Role-Based 
 - **Registration**: Publicly available via `POST /api/users`.
 - **Identifier**: Log in via `POST /api/auth/users/login` using **email**, **username**, or **phone number**.
 - **Per-User Limits**: Authentication respects individual `sessionLimit` configured per account (defaulting to 1).
-- **Session Management**: Users can list active devices via `GET /api/auth/users/sessions` and terminate sessions via `DELETE /api/auth/users/sessions/:uuid`.
+- **Tenant Authentication**: Authenticate via `POST /api/auth/tenant/login` using phone and password. Respects `sessionLimit` (defaults to 1). Returns management token and active sessions on limit breach (HTTP 403).
+- **Session Management**: Users and Tenants can list active devices via `GET /api/auth/users/sessions` or `GET /api/auth/tenant/sessions` and terminate sessions via `DELETE /api/auth/users/sessions/:uuid` or `DELETE /api/auth/tenant/sessions/:uuid`.
+- **Management Tokens**: Stateless, signed tokens (`X-Mgmt-Token`) allow remote session termination when the login limit is reached, facilitating secure self-recovery.
 - **RBAC Enforcement**: All resource endpoints (Users, Roles, Countries, Permissions) are protected by a custom `rbac` middleware that validates permission slugs (e.g., `user.view`, `role.create`). Permissions are **always** enforced from the database — there is no role-based bypass.
 - **Self-Deletion Prevention**: Authenticated users cannot delete their own account. `DELETE /api/users/:uuid` returns `403 Forbidden` if the target UUID matches the requesting user.
 
@@ -118,7 +120,7 @@ The API outputs consistent **camelCase** JSON payloads.
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.13.0"
+    "version": "1.35.0"
   }
 }
 ```
@@ -134,7 +136,7 @@ The API outputs consistent **camelCase** JSON payloads.
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "v1.13.0"
+    "version": "1.35.0"
   }
 }
 ```
