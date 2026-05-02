@@ -123,6 +123,28 @@ export interface TenantLoginData {
       status: string;
       email?: string;
       username?: string;
+      address?: string;
+      country?: {
+        uuid: string;
+        name: string;
+        code: string;
+        phoneCode: string;
+      } | null;
+      role?: {
+        uuid: string;
+        name: string;
+        slug: string;
+      } | null;
+      business?: {
+        uuid: string;
+        name: string;
+        type: 'operator' | 'distributor';
+        status: 'active' | 'blocked' | 'suspended' | 'deleted';
+      } | null;
+    };
+    meta: {
+      createdAt: string;
+      updatedAt: string;
     };
   };
   accessToken: string;
@@ -144,7 +166,7 @@ async function apiFetch<T = unknown>(
   mgmtToken?: string
 ): Promise<ApiResponse<T>> {
   const token = typeof window !== 'undefined' 
-    ? localStorage.getItem('fiber_auth_token') 
+    ? (localStorage.getItem('fiber_tenant_token') || localStorage.getItem('fiber_auth_token'))
     : null;
 
   const headers: Record<string, string> = {
@@ -231,6 +253,18 @@ export async function refreshTenantToken(refreshToken: string): Promise<ApiRespo
     localStorage.setItem('fiber_tenant_token', result.data.accessToken);
     localStorage.setItem('fiber_tenant_refresh', result.data.refreshToken);
   }
+
+  return result;
+}
+
+/**
+ * Change a tenant's password.
+ */
+export async function changeTenantPassword(data: { currentPassword: string; newPassword: string }): Promise<ApiResponse> {
+  const result = await apiFetch('/api/auth/tenant/change-password', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
 
   return result;
 }

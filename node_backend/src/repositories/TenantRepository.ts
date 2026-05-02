@@ -215,4 +215,12 @@ export class TenantRepository {
     });
     return result > 0;
   }
+
+  async updatePassword(uuid: string, password: string): Promise<boolean> {
+    const result = await db(this.table).where('uuid', uuid).update({
+      password,
+      updatedAt: nowDb(),
+    });
+    return result > 0;
+  }
 }

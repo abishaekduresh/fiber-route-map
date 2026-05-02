@@ -210,6 +210,29 @@ export class AuthController {
     }
   };
 
+  changeTenantPassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const tenantUuid = (req as any).user?.id;
+
+      if (!tenantUuid) {
+        const error = new Error('Unauthorized');
+        (error as any).status = 401;
+        throw error;
+      }
+
+      await this.authService.changeTenantPassword(tenantUuid, currentPassword, newPassword);
+      res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: 'Password updated successfully',
+        meta: this.getMeta(req)
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   private transformTenant = (tenant: any) => {
     const { uuid, createdAt, updatedAt, email, username, name, phone, status, address, country, role, business } = tenant;
     return {
@@ -284,7 +307,7 @@ export class AuthController {
     return {
       requestId: (req as any).requestId,
       timestamp: new Date().toISOString(),
-      version: '1.34.0'
+      version: '1.35.0'
     };
   };
 }

@@ -7,6 +7,7 @@ import { TenantRepository } from '../repositories/TenantRepository.js';
 import { User } from '../models/User.js';
 import { Tenant } from '../models/Tenant.js';
 import { Session } from '../models/Session.js';
+import db from '../config/database.js';
 
 export class AuthService {
   private readonly MAX_SESSIONS = 3;
@@ -14,7 +15,7 @@ export class AuthService {
   constructor(
     private authRepo: AuthRepository,
     private userRepo: UserRepository,
-    private tenantRepo: TenantRepository
+    public tenantRepo: TenantRepository
   ) {}
 
   async login(identifier: string, password: string, deviceInfo?: { deviceId?: string; deviceName?: string; ipAddress?: string; userAgent?: string }): Promise<{ user: User; session: Session }> {
@@ -257,6 +258,31 @@ export class AuthService {
       (error as any).status = 401;
       throw error;
     }
+  }
+
+  async changeTenantPassword(uuid: string, currentPassword: string, newPassword: string): Promise<void> {
+    const tenantWithPassword = await this.tenantRepo.findByUuid(uuid); // Need password here
+    // Wait, findByUuid doesn't return password. I need to get it from a raw query or add a specific method.
+    // I'll add a check in TenantRepository to get password by uuid.
+    
+    const rawTenant = await db('tenants').where('uuid', uuid).first();
+    if (!rawTenant) throw new Error('Tenant not found');
+
+    const isPasswordValid = await bcrypt.compare(currentPassword, rawTenant.password);
+    if (!isPasswordValid) {
+      const error = new Error('Current password is incorrect');
+      (error as any).status = 400;
+      throw error;
+    }
+
+    if (currentPassword === newPassword) {
+      const error = new Error('New password cannot be the same as current password');
+      (error as any).status = 400;
+      throw error;
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.tenantRepo.updatePassword(uuid, hashedPassword);
   }
 
   private generateAccessToken(payload: any): string {
