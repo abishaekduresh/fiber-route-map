@@ -248,7 +248,7 @@ export default function TenantLoginPage() {
           </p>
           <div className={styles.version}>
             <div className={styles.versionDot} />
-            <span>v1.37.0 • Secure Session</span>
+            <span>v1.36.0 • Secure Session</span>
           </div>
         </footer>
       </div>

@@ -3,11 +3,14 @@
 All notable changes to the Fiber Route Map project will be documented in this file.
 
 ## [1.37.0] - 2026-05-03
+### Added
+- **Authentication Routing Refactor**: 
+  - Moved Tenant Login to the primary `/login` route for improved accessibility.
+  - Relocated Super Admin/Staff Login to `/superadmin`.
+- **Improved Directory Structure**: Renamed page directories and synchronized CSS modules to match the new URL patterns.
+- **Enhanced Redirect Logic**: Updated all `AuthGuards`, middleware, and session termination flows to respect the new routing hierarchy.
 ### Changed
-- **Routing Overhaul**: Swapped login entry points for better UX. The Tenant Portal is now the default login at `/login`, while the Super Admin portal has been moved to `/superadmin`.
-- **Directory Restructuring**: Refactored frontend page directories and CSS modules to align with the new routing architecture.
-- **Improved Security Flow**: Updated all authentication guards and middleware to respect the new `/superadmin` and `/login` boundaries.
-- **Enhanced Health Monitoring**: Refined system health checks to correctly bypass the new administration routes during validation.
+- **Version Synchronization**: Unified versioning across the entire ecosystem (Frontend, Backend, and API Docs).
 
 ## [1.36.0] - 2026-05-03
 ### Added
