@@ -296,6 +296,15 @@ export async function logout(): Promise<ApiResponse> {
 }
 
 /**
+ * Terminate the current tenant session (logout)
+ */
+export async function tenantLogout(): Promise<ApiResponse> {
+  return apiFetch('/api/auth/tenant/logout', {
+    method: 'POST',
+  });
+}
+
+/**
  * Terminate a specific session by its UUID.
  * This is used to free up space when the session limit is reached.
  */

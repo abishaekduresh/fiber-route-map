@@ -23,6 +23,7 @@ export const authRoutes = (authService: AuthService) => {
   tenantRouter.post('/login', controller.tenantLogin);
   tenantRouter.post('/refresh', controller.refreshTenantToken);
   tenantRouter.post('/change-password', tenantAuth(tenantRepo), controller.changeTenantPassword);
+  tenantRouter.post('/logout', controller.tenantLogout);
   tenantRouter.delete('/sessions/:uuid', controller.terminateTenantSession);
   router.use('/tenant', tenantRouter);
 

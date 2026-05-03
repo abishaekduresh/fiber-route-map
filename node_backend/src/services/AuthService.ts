@@ -318,6 +318,10 @@ export class AuthService {
     }
   }
 
+  async tenantLogout(token: string): Promise<void> {
+    await this.authRepo.deleteTenantSession(token);
+  }
+
   async changeTenantPassword(uuid: string, currentPassword: string, newPassword: string): Promise<void> {
     const tenantWithPassword = await this.tenantRepo.findByUuid(uuid); // Need password here
     // Wait, findByUuid doesn't return password. I need to get it from a raw query or add a specific method.

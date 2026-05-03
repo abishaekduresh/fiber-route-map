@@ -42,7 +42,13 @@ export function TenantAuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      const { tenantLogout: apiTenantLogout } = await import('@/lib/api');
+      await apiTenantLogout();
+    } catch (e) {
+      console.error('Failed to logout on server:', e);
+    }
     setTenant(null);
     window.location.href = '/tenant-login';
   };

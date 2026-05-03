@@ -2,6 +2,15 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.36.0] - 2026-05-03
+### Added
+- **Tenant Profile Enhancements**: Integrated user role display into the tenant profile header, personal information, and security sections.
+- **Improved Tenant Logout**: Implemented backend-driven session invalidation for tenants, ensuring sessions are properly cleared from the database on logout.
+- **Database Auto-Migration**: Added self-healing logic to backfill missing `uuid` values in the `tenant_sessions` table for older database installations.
+### Fixed
+- **Type Safety**: Resolved various TypeScript compilation errors related to session management and route parameters.
+- **Frontend Keys**: Fixed a React "duplicate key" warning in the session management list by providing a unique fallback key.
+
 ## [1.35.0] - 2026-05-02
 ### Added
 - **Tenant Session Limit Enforcement**: Implemented robust backend checking against `sessionLimit` during tenant login.

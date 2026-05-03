@@ -210,6 +210,26 @@ export class AuthController {
     }
   };
 
+  tenantLogout = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authHeader = req.headers.authorization;
+      const token = authHeader && authHeader.split(' ')[1];
+
+      if (token) {
+        await this.authService.tenantLogout(token);
+      }
+
+      res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: 'Tenant logout successful',
+        meta: this.getMeta(req)
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   changeTenantPassword = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { currentPassword, newPassword } = req.body;
@@ -257,7 +277,7 @@ export class AuthController {
 
       console.log(`[AuthController] Management token valid for tenantId: ${tenantId}`);
 
-      const success = await this.authService.terminateTenantSession(uuid, tenantId);
+      const success = await this.authService.terminateTenantSession(uuid as string, tenantId);
       
       if (!success) {
         console.log(`[AuthController] Session ${uuid} not found for tenantId ${tenantId}`);

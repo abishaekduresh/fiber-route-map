@@ -38,7 +38,7 @@ export default function TenantProfilePage() {
           </div>
           <div className={styles.nameSection}>
             <h1 className={styles.name}>{attr.name}</h1>
-            <p className={styles.subtitle}>@{attr.username} • {attr.status.toUpperCase()}</p>
+            <p className={styles.subtitle}>@{attr.username} • {attr.status.toUpperCase()} • {attr.role?.name || 'Staff'}</p>
           </div>
         </div>
       </div>
@@ -56,6 +56,10 @@ export default function TenantProfilePage() {
             <div className={styles.detailItem}>
               <span className={styles.label}>Full Name</span>
               <span className={styles.value}>{attr.name}</span>
+            </div>
+            <div className={styles.detailItem}>
+              <span className={styles.label}>User Role</span>
+              <span className={styles.value}>{attr.role?.name || 'Staff Member'}</span>
             </div>
             <div className={styles.detailItem}>
               <span className={styles.label}>Email Address</span>
@@ -126,6 +130,10 @@ export default function TenantProfilePage() {
               <div className={`${styles.statusBadge} ${styles[attr.status]}`}>
                 {attr.status.toUpperCase()}
               </div>
+            </div>
+            <div className={styles.detailItem}>
+              <span className={styles.label}>User Role</span>
+              <span className={styles.value}>{attr.role?.name || 'Staff'}</span>
             </div>
             <div className={styles.detailItem}>
               <span className={styles.label}>Username</span>
