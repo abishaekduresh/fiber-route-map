@@ -115,7 +115,7 @@ const ensureAuditLogsTable = async () => {
   try {
     const exists = await db.schema.hasTable('audit_logs');
     if (!exists) {
-      await db.schema.createTable('audit_logs', (t) => {
+      await db.schema.createTable('audit_logs', (t: any) => {
         t.bigIncrements('id').primary();
         t.string('uuid', 36).notNullable().unique();
         t.enum('actorType', ['user', 'system', 'anonymous']).notNullable().defaultTo('anonymous');
