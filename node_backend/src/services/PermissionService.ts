@@ -71,6 +71,18 @@ export class PermissionService {
       }
     }
 
+    // Auto-assign ALL permissions to Super Admin role
+    const superAdminRole = await db('roles').where('slug', 'super-admin').select('id').first();
+    if (superAdminRole) {
+      const allPermissions = await db('permissions').select('id');
+      for (const perm of allPermissions) {
+        await db('role_permissions').insert({
+          roleId: superAdminRole.id,
+          permissionId: perm.id
+        }).onConflict().ignore();
+      }
+    }
+
     const { total } = await this.repository.getAll({ limit: -1 });
     return { added, total };
   }

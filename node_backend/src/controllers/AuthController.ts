@@ -321,7 +321,7 @@ export class AuthController {
   };
 
   private transformTenant = (tenant: any) => {
-    const { uuid, createdAt, updatedAt, email, username, name, phone, status, address, country, role, business } = tenant;
+    const { uuid, createdAt, updatedAt, email, username, name, phone, status, address, country, role, business, permissions } = tenant;
     return {
       id: uuid,
       type: 'tenant',
@@ -334,7 +334,8 @@ export class AuthController {
         address,
         country,
         role,
-        business
+        business,
+        permissions: permissions || []
       },
       meta: {
         createdAt,
@@ -394,7 +395,7 @@ export class AuthController {
     return {
       requestId: (req as any).requestId,
       timestamp: new Date().toISOString(),
-      version: '1.41.0'
+      version: '1.42.0'
     };
   };
 }

@@ -18,7 +18,7 @@ export default function TenantSidebar({
   onClose?: () => void;
 }) {
   const pathname = usePathname();
-  const { logout, isImpersonating } = useTenantAuth();
+  const { logout, isImpersonating, hasPermission } = useTenantAuth();
 
   const navLinks = [
     {
@@ -30,6 +30,7 @@ export default function TenantSidebar({
           <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
         </svg>
       ),
+      show: true
     },
     {
       name: 'Users',
@@ -40,6 +41,7 @@ export default function TenantSidebar({
           <path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" />
         </svg>
       ),
+      show: hasPermission('tenant_user.view')
     },
     {
       name: 'LCOs',
@@ -51,8 +53,9 @@ export default function TenantSidebar({
           <line x1="9" y1="21" x2="9" y2="9" />
         </svg>
       ),
+      show: hasPermission('lco.view')
     },
-  ];
+  ].filter(link => link.show);
 
   return (
     <aside className={`${styles.sidebar} ${className}`}>

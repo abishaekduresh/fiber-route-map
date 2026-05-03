@@ -72,6 +72,8 @@ export const ROUTE_PERMISSIONS = [
   { resource: 'permission',      actions: ['view', 'create', 'update', 'delete'] },
   { resource: 'tenant',          actions: ['view', 'create', 'update', 'delete'] },
   { resource: 'tenant_business', actions: ['view', 'create', 'update', 'delete'] },
+  { resource: 'lco',             actions: ['view', 'create', 'update', 'delete'] },
+  { resource: 'tenant_user',     actions: ['view', 'create', 'update', 'delete'] },
   { resource: 'audit_log',       actions: ['view', 'export'] },
   { resource: 'apidoc',          actions: ['view'] },
 ];

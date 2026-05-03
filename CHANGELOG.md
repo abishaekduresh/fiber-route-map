@@ -2,6 +2,18 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.42.0] - 2026-05-03
+
+### Added
+- **RBAC for Tenant Portal**: Implemented comprehensive role-based access control for the tenant dashboard.
+- **Tenant Permission Sync**: Added `lco` and `tenant_user` resources to system permissions with auto-assignment to admin roles.
+- **Permission-Aware UI**: Menu items, action buttons (Create/Edit/Delete), and dashboard widgets now automatically hide based on the authenticated tenant's permissions.
+- **Enhanced Tenant Repository**: Integrated permission fetching into the core tenant retrieval logic.
+
+### Updated
+- Backend controllers now return enriched meta information including real-time permission states.
+- Documentation and versioning synchronized across all services.
+
 ## [1.41.0] - 2026-05-03
 ### Added
 - **LCO Management Module**: Complete CRUD functionality for Local Cable Operators.

@@ -5,6 +5,8 @@ import { LcoRepository } from '../repositories/LcoRepository.js';
 import { tenantAuth } from '../middleware/tenantAuth.js';
 import { TenantRepository } from '../repositories/TenantRepository.js';
 
+import { rbac } from '../middleware/rbac.js';
+
 const router = express.Router();
 const tenantRepo = new TenantRepository();
 const lcoRepo = new LcoRepository();
@@ -15,10 +17,10 @@ const auth = tenantAuth(tenantRepo);
 
 router.use(auth);
 
-router.get('/', lcoController.index);
-router.get('/:uuid', lcoController.show);
-router.post('/', lcoController.create);
-router.put('/:uuid', lcoController.update);
-router.delete('/:uuid', lcoController.delete);
+router.get('/', rbac('lco.view'), lcoController.index);
+router.get('/:uuid', rbac('lco.view'), lcoController.show);
+router.post('/', rbac('lco.create'), lcoController.create);
+router.put('/:uuid', rbac('lco.update'), lcoController.update);
+router.delete('/:uuid', rbac('lco.delete'), lcoController.delete);
 
 export default router;

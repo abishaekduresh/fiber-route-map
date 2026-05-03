@@ -49,7 +49,7 @@ export class AuditLogController {
     return {
       requestId: (req as any).requestId,
       timestamp: new Date().toISOString(),
-      version: process.env.APP_VERSION || '1.29.0',
+      version: process.env.APP_VERSION || '1.42.0',
       ...extra,
     };
   }

@@ -12,6 +12,7 @@ const SAFE_COLUMNS = [
   'tenants.address',
   'tenants.status',
   'tenants.sessionLimit',
+  'tenants.roleId',
   'tenants.createdAt',
   'tenants.updatedAt',
   'tenants.deletedAt',
@@ -46,6 +47,7 @@ function mapRow(row: any): Tenant {
     business: businessUuid
       ? { uuid: businessUuid, name: businessName, type: businessType, status: businessStatus }
       : null,
+    permissions: [], // To be populated
   } as Tenant;
 }
 
@@ -141,7 +143,22 @@ export class TenantRepository {
       .select(SAFE_COLUMNS)
       .where('tenants.uuid', uuid)
       .first();
-    return row ? mapRow(row) : null;
+    
+    if (!row) return null;
+    const tenant = mapRow(row);
+    if (row.roleId) {
+      tenant.permissions = await this.getPermissionsByRoleId(row.roleId);
+    }
+    return tenant;
+  }
+
+  async getPermissionsByRoleId(roleId: number): Promise<string[]> {
+    const results = await db('role_permissions')
+      .join('permissions', 'role_permissions.permissionId', 'permissions.id')
+      .select('permissions.slug')
+      .where('role_permissions.roleId', roleId);
+    
+    return [...new Set((results as any[]).map((p: any) => p.slug as string))];
   }
 
   async findInternalIdByUuid(uuid: string): Promise<number | null> {

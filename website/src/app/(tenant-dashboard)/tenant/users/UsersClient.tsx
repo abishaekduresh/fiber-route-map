@@ -12,6 +12,7 @@ import {
 import TenantUserModal from '@/components/tenant-users/TenantUserModal';
 import TenantUserCard from '@/components/tenant-users/TenantUserCard';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { useTenantPermissions } from '@/components/providers/TenantAuthContext';
 import styles from '@/app/(dashboard)/dashboard/dashboard.module.css';
 
 const ITEMS_PER_PAGE = 6;
@@ -29,6 +30,11 @@ export default function UsersClient() {
     message: string;
     onConfirm: () => void;
   } | null>(null);
+  const { hasPermission } = useTenantPermissions();
+
+  const canCreate = hasPermission('tenant_user.create');
+  const canUpdate = hasPermission('tenant_user.update');
+  const canDelete = hasPermission('tenant_user.delete');
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
@@ -136,12 +142,14 @@ export default function UsersClient() {
             </span>
           </div>
           <div className={styles.headerActions}>
-            <button className={styles.createBtn} onClick={handleAdd}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              Add User
-            </button>
+            {canCreate && (
+              <button className={styles.createBtn} onClick={handleAdd}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Add User
+              </button>
+            )}
           </div>
         </div>
 
@@ -184,10 +192,10 @@ export default function UsersClient() {
               <TenantUserCard
                 key={user.id}
                 user={user}
-                onEdit={() => handleEdit(user)}
-                onBlock={() => handleBlock(user)}
-                onUnblock={() => handleUnblock(user)}
-                onDelete={() => handleDelete(user)}
+                onEdit={canUpdate ? () => handleEdit(user) : undefined}
+                onBlock={canUpdate ? () => handleBlock(user) : undefined}
+                onUnblock={canUpdate ? () => handleUnblock(user) : undefined}
+                onDelete={canDelete ? () => handleDelete(user) : undefined}
               />
             ))
           ) : (

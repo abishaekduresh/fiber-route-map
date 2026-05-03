@@ -8,6 +8,7 @@ interface TenantAuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   isImpersonating: boolean;
+  hasPermission: (permission: string) => boolean;
   setTenant: (tenant: TenantLoginData['tenant'] | null) => void;
   logout: () => void;
   exitImpersonation: () => void;
@@ -85,12 +86,18 @@ export function TenantAuthProvider({ children }: { children: ReactNode }) {
     window.location.href = '/manage/tenants';
   };
 
+  const hasPermission = (permission: string): boolean => {
+    if (!tenant) return false;
+    return (tenant as any).attributes.permissions?.includes(permission) || false;
+  };
+
   return (
     <TenantAuthContext.Provider value={{
       tenant,
       isAuthenticated: !!tenant,
       isLoading,
       isImpersonating,
+      hasPermission,
       setTenant,
       logout,
       exitImpersonation,
@@ -106,4 +113,9 @@ export function useTenantAuth() {
     throw new Error('useTenantAuth must be used within a TenantAuthProvider');
   }
   return context;
+}
+
+export function useTenantPermissions() {
+  const { hasPermission } = useTenantAuth();
+  return { hasPermission };
 }
