@@ -12,7 +12,7 @@ import {
   TenantUserData,
 } from '@/lib/api';
 import { toast } from 'sonner';
-import styles from '../../dashboard/dashboard.module.css';
+import styles from '@/app/(dashboard)/dashboard/dashboard.module.css';
 import cardStyles from '@/components/users/UserCard.module.css';
 
 const ROLES = ['admin', 'manager', 'member', 'viewer'];
