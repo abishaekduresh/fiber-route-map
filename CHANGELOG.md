@@ -2,6 +2,20 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.40.0] - 2026-05-03
+### Changed
+- **Tenant User Management — Refactored**: Replaced the separate `tenant_users` table approach with direct reuse of the `tenants` table for sub-users.
+  - Sub-users are stored as regular tenant records scoped by `tenantBusinessId` (inherited from the parent tenant) with `sessionLimit=1`.
+  - Removed `TenantUserRepository` and the `tenant_users` auto-migration; `TenantRepository.getAllByBusiness()` and `findByUuidInBusiness()` handle all scoped queries.
+  - `TenantUserController` rewritten to use `TenantRepository` directly — business and country IDs are always inherited server-side, never accepted from the frontend.
+  - Deleted `TenantUserRepository.ts` and obsolete `tenant_users.doc.ts`; recreated Swagger docs for all 10 tenant-user endpoints under the `Tenant Users` tag.
+- **Tenant Users UI — Redesigned**: `/tenant/users` page now matches the admin Tenants page design system exactly.
+  - Uses the same `dashboard.module.css` container (search bar, status filter, card grid, pagination) and `UserCard.module.css` card components.
+  - `TenantUserCard` renders with avatar, role badge, `@username`, 2×2 detail grid (Email / Status / Country / Joined), expandable extras (Phone / Business / Address), view-details modal, and icon-only action buttons (View / Expand / Block / Edit / Delete).
+  - Create/Edit modal is a 2-column form (Name/Username, Email/Phone, Password/Confirm, Address, Country/Role) with `autoComplete="off"` on all inputs; Tenant Business field removed (auto-assigned backend).
+### Fixed
+- `roleUuid` in `createTenantUser` API signature changed from `required string` to `optional string` to align with backend behaviour.
+
 ## [1.39.0] - 2026-05-03
 ### Added
 - **Tenant User Management**: Tenants can now manage their own sub-users from the tenant portal.

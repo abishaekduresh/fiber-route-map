@@ -1,25 +1,51 @@
 export interface TenantUser {
+  id: number;
   uuid: string;
+  tenantId: number;
   name: string;
+  username: string;
   email: string;
   phone: string | null;
-  role: string;
+  address?: string;
+  countryId?: number;
+  tenantBusinessId?: number;
+  roleId?: number;
+  password?: string;
   status: 'active' | 'blocked';
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
+
+  // Joins
+  countryName?: string;
+  tenantBusinessName?: string;
+  roleName?: string;
+  roleSlug?: string;
+  countryUuid?: string;
+  tenantBusinessUuid?: string;
+  roleUuid?: string;
 }
 
 export interface CreateTenantUserDTO {
   name: string;
+  username: string;
   email: string;
   phone?: string;
-  role?: string;
+  address?: string;
+  countryUuid?: string;
+  tenantBusinessUuid?: string;
+  roleUuid?: string;
   password: string;
 }
 
 export interface UpdateTenantUserDTO {
   name?: string;
+  username?: string;
   email?: string;
   phone?: string;
-  role?: string;
+  address?: string;
+  countryUuid?: string;
+  tenantBusinessUuid?: string;
+  roleUuid?: string;
+  password?: string;
+  status?: 'active' | 'blocked';
 }

@@ -229,15 +229,20 @@ const ensureTenantUsersTable = async () => {
         t.string('uuid', 36).notNullable().unique();
         t.integer('tenantId').unsigned().notNullable();
         t.string('name', 255).notNullable();
+        t.string('username', 100).notNullable();
         t.string('email', 191).notNullable();
         t.string('phone', 30).nullable();
-        t.string('role', 100).notNullable().defaultTo('member');
+        t.string('address', 500).nullable();
+        t.integer('countryId').unsigned().nullable();
+        t.integer('tenantBusinessId').unsigned().nullable();
+        t.integer('roleId').unsigned().nullable();
         t.string('password', 255).notNullable();
         t.enum('status', ['active', 'blocked']).notNullable().defaultTo('active');
         t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
         t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
         t.index(['tenantId'], 'idx_tenant_users_tenant_id');
         t.unique(['tenantId', 'email'], 'uq_tenant_users_email');
+        t.unique(['tenantId', 'username'], 'uq_tenant_users_username');
       });
       logger.info('Auto-migration: tenant_users table created');
     }

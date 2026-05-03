@@ -226,4 +226,46 @@ export class TenantRepository {
     });
     return result > 0;
   }
+
+  async getAllByBusiness(
+    tenantBusinessId: number,
+    excludeUuid: string,
+    params: { page?: number; limit?: number } = {},
+  ): Promise<{ tenants: Tenant[]; total: number }> {
+    const page = Number(params.page) || 1;
+    const limit = Number(params.limit) === -1 ? -1 : (Number(params.limit) || 10);
+    const offset = limit === -1 ? 0 : (page - 1) * limit;
+
+    const base = () =>
+      db(this.table)
+        .leftJoin('countries', 'tenants.countryId', 'countries.id')
+        .leftJoin('roles', 'tenants.roleId', 'roles.id')
+        .leftJoin('tenant_business', 'tenants.tenantBusinessId', 'tenant_business.id')
+        .where('tenants.tenantBusinessId', tenantBusinessId)
+        .whereNot('tenants.uuid', excludeUuid)
+        .whereNot('tenants.status', 'deleted');
+
+    const countResult = await base().count('tenants.id as total').first();
+    const total = Number(countResult?.total || 0);
+
+    let query = base().select(SAFE_COLUMNS).orderBy('tenants.name', 'asc');
+    if (limit !== -1) query = (query as any).limit(limit).offset(offset);
+
+    const rows = await query;
+    return { tenants: rows.map(mapRow), total };
+  }
+
+  async findByUuidInBusiness(uuid: string, tenantBusinessId: number, excludeUuid: string): Promise<Tenant | null> {
+    const row = await db(this.table)
+      .leftJoin('countries', 'tenants.countryId', 'countries.id')
+      .leftJoin('roles', 'tenants.roleId', 'roles.id')
+      .leftJoin('tenant_business', 'tenants.tenantBusinessId', 'tenant_business.id')
+      .select(SAFE_COLUMNS)
+      .where('tenants.uuid', uuid)
+      .where('tenants.tenantBusinessId', tenantBusinessId)
+      .whereNot('tenants.uuid', excludeUuid)
+      .whereNot('tenants.status', 'deleted')
+      .first();
+    return row ? mapRow(row) : null;
+  }
 }

@@ -798,10 +798,14 @@ export interface TenantUserData {
   type: string;
   attributes: {
     name: string;
+    username: string;
     email: string;
     phone: string | null;
-    role: string;
-    status: 'active' | 'blocked';
+    address: string | null;
+    role: { uuid: string; name: string; slug: string } | null;
+    status: 'active' | 'blocked' | 'suspended';
+    country: { uuid: string; name: string } | null;
+    business: { uuid: string; name: string } | null;
   };
   meta: { createdAt: string; updatedAt: string };
 }
@@ -819,12 +823,51 @@ export async function getTenantUsers(params?: { page?: number; limit?: number; f
   return apiFetch(`/api/tenant/users${query}`);
 }
 
-export async function createTenantUser(data: { name: string; email: string; phone?: string; role?: string; password: string }): Promise<ApiResponse<TenantUserData>> {
-  return apiFetch('/api/tenant/users', { method: 'POST', body: JSON.stringify(data) });
+export async function getTenantRoles(): Promise<ApiResponse<TenantRoleData[]>> {
+  return apiFetch('/api/tenant/users/roles');
 }
 
-export async function updateTenantUser(uuid: string, data: { name?: string; email?: string; phone?: string; role?: string }): Promise<ApiResponse<TenantUserData>> {
-  return apiFetch(`/api/tenant/users/${uuid}`, { method: 'PUT', body: JSON.stringify(data) });
+export async function getTenantPortalBusinesses(): Promise<ApiResponse<any[]>> {
+  return apiFetch('/api/tenant/users/businesses');
+}
+
+export async function getTenantCountries(): Promise<ApiResponse<any[]>> {
+  return apiFetch('/api/tenant/users/countries');
+}
+
+export async function createTenantUser(data: {
+  name: string;
+  username: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  roleUuid?: string;
+  password?: string;
+  countryUuid?: string;
+  tenantBusinessUuid?: string;
+}): Promise<ApiResponse> {
+  return apiFetch('/api/tenant/users', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateTenantUser(uuid: string, data: {
+  name?: string;
+  username?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  roleUuid?: string;
+  status?: string;
+  password?: string;
+  countryUuid?: string;
+  tenantBusinessUuid?: string;
+}): Promise<ApiResponse> {
+  return apiFetch(`/api/tenant/users/${uuid}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
 }
 
 export async function deleteTenantUser(uuid: string): Promise<ApiResponse> {
@@ -837,6 +880,12 @@ export async function blockTenantUser(uuid: string): Promise<ApiResponse> {
 
 export async function unblockTenantUser(uuid: string): Promise<ApiResponse> {
   return apiFetch(`/api/tenant/users/${uuid}/unblock`, { method: 'PUT' });
+}
+
+export interface TenantRoleData {
+  id: string;
+  name: string;
+  slug: string;
 }
 
 export { apiFetch };

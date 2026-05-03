@@ -23,7 +23,16 @@ export default function TenantLoginPage() {
   const [mgmtToken, setMgmtToken] = useState<string | null>(null);
   const [sessionLimit, setSessionLimit] = useState<number>(1);
   const [terminatingUuid, setTerminatingUuid] = useState<string | null>(null);
-  const { setTenant } = useTenantAuth();
+  const { setTenant, isAuthenticated, isLoading: authLoading } = useTenantAuth();
+  const [redirecting, setRedirecting] = useState(false);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && !redirecting) {
+      setRedirecting(true);
+      window.location.href = '/tenant/dashboard';
+    }
+  }, [authLoading, isAuthenticated, redirecting]);
 
   // Check backend health on mount
   useEffect(() => {
