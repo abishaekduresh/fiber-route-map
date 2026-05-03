@@ -791,4 +791,52 @@ export async function checkHealth(): Promise<any> {
   }
 }
 
+// ─── Tenant User Management ───────────────────────────────────────────────────
+
+export interface TenantUserData {
+  id: string;
+  type: string;
+  attributes: {
+    name: string;
+    email: string;
+    phone: string | null;
+    role: string;
+    status: 'active' | 'blocked';
+  };
+  meta: { createdAt: string; updatedAt: string };
+}
+
+export async function getTenantUsers(params?: { page?: number; limit?: number; filter?: Record<string, string> }): Promise<ApiResponse<TenantUserData[]>> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set('page', String(params.page));
+  if (params?.limit) qs.set('limit', String(params.limit));
+  if (params?.filter) {
+    for (const [k, v] of Object.entries(params.filter)) {
+      if (v) qs.set(`filter[${k}]`, v);
+    }
+  }
+  const query = qs.toString() ? `?${qs.toString()}` : '';
+  return apiFetch(`/api/tenant/users${query}`);
+}
+
+export async function createTenantUser(data: { name: string; email: string; phone?: string; role?: string; password: string }): Promise<ApiResponse<TenantUserData>> {
+  return apiFetch('/api/tenant/users', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function updateTenantUser(uuid: string, data: { name?: string; email?: string; phone?: string; role?: string }): Promise<ApiResponse<TenantUserData>> {
+  return apiFetch(`/api/tenant/users/${uuid}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export async function deleteTenantUser(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/tenant/users/${uuid}`, { method: 'DELETE' });
+}
+
+export async function blockTenantUser(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/tenant/users/${uuid}/block`, { method: 'POST' });
+}
+
+export async function unblockTenantUser(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/tenant/users/${uuid}/unblock`, { method: 'PUT' });
+}
+
 export { apiFetch };

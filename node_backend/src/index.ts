@@ -29,6 +29,7 @@ import { authRoutes } from './routes/authRoutes.js';
 import setupRoutes from './routes/setupRoutes.js';
 import tenantRoutes from './routes/tenantRoutes.js';
 import tenantBusinessRoutes from './routes/tenantBusinessRoutes.js';
+import tenantUserRoutes from './routes/tenantUserRoutes.js';
 import auditLogRoutes, { auditLogService } from './routes/auditLogRoutes.js';
 import { auditLog } from './middleware/auditLog.js';
 import logger from './utils/logger.js';
@@ -80,6 +81,7 @@ app.use('/api/roles', auth(authService), roleRoutes);
 app.use('/api/permissions', permissionRoutes);
 app.use('/api/tenants', auth(authService), tenantRoutes);
 app.use('/api/tenant-business', auth(authService), tenantBusinessRoutes);
+app.use('/api/tenant/users', tenantUserRoutes);
 app.use('/api/audit-logs', auth(authService), auditLogRoutes);
 app.use('/api/health', healthRoutes);
 app.get('/api/docs/spec', (_req: express.Request, res: express.Response) => res.json(swaggerSpec));
@@ -217,6 +219,33 @@ const ensureTenantSessionsTable = async () => {
   }
 };
 
+// Ensure tenant_users table exists (auto-migration for v1.39.0)
+const ensureTenantUsersTable = async () => {
+  try {
+    const exists = await db.schema.hasTable('tenant_users');
+    if (!exists) {
+      await db.schema.createTable('tenant_users', (t: any) => {
+        t.bigIncrements('id').primary();
+        t.string('uuid', 36).notNullable().unique();
+        t.integer('tenantId').unsigned().notNullable();
+        t.string('name', 255).notNullable();
+        t.string('email', 191).notNullable();
+        t.string('phone', 30).nullable();
+        t.string('role', 100).notNullable().defaultTo('member');
+        t.string('password', 255).notNullable();
+        t.enum('status', ['active', 'blocked']).notNullable().defaultTo('active');
+        t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
+        t.index(['tenantId'], 'idx_tenant_users_tenant_id');
+        t.unique(['tenantId', 'email'], 'uq_tenant_users_email');
+      });
+      logger.info('Auto-migration: tenant_users table created');
+    }
+  } catch (err: any) {
+    logger.warn('Auto-migration for tenant_users skipped or failed', { error: err.message });
+  }
+};
+
 // Start server
 const startServer = async () => {
   try {
@@ -229,6 +258,9 @@ const startServer = async () => {
 
     // Ensure tenant_sessions table exists (handles existing installs using tenant_refresh_tokens)
     await ensureTenantSessionsTable();
+
+    // Ensure tenant_users table exists (v1.39.0)
+    await ensureTenantUsersTable();
   } catch (error: any) {
     logger.error('Initial database connection failed. Server is starting but database-dependent routes will return connectivity errors.', {
       error: error.message,

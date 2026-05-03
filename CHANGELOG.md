@@ -2,6 +2,19 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.39.0] - 2026-05-03
+### Added
+- **Tenant User Management**: Tenants can now manage their own sub-users from the tenant portal.
+  - New `tenant_users` database table (auto-migrated on startup) — stores name, email, phone, role, password (bcrypt), and status, scoped to `tenantId`.
+  - Backend REST API at `POST/GET /api/tenant/users` and `GET/PUT/DELETE /api/tenant/users/:uuid` plus `/block` and `/unblock` actions, all protected by tenant JWT (`tenantAuth` middleware).
+  - Available roles per user: `admin`, `manager`, `member`, `viewer`.
+  - Duplicate email check scoped within the same tenant.
+  - New **Users** page at `/tenant/users` with card grid, search, status filter, create/edit modal, delete confirmation, block/unblock actions, and pagination.
+  - **Users** nav link added to the tenant portal sidebar.
+  - Full OpenAPI/Swagger documentation for all 7 tenant user endpoints under the `Tenant Users` tag.
+### Changed
+- **Version Synchronization**: Bumped to 1.39.0 across frontend, backend, and API docs.
+
 ## [1.38.0] - 2026-05-03
 ### Added
 - **Tenant Impersonation (Super-Admin)**: Super-admins can now switch into any active tenant's dashboard directly from the Manage Tenants page without requiring the tenant's credentials.
