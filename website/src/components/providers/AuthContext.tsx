@@ -42,7 +42,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      const { logout: apiLogout } = await import('@/lib/api');
+      await apiLogout();
+    } catch (e) {
+      console.error('Failed to logout on server:', e);
+    }
     setUser(null);
     window.location.href = '/superadmin';
   };

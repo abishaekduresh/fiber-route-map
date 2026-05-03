@@ -4,7 +4,7 @@ A futuristic, high-performance web dashboard for managing fiber optic networks.
 Built with **Next.js 16 (Turbopack)** and **TypeScript**, featuring a stunning **Glassmorphism Design System**.
 
 ## Version
-**Current Version:** 1.42.0 (Tenant RBAC & Permission UI)
+**Current Version:** 1.43.0 (Session Termination & Context Fixes)
 
 ## Features
 - **LCO Management** (`/tenant/lcos`): Full CRUD for Local Cable Operators — sequential `LCO000X` code generation, country integration, search, and pagination.

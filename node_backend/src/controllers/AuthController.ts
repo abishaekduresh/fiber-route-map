@@ -212,11 +212,17 @@ export class AuthController {
 
   tenantLogout = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const { refreshToken } = req.body;
       const authHeader = req.headers.authorization;
-      const token = authHeader && authHeader.split(' ')[1];
+      const accessToken = authHeader && authHeader.split(' ')[1];
 
-      if (token) {
-        await this.authService.tenantLogout(token);
+      // Prioritize deleting the specific refresh token session
+      if (refreshToken) {
+        await this.authService.tenantLogout(refreshToken);
+      } else if (accessToken) {
+        // Fallback: If no refresh token provided, try to invalidate the access token (legacy behavior)
+        // Note: This won't work for stateless JWTs unless they are in tenant_sessions
+        await this.authService.tenantLogout(accessToken);
       }
 
       res.status(200).json({
@@ -395,7 +401,7 @@ export class AuthController {
     return {
       requestId: (req as any).requestId,
       timestamp: new Date().toISOString(),
-      version: '1.42.0'
+      version: '1.43.0'
     };
   };
 }

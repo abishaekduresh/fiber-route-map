@@ -2,6 +2,14 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.43.0] - 2026-05-03
+
+### Fixed
+- **Session Termination**: Updated logout flows for both Tenants and Super Admins to explicitly terminate backend sessions in the database.
+- **Tenant Auth Sync**: Corrected `tenantLogout` to pass the refresh token to the server, ensuring orphaned sessions are cleaned up.
+- **TypeScript Stability**: Resolved interface mismatch in `UpdateLcoDTO` and added missing `permissions` property to `Tenant` model.
+- **Schema Migration**: Fixed implicit `any` type in `audit_logs` table creation logic.
+
 ## [1.42.0] - 2026-05-03
 
 ### Added

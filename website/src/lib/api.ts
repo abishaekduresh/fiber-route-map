@@ -299,9 +299,22 @@ export async function logout(): Promise<ApiResponse> {
  * Terminate the current tenant session (logout)
  */
 export async function tenantLogout(): Promise<ApiResponse> {
-  return apiFetch('/api/auth/tenant/logout', {
+  const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('fiber_tenant_refresh') : null;
+  
+  const result = await apiFetch('/api/auth/tenant/logout', {
     method: 'POST',
+    body: refreshToken ? JSON.stringify({ refreshToken }) : undefined
   });
+
+  // Clear local storage regardless of server success
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('fiber_tenant_token');
+    localStorage.removeItem('fiber_tenant_refresh');
+    localStorage.removeItem('fiber_tenant_data');
+    localStorage.removeItem('fiber_tenant_impersonating');
+  }
+
+  return result;
 }
 
 /**

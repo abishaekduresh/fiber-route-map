@@ -33,7 +33,7 @@ export class TenantBusinessController {
     } else {
       sort = [{ field: 'name', order: 'asc' }];
     }
-    return { requestId: (req as any).requestId, timestamp: new Date().toISOString(), version: '1.42.0', filters: { ...filterObj }, sort, ...extra };
+    return { requestId: (req as any).requestId, timestamp: new Date().toISOString(), version: '1.43.0', filters: { ...filterObj }, sort, ...extra };
   };
 
   private buildLink = (req: Request, params: any) => {
