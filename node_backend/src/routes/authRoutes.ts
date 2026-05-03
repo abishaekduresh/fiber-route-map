@@ -17,6 +17,9 @@ export const authRoutes = (authService: AuthService) => {
   userRouter.get('/sessions', auth(authService), controller.sessions);
   userRouter.delete('/sessions/:uuid', auth(authService), controller.terminateSession);
 
+  // Tenant impersonation (super-admin only)
+  userRouter.post('/impersonate/:tenantUuid', auth(authService), controller.impersonateTenant);
+
   router.use('/users', userRouter);
 
   const tenantRouter = Router();

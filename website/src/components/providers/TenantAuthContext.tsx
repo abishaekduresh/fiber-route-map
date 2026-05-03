@@ -7,8 +7,10 @@ interface TenantAuthContextType {
   tenant: TenantLoginData['tenant'] | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isImpersonating: boolean;
   setTenant: (tenant: TenantLoginData['tenant'] | null) => void;
   logout: () => void;
+  exitImpersonation: () => void;
 }
 
 const TenantAuthContext = createContext<TenantAuthContextType | undefined>(undefined);
@@ -16,6 +18,7 @@ const TenantAuthContext = createContext<TenantAuthContextType | undefined>(undef
 export function TenantAuthProvider({ children }: { children: ReactNode }) {
   const [tenant, setTenantState] = useState<TenantLoginData['tenant'] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isImpersonating, setIsImpersonating] = useState(false);
 
   useEffect(() => {
     // Initialize tenant from localStorage on mount
@@ -28,6 +31,7 @@ export function TenantAuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('fiber_tenant_data');
       }
     }
+    setIsImpersonating(localStorage.getItem('fiber_tenant_impersonating') === 'true');
     setIsLoading(false);
   }, []);
 
@@ -39,6 +43,9 @@ export function TenantAuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('fiber_tenant_data');
       localStorage.removeItem('fiber_tenant_token');
       localStorage.removeItem('fiber_tenant_refresh');
+      localStorage.removeItem('fiber_tenant_impersonating');
+      localStorage.removeItem('fiber_impersonation_return');
+      setIsImpersonating(false);
     }
   };
 
@@ -53,13 +60,40 @@ export function TenantAuthProvider({ children }: { children: ReactNode }) {
     window.location.href = '/login';
   };
 
+  const exitImpersonation = () => {
+    // Restore the admin session from stashed credentials
+    const returnData = localStorage.getItem('fiber_impersonation_return');
+    if (returnData) {
+      try {
+        const { token, user } = JSON.parse(returnData);
+        if (token) localStorage.setItem('fiber_auth_token', token);
+        if (user) localStorage.setItem('fiber_auth_user', user);
+      } catch (e) {
+        console.error('Failed to restore admin session:', e);
+      }
+    }
+
+    // Clear tenant impersonation state
+    localStorage.removeItem('fiber_tenant_token');
+    localStorage.removeItem('fiber_tenant_refresh');
+    localStorage.removeItem('fiber_tenant_data');
+    localStorage.removeItem('fiber_tenant_impersonating');
+    localStorage.removeItem('fiber_impersonation_return');
+    setTenantState(null);
+    setIsImpersonating(false);
+
+    window.location.href = '/manage/tenants';
+  };
+
   return (
-    <TenantAuthContext.Provider value={{ 
-      tenant, 
-      isAuthenticated: !!tenant, 
-      isLoading, 
-      setTenant, 
-      logout 
+    <TenantAuthContext.Provider value={{
+      tenant,
+      isAuthenticated: !!tenant,
+      isLoading,
+      isImpersonating,
+      setTenant,
+      logout,
+      exitImpersonation,
     }}>
       {children}
     </TenantAuthContext.Provider>

@@ -2,6 +2,17 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.38.0] - 2026-05-03
+### Added
+- **Tenant Impersonation (Super-Admin)**: Super-admins can now switch into any active tenant's dashboard directly from the Manage Tenants page without requiring the tenant's credentials.
+  - New backend endpoint `POST /api/auth/users/impersonate/:tenantUuid` generates a short-lived 2-hour JWT marked with `impersonated: true` — no tenant session is created or counted against the session limit.
+  - Impersonation banner displayed at the top of the tenant portal (amber, fixed position), showing the tenant name and an **Exit to Admin** button that restores the admin session and returns to `/manage/tenants`.
+  - Logout button is hidden in the tenant sidebar during impersonation to prevent accidental session termination.
+  - Admin credentials are stashed in `localStorage` during impersonation and restored cleanly on exit.
+- **Swagger Documentation**: Added full OpenAPI spec for `POST /auth/users/impersonate/{tenantUuid}`.
+### Changed
+- **Version Synchronization**: Bumped version to 1.38.0 across frontend, backend, and API docs.
+
 ## [1.37.0] - 2026-05-03
 ### Added
 - **Authentication Routing Refactor**: 

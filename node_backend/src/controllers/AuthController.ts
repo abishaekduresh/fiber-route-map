@@ -300,6 +300,26 @@ export class AuthController {
     }
   };
 
+  impersonateTenant = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { tenantUuid } = req.params;
+      const { tenant, accessToken } = await this.authService.impersonateTenant(tenantUuid as string);
+
+      res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: 'Switched to tenant dashboard',
+        data: {
+          tenant: this.transformTenant(tenant),
+          accessToken,
+        },
+        meta: this.getMeta(req)
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   private transformTenant = (tenant: any) => {
     const { uuid, createdAt, updatedAt, email, username, name, phone, status, address, country, role, business } = tenant;
     return {
@@ -374,7 +394,7 @@ export class AuthController {
     return {
       requestId: (req as any).requestId,
       timestamp: new Date().toISOString(),
-      version: '1.35.0'
+      version: '1.38.0'
     };
   };
 }

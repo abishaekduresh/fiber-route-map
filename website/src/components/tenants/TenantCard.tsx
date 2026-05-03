@@ -12,9 +12,10 @@ interface TenantCardProps {
   onBlock: (tenant: any) => void;
   onUnblock: (tenant: any) => void;
   onSuspend: (tenant: any) => void;
+  onSwitchToDashboard: (tenant: any) => void;
 }
 
-export default function TenantCard({ tenant, onEdit, onDelete, onBlock, onUnblock, onSuspend }: TenantCardProps) {
+export default function TenantCard({ tenant, onEdit, onDelete, onBlock, onUnblock, onSuspend, onSwitchToDashboard }: TenantCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
 
@@ -70,6 +71,20 @@ export default function TenantCard({ tenant, onEdit, onDelete, onBlock, onUnbloc
       )}
 
       <div className={styles.cardFooter}>
+        {status === 'active' && (
+          <button
+            className={`${styles.actionBtn}`}
+            onClick={() => onSwitchToDashboard(tenant)}
+            title="Switch to Tenant Dashboard"
+            style={{ color: '#10b981' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+            </svg>
+          </button>
+        )}
+
         <button className={`${styles.actionBtn} ${styles.viewBtn}`} onClick={() => setIsViewOpen(true)} title="View Details">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />

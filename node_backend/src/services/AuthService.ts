@@ -347,6 +347,30 @@ export class AuthService {
     await this.tenantRepo.updatePassword(uuid, hashedPassword);
   }
 
+  async impersonateTenant(tenantUuid: string): Promise<{ tenant: Tenant; accessToken: string }> {
+    const tenant = await this.tenantRepo.findByUuid(tenantUuid);
+    if (!tenant) {
+      const error = new Error('Tenant not found');
+      (error as any).status = 404;
+      throw error;
+    }
+
+    if (tenant.status !== 'active') {
+      const error = new Error(`Cannot switch to a ${tenant.status} tenant account`);
+      (error as any).status = 403;
+      throw error;
+    }
+
+    // Generate a short-lived impersonation token (2h, no refresh token, no session stored)
+    const accessToken = jwt.sign(
+      { id: tenant.uuid, type: 'tenant', phone: (tenant as any).phone, impersonated: true },
+      process.env.JWT_ACCESS_SECRET || 'access-secret',
+      { expiresIn: '2h' }
+    );
+
+    return { tenant, accessToken };
+  }
+
   private generateAccessToken(payload: any): string {
     return jwt.sign(payload, process.env.JWT_ACCESS_SECRET || 'access-secret', {
       expiresIn: process.env.JWT_ACCESS_EXPIRATION || '15m'

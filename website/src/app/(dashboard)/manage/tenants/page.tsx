@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { getTenants, deleteTenant, blockTenant, unblockTenant, suspendTenant } from '@/lib/api';
+import { getTenants, deleteTenant, blockTenant, unblockTenant, suspendTenant, impersonateTenant } from '@/lib/api';
 import TenantCard from '@/components/tenants/TenantCard';
 import TenantModal from '@/components/tenants/TenantModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
@@ -118,6 +118,19 @@ export default function ManageTenantsPage() {
     } catch { toast.error('Network error'); }
   };
 
+  const handleSwitchToDashboard = async (tenant: any) => {
+    try {
+      const result = await impersonateTenant(tenant.id);
+      if (result.success) {
+        window.location.href = '/tenant/dashboard';
+      } else {
+        toast.error(result.message || 'Failed to switch to tenant dashboard');
+      }
+    } catch {
+      toast.error('Network error while switching to tenant dashboard');
+    }
+  };
+
   const handleSuspend = async (tenant: any) => {
     try {
       const result = await suspendTenant(tenant.id);
@@ -225,6 +238,7 @@ export default function ManageTenantsPage() {
                   onBlock={handleBlock}
                   onUnblock={handleUnblock}
                   onSuspend={handleSuspend}
+                  onSwitchToDashboard={handleSwitchToDashboard}
                 />
               ))
             ) : (

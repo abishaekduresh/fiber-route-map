@@ -240,7 +240,7 @@ export async function tenantLogin(
   });
 
   // Store tokens on successful login
-  if (result.success && result.data) {
+  if (result.success && result.data && 'accessToken' in result.data) {
     localStorage.setItem('fiber_tenant_token', result.data.accessToken);
     localStorage.setItem('fiber_tenant_refresh', result.data.refreshToken);
     localStorage.setItem('fiber_tenant_data', JSON.stringify(result.data.tenant));
@@ -617,6 +617,34 @@ export async function suspendTenant(uuid: string): Promise<ApiResponse> {
   return apiFetch(`/api/tenants/${uuid}/suspend`, {
     method: 'POST',
   });
+}
+
+/**
+ * Impersonate a tenant as super-admin.
+ * Generates a short-lived access token to view that tenant's dashboard.
+ * Saves the current admin session so it can be restored later.
+ */
+export async function impersonateTenant(tenantId: string): Promise<ApiResponse<{ tenant: TenantLoginData['tenant']; accessToken: string }>> {
+  const result = await apiFetch<{ tenant: TenantLoginData['tenant']; accessToken: string }>(
+    `/api/auth/users/impersonate/${tenantId}`,
+    { method: 'POST' }
+  );
+
+  if (result.success && result.data) {
+    // Stash the current admin credentials so we can restore them on exit
+    const adminToken = localStorage.getItem('fiber_auth_token');
+    const adminUser = localStorage.getItem('fiber_auth_user');
+    if (adminToken) {
+      localStorage.setItem('fiber_impersonation_return', JSON.stringify({ token: adminToken, user: adminUser }));
+    }
+
+    localStorage.setItem('fiber_tenant_token', result.data.accessToken);
+    localStorage.setItem('fiber_tenant_data', JSON.stringify(result.data.tenant));
+    localStorage.setItem('fiber_tenant_impersonating', 'true');
+    localStorage.removeItem('fiber_tenant_refresh'); // no refresh token for impersonation
+  }
+
+  return result;
 }
 
 /**

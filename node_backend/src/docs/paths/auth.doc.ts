@@ -244,6 +244,72 @@
 
 /**
  * @openapi
+ * /auth/users/impersonate/{tenantUuid}:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Switch to Tenant Dashboard (Super-Admin)
+ *     description: >
+ *       Allows an authenticated super-admin to generate a short-lived (2-hour)
+ *       impersonation JWT for a specific tenant without requiring the tenant's password.
+ *       No tenant session is created or counted against the tenant's session limit.
+ *       The returned `accessToken` can be used as a Bearer token on tenant-protected
+ *       routes. The JWT payload includes `"impersonated": true` for audit traceability.
+ *       Only active tenants can be impersonated.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/ApiVersionHeader'
+ *       - in: path
+ *         name: tenantUuid
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *         description: UUID of the tenant to impersonate
+ *         example: "019d1eb5-cccc-7000-0000-000000000003"
+ *     responses:
+ *       200:
+ *         description: Impersonation token generated — use accessToken as Bearer on tenant routes
+ *         content:
+ *           application/json:
+ *             example:
+ *               success: true
+ *               statusCode: 200
+ *               message: "Switched to tenant dashboard"
+ *               data:
+ *                 tenant:
+ *                   id: "019d1eb5-cccc-7000-0000-000000000003"
+ *                   type: "tenant"
+ *                   attributes:
+ *                     name: "Abishaek Duresh"
+ *                     phone: "9876543210"
+ *                     status: "active"
+ *                     role: { uuid: "...", name: "Operator", slug: "operator" }
+ *                     business: { uuid: "...", name: "Acme Fiber", type: "operator", status: "active" }
+ *                 accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *       401:
+ *         $ref: '#/components/responses/401Unauthorized'
+ *       403:
+ *         description: Tenant account is not active
+ *         content:
+ *           application/json:
+ *             example:
+ *               success: false
+ *               statusCode: 403
+ *               message: "Cannot switch to a blocked tenant account"
+ *       404:
+ *         description: Tenant not found
+ *         content:
+ *           application/json:
+ *             example:
+ *               success: false
+ *               statusCode: 404
+ *               message: "Tenant not found"
+ *       500:
+ *         $ref: '#/components/responses/500InternalError'
+ */
+
+/**
+ * @openapi
  * /auth/tenant/login:
  *   post:
  *     tags:
