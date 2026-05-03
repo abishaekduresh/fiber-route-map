@@ -61,7 +61,7 @@ export default function ProfilePage() {
           // If the current session was terminated, logout
           localStorage.removeItem('fiber_auth_token');
           localStorage.removeItem('fiber_auth_user');
-          window.location.href = '/login';
+          window.location.href = '/superadmin';
           return;
         }
         setSessions(prev => prev.filter(s => s.uuid !== uuid));

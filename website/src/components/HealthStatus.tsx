@@ -11,7 +11,7 @@ import { checkSetupStatus } from '@/lib/setupApi';
  * Monitors the backend health and displays a warning banner if the system is unhealthy or unreachable.
  */
 // Pages where health checks should never run
-const SKIP_HEALTH_CHECK_PATHS = ['/setup', '/login', '/tenant-login', '/unhealthy'];
+const SKIP_HEALTH_CHECK_PATHS = ['/setup', '/superadmin', '/login', '/unhealthy'];
 
 export default function HealthStatus() {
   const [isUnhealthy, setIsUnhealthy] = useState(false);

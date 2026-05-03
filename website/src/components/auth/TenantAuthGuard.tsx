@@ -17,8 +17,8 @@ export default function TenantAuthGuard({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (!isLoading) {
-      if (!isAuthenticated && pathname !== '/tenant-login') {
-        router.push('/tenant-login');
+      if (!isAuthenticated && pathname !== '/login') {
+        router.push('/login');
       } else {
         setIsAuthorized(true);
       }

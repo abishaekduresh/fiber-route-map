@@ -1,20 +1,20 @@
 'use client';
 
 import { useState, useEffect, FormEvent } from 'react';
-import { tenantLogin, terminateTenantSession, checkHealth, type ApiResponse, type TenantLoginData, type SessionLimitData, type ActiveSession } from '@/lib/api';
-import styles from './tenant-login.module.css';
+import { login, terminateSession, checkHealth, type ApiResponse, type LoginData, type SessionLimitData, type ActiveSession } from '@/lib/api';
+import styles from './superadmin.module.css';
 import ThemeToggle from '@/components/layout/ThemeToggle';
-import { useTenantAuth } from '@/components/providers/TenantAuthContext';
+import { useAuth } from '@/components/providers/AuthContext';
 import { toast } from 'sonner';
 
 /**
- * Tenant Login Page — Premium Emerald Glassmorphism Design
+ * Login Page — Futuristic Glassmorphism Design
  * 
- * Authenticates tenants using phone number and password.
- * Handles session limits by allowing termination of active sessions.
+ * Authenticates users against the backend API using email/username/phone + password.
+ * Handles error states including session limit reached (shows active devices in a modal).
  */
-export default function TenantLoginPage() {
-  const [phone, setPhone] = useState('');
+export default function LoginPage() {
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,7 +23,7 @@ export default function TenantLoginPage() {
   const [mgmtToken, setMgmtToken] = useState<string | null>(null);
   const [sessionLimit, setSessionLimit] = useState<number>(1);
   const [terminatingUuid, setTerminatingUuid] = useState<string | null>(null);
-  const { setTenant } = useTenantAuth();
+  const { setUser } = useAuth();
 
   // Check backend health on mount
   useEffect(() => {
@@ -39,60 +39,50 @@ export default function TenantLoginPage() {
   }, []);
 
   /**
-   * Handle the tenant login form submission
+   * Handle the main login form submission
    */
   const handleSubmit = async (e?: FormEvent) => {
     if (e) e.preventDefault();
-    
-    if (!phone || !password) {
-      toast.error('Validation Error', {
-        description: 'Please enter both phone number and password.'
-      });
+    if (!identifier || !password) {
+      toast.error('Please enter both identifier and password');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const result = await tenantLogin(phone, password);
+      const result = await login(identifier, password);
 
-      if (result.success && result.data) {
-        const loginData = result.data as TenantLoginData;
-        toast.success('Login Successful', {
-          description: `Welcome to your dashboard, ${loginData.tenant.attributes.name}!`
-        });
-        
+      if (result.success) {
+        const loginData = result.data as LoginData;
+        toast.success(`Welcome back, ${loginData.user.attributes.name}!`);
         setIsModalOpen(false);
         setMgmtToken(null);
-
-        // Use TenantAuthContext to store tenant data
-        setTenant(loginData.tenant);
+        
+        // Use central AuthContext to store user
+        setUser(loginData.user);
 
         setTimeout(() => {
-          window.location.href = '/tenant/dashboard';
+          window.location.href = '/dashboard';
         }, 1500);
       } else {
-        // Handle session limit error
+        // Handle specific error codes or status codes
         if (result.statusCode === 403 && result.data && 'activeSessions' in result.data) {
           const limitData = result.data as SessionLimitData;
           setActiveSessions(limitData.activeSessions);
           setMgmtToken(limitData.mgmtToken);
           setSessionLimit(limitData.sessionLimit || 1);
           setIsModalOpen(true);
-          toast.warning('Session Limit Reached', {
+          toast.warning('Session limit reached', {
             description: 'You have too many active sessions. Please terminate one to proceed.'
           });
         } else {
-          toast.error('Authentication Failed', {
-            description: result.message || 'Invalid phone number or password.'
-          });
+          toast.error(result.message || 'Login failed. Please check your credentials.');
         }
       }
     } catch (err) {
-      toast.error('Connection Error', {
-        description: 'Unable to reach the server. Please check your internet connection.'
-      });
-      console.error('Tenant login error:', err);
+      toast.error('Unable to connect to the server. Please check your connection and try again.');
+      console.error('Login error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -104,31 +94,25 @@ export default function TenantLoginPage() {
   const handleTerminateSession = async (uuid: string) => {
     setTerminatingUuid(uuid);
     try {
-      const result = await terminateTenantSession(uuid, mgmtToken || undefined);
+      const result = await terminateSession(uuid, mgmtToken || undefined);
       if (result.success) {
-        toast.success('Session Terminated', {
-          description: 'The selected session has been closed successfully.'
-        });
+        toast.success('Session terminated successfully');
         
-        // Remove from local list
+        // Remove the session from the local list
         const updatedSessions = activeSessions.filter(s => s.uuid !== uuid);
         setActiveSessions(updatedSessions);
         
-        // If now under limit, try logging in again
+        // If there's now space, try logging in again automatically
         if (updatedSessions.length < sessionLimit) {
           setIsModalOpen(false);
           handleSubmit();
         }
       } else {
-        toast.error('Termination Failed', {
-          description: result.message || 'Could not terminate the session.'
-        });
+        toast.error(result.message || 'Failed to terminate session');
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Termination error:', err);
-      toast.error('Error', {
-        description: err.message || 'An unexpected error occurred during session termination.'
-      });
+      toast.error('Failed to terminate session. Please try again.');
     } finally {
       setTerminatingUuid(null);
     }
@@ -142,7 +126,7 @@ export default function TenantLoginPage() {
 
       {/* Animated background elements */}
       <div className={styles.bgMesh} />
-      <div className={styles.gridLines} />
+      <div className={`${styles.gridLines} ${styles.gridLinesAnimation}`} />
       <div className={`${styles.orb} ${styles.orb1}`} />
       <div className={`${styles.orb} ${styles.orb2}`} />
       <div className={`${styles.orb} ${styles.orb3}`} />
@@ -159,29 +143,29 @@ export default function TenantLoginPage() {
             />
           </div>
           <h1 className={styles.brandTitle}>
-            Tenant Portal
+            {process.env.NEXT_PUBLIC_APP_NAME || 'Fiber Route Map'}
           </h1>
-          <p className={styles.brandSubtitle}>Secure access to your business center</p>
+          <p className={styles.brandSubtitle}>Sign in to your control center</p>
         </div>
 
         {/* Login Form */}
         <form className={styles.form} onSubmit={handleSubmit}>
-          {/* Phone Input */}
+          {/* Identifier Input */}
           <div className={styles.inputGroup}>
-            <label htmlFor="phone" className={styles.label}>
-              Phone Number
+            <label htmlFor="identifier" className={styles.label}>
+              Email, Username or Phone
             </label>
             <div className={styles.inputWrapper}>
-              <svg className={styles.inputIcon} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              <svg className={styles.inputIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
               <input
-                id="phone"
-                type="tel"
+                id="identifier"
+                type="text"
                 className={styles.input}
-                placeholder="Enter your phone number"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Enter your email, username or phone"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 disabled={isLoading}
                 required
               />
@@ -194,8 +178,8 @@ export default function TenantLoginPage() {
               Password
             </label>
             <div className={styles.inputWrapper}>
-              <svg className={styles.inputIcon} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              <svg className={styles.inputIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
               <input
                 id="password"
@@ -233,10 +217,10 @@ export default function TenantLoginPage() {
               {isLoading ? (
                 <>
                   <div className={styles.spinner} />
-                  <span>Verifying...</span>
+                  <span>Authenticating...</span>
                 </>
               ) : (
-                <span>Access Dashboard</span>
+                <span>Sign In</span>
               )}
             </div>
           </button>
@@ -244,11 +228,11 @@ export default function TenantLoginPage() {
 
         <footer className={styles.footer}>
           <p className={styles.footerText}>
-            Fiber Route Map • Tenant Control
+            {process.env.NEXT_PUBLIC_APP_NAME || 'Fiber Route Map'} Control Center
           </p>
           <div className={styles.version}>
             <div className={styles.versionDot} />
-            <span>v1.35.0 • Secure Session</span>
+            <span>v1.37.0 • System Online</span>
           </div>
         </footer>
       </div>
@@ -268,7 +252,7 @@ export default function TenantLoginPage() {
             <div className={styles.modalContent}>
               <p className={styles.modalDescription}>
                 You have reached your maximum of {sessionLimit} active session(s). 
-                Please terminate an existing session below to continue.
+                Please logout from another device or terminate a session below to continue.
               </p>
 
               <div className={styles.sessionList}>
@@ -276,7 +260,7 @@ export default function TenantLoginPage() {
                   <div key={session.uuid} className={styles.sessionItem}>
                     <div className={styles.sessionInfo}>
                       <span className={styles.sessionDevice}>
-                        {session.deviceName}
+                        {session.deviceName} {session.isCurrent && '(This device)'}
                       </span>
                       <span className={styles.sessionTime}>
                         Last active: {new Date(session.lastActive).toLocaleString()}
@@ -287,7 +271,7 @@ export default function TenantLoginPage() {
                       onClick={() => handleTerminateSession(session.uuid)}
                       disabled={terminatingUuid !== null}
                     >
-                      {terminatingUuid === session.uuid ? 'Closing...' : 'Terminate'}
+                      {terminatingUuid === session.uuid ? 'Terminating...' : 'Terminate'}
                     </button>
                   </div>
                 ))}

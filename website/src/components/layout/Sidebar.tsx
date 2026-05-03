@@ -25,11 +25,11 @@ export default function Sidebar({
   const handleLogout = async () => {
     try {
       await logout();
-      router.push('/login');
+      router.push('/superadmin');
     } catch (err) {
       console.error('Logout failed:', err);
       // Still redirect to login
-      router.push('/login');
+      router.push('/superadmin');
     }
   };
 

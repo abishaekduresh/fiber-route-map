@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUser(null);
-    window.location.href = '/login';
+    window.location.href = '/superadmin';
   };
 
   const hasPermission = (permission: string): boolean => {

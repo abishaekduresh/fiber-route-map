@@ -50,7 +50,7 @@ export function TenantAuthProvider({ children }: { children: ReactNode }) {
       console.error('Failed to logout on server:', e);
     }
     setTenant(null);
-    window.location.href = '/tenant-login';
+    window.location.href = '/login';
   };
 
   return (

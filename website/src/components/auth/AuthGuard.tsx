@@ -20,9 +20,9 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const checkAuth = () => {
       const auth = isAuthenticated();
       
-      if (!auth && pathname !== '/login') {
+      if (!auth && pathname !== '/superadmin') {
         // Redirect to login if not authenticated and not already on the login page
-        router.push('/login');
+        router.push('/superadmin');
       } else {
         setIsAuthorized(true);
       }
