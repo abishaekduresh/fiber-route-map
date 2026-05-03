@@ -32,6 +32,6 @@ export interface CreateLcoDTO {
   status?: 'active' | 'inactive';
 }
 
-export interface UpdateLcoDTO extends Partial<CreateLcoDTO> {
+export interface UpdateLcoDTO extends Omit<Partial<CreateLcoDTO>, 'status'> {
   status?: 'active' | 'inactive' | 'deleted';
 }
