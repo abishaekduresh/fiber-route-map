@@ -26,6 +26,7 @@ export interface Tenant {
     type: 'operator' | 'distributor';
     status: 'active' | 'blocked' | 'suspended' | 'deleted';
   } | null;
+  permissions?: string[];
 }
 
 export type CreateTenantDTO = {
