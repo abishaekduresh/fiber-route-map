@@ -112,7 +112,7 @@ export class UserController {
     return {
       requestId: (req as any).requestId,
       timestamp: new Date().toISOString(),
-      version: '1.29.0',
+      version: '1.41.0',
       filters: appliedFilters,
       sort,
       ...extra

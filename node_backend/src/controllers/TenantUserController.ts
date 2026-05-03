@@ -28,7 +28,7 @@ export class TenantUserController {
   private getMeta = (req: Request, extra: any = {}) => ({
     requestId: (req as any).requestId,
     timestamp: new Date().toISOString(),
-    version: '1.40.0',
+    version: '1.41.0',
     ...extra,
   });
 
@@ -101,6 +101,11 @@ export class TenantUserController {
       const existingEmail = await this.tenantRepo.findByEmail(email);
       if (existingEmail) { const e = new Error('A user with this email already exists'); (e as any).status = 409; throw e; }
 
+      if (phone) {
+        const existingPhone = await this.tenantRepo.findByPhone(phone);
+        if (existingPhone) { const e = new Error('This phone number is already registered'); (e as any).status = 409; throw e; }
+      }
+
       let finalUsername = username;
       if (!finalUsername) {
         const emailLocal = email.split('@')[0].replace(/[^a-z0-9_]/gi, '').toLowerCase();
@@ -137,7 +142,7 @@ export class TenantUserController {
 
   update = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { name, username, email, phone, address, countryUuid, roleUuid } = req.body;
+      const { name, username, email, phone, address, countryUuid, roleUuid, password } = req.body;
       const authUuid = this.authUuid(req);
       const targetUuid = req.params.uuid as string;
       const { tenantBusinessId } = await this.getParentInternals(authUuid);
@@ -151,6 +156,11 @@ export class TenantUserController {
         if (dup) { const e = new Error('A user with this email already exists'); (e as any).status = 409; throw e; }
       }
 
+      if (phone && phone !== current.phone) {
+        const dup = await this.tenantRepo.findByPhone(phone);
+        if (dup) { const e = new Error('This phone number is already registered'); (e as any).status = 409; throw e; }
+      }
+
       if (username && username !== current.username) {
         const dup = await this.tenantRepo.findByUsername(username);
         if (dup) { const e = new Error('Username is already taken'); (e as any).status = 409; throw e; }
@@ -162,6 +172,7 @@ export class TenantUserController {
       if (email !== undefined) updateData.email = email;
       if (phone !== undefined) updateData.phone = phone;
       if (address !== undefined) updateData.address = address;
+      if (password) updateData.password = await bcrypt.hash(password, 10);
 
       if (countryUuid !== undefined) {
         if (countryUuid) {

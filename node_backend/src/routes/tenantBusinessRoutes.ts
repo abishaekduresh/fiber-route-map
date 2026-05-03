@@ -3,13 +3,15 @@ import { TenantBusinessController } from '../controllers/TenantBusinessControlle
 import { TenantBusinessService } from '../services/TenantBusinessService.js';
 import { TenantBusinessRepository } from '../repositories/TenantBusinessRepository.js';
 import { CountryRepository } from '../repositories/CountryRepository.js';
+import { TenantRepository } from '../repositories/TenantRepository.js';
 import { rbac } from '../middleware/rbac.js';
 
 const router = Router();
 
 const tenantBusinessRepository = new TenantBusinessRepository();
 const countryRepository = new CountryRepository();
-const tenantBusinessService = new TenantBusinessService(tenantBusinessRepository, countryRepository);
+const tenantRepository = new TenantRepository();
+const tenantBusinessService = new TenantBusinessService(tenantBusinessRepository, countryRepository, tenantRepository);
 const tenantBusinessController = new TenantBusinessController(tenantBusinessService);
 
 router.get('/', rbac('tenant_business.view'), tenantBusinessController.index);

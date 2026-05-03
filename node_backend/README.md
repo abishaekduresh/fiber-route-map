@@ -4,7 +4,7 @@ The authoritative backend REST API for the Fiber Route Map system, replicated in
 Built using [Express](https://expressjs.com/) and [TypeScript](https://www.typescriptlang.org/), leveraging [Knex.js](https://knexjs.org/) for database interaction.
 
 ## Version
-**Current Version:** 1.40.0 (Tenant User Management — Refactored)
+**Current Version:** 1.41.0 (LCO Module & Phone Uniqueness)
 
 ## Interactive Documentation
 The API is fully documented using Swagger/OpenAPI 3.0.
@@ -120,7 +120,7 @@ The API outputs consistent **camelCase** JSON payloads.
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "1.40.0"
+    "version": "1.41.0"
   }
 }
 ```
@@ -136,7 +136,7 @@ The API outputs consistent **camelCase** JSON payloads.
   "meta": {
     "requestId": "req_...",
     "timestamp": "2026-03-26T21:42:00.000Z",
-    "version": "1.40.0"
+    "version": "1.41.0"
   }
 }
 ```

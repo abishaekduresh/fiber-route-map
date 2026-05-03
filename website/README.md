@@ -4,11 +4,12 @@ A futuristic, high-performance web dashboard for managing fiber optic networks.
 Built with **Next.js 16 (Turbopack)** and **TypeScript**, featuring a stunning **Glassmorphism Design System**.
 
 ## Version
-**Current Version:** 1.40.0 (Tenant User Management — Refactored)
+**Current Version:** 1.41.0 (LCO Module & Sonner Notifications)
 
 ## Features
-- **Interactive API Docs Viewer** (`/manage/api-docs`): Custom Swagger-style documentation page — live OpenAPI spec, tag sidebar, accordion endpoint cards, schema tables, named response examples, and a built-in "Try it out" HTTP client with x-axis scroll support.
-- **Tenant User Management** (`/tenant/users`): Tenant portal sub-user CRUD — card grid matching the admin Tenants UI, search, status filter, pagination, create/edit modal (2-column form, autocomplete off), view details modal, block/unblock/delete with confirm dialogs.
+- **LCO Management** (`/tenant/lcos`): Full CRUD for Local Cable Operators — sequential `LCO000X` code generation, country integration, search, and pagination.
+- **Tenant User Management** (`/tenant/users`): Tenant portal sub-user CRUD — card grid matching the admin Tenants UI, search, status filter, pagination, create/edit modal, view details modal, block/unblock/delete with confirm dialogs.
+- **Sonner Toast Notifications**: Replaced legacy alerts with premium `sonner` toast notifications for real-time operation status.
 - **Tenant Management UI**: Comprehensive CRUD interface for managing Tenants and Business entities with dedicated visibility controls for roles and lifecycle actions (Block/Unblock/Suspend/Reactivate).
 - **ViewModal Component**: Reusable glassmorphism modal for non-destructive data inspection.
 - **First-Time Setup Wizard**: 5-step web wizard at `/setup` — configures the database, seeds all permissions, creates a Super Admin role, and sets up the first admin account automatically.

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
 import {
   getTenantUsers,
   deleteTenantUser,
@@ -40,6 +41,7 @@ export default function UsersClient() {
       }
     } catch {
       setUsers([]);
+      toast.error('Failed to fetch users');
     } finally {
       setIsLoading(false);
     }
@@ -77,21 +79,48 @@ export default function UsersClient() {
       title: 'Delete User',
       message: `Are you sure you want to delete "${user.attributes.name}"? This action cannot be undone.`,
       onConfirm: async () => {
-        setConfirmDialog(null);
-        await deleteTenantUser(user.id);
-        fetchUsers();
+        try {
+          setConfirmDialog(null);
+          const res = await deleteTenantUser(user.id);
+          if (res.success) {
+            toast.success('User deleted successfully');
+            fetchUsers();
+          } else {
+            toast.error((res as any).message ?? 'Failed to delete user');
+          }
+        } catch (err: any) {
+          toast.error(err.message ?? 'An error occurred during deletion');
+        }
       },
     });
   };
 
   const handleBlock = async (user: TenantUserData) => {
-    await blockTenantUser(user.id);
-    fetchUsers();
+    try {
+      const res = await blockTenantUser(user.id);
+      if (res.success) {
+        toast.success('User blocked successfully');
+        fetchUsers();
+      } else {
+        toast.error((res as any).message ?? 'Failed to block user');
+      }
+    } catch (err: any) {
+      toast.error(err.message ?? 'An error occurred');
+    }
   };
 
   const handleUnblock = async (user: TenantUserData) => {
-    await unblockTenantUser(user.id);
-    fetchUsers();
+    try {
+      const res = await unblockTenantUser(user.id);
+      if (res.success) {
+        toast.success('User unblocked successfully');
+        fetchUsers();
+      } else {
+        toast.error((res as any).message ?? 'Failed to unblock user');
+      }
+    } catch (err: any) {
+      toast.error(err.message ?? 'An error occurred');
+    }
   };
 
   return (

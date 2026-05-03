@@ -51,7 +51,7 @@ export class CountryController {
     return {
       requestId: (req as any).requestId,
       timestamp: new Date().toISOString(),
-      version: '1.26.0',
+      version: '1.41.0',
       filters: appliedFilters,
       sort,
       ...extra

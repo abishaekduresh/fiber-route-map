@@ -394,7 +394,7 @@ export class AuthController {
     return {
       requestId: (req as any).requestId,
       timestamp: new Date().toISOString(),
-      version: '1.38.0'
+      version: '1.41.0'
     };
   };
 }

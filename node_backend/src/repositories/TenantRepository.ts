@@ -157,10 +157,19 @@ export class TenantRepository {
     return db(this.table).where('username', username).select('uuid').first() ?? null;
   }
 
+  async findByPhone(phone: string): Promise<{ uuid: string } | null> {
+    return db(this.table)
+      .where('phone', String(phone))
+      .whereNot('status', 'deleted')
+      .select('uuid')
+      .first() ?? null;
+  }
+
   async findByPhoneWithPassword(phone: string): Promise<any | null> {
     return db(this.table)
       .leftJoin('tenant_business', 'tenants.tenantBusinessId', 'tenant_business.id')
       .where('tenants.phone', String(phone))
+      .whereNot('tenants.status', 'deleted')
       .select('tenants.*', 'tenant_business.status as businessStatus')
       .first();
   }

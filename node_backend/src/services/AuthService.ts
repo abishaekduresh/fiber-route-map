@@ -195,23 +195,30 @@ export class AuthService {
       throw error;
     }
 
-    // Step 1: Validate credentials
+    // Step 1: Validate credentials (phone + password)
     const isPasswordValid = await bcrypt.compare(password, tenantWithPassword.password);
     if (!isPasswordValid) {
-      const error = new Error('Invalid phone or password');
+      const error = new Error('Invalid phone number or password');
       (error as any).status = 401;
       throw error;
     }
 
-    // Step 2: Check tenant status is active
+    // Step 2: Validate tenant account status
     if (tenantWithPassword.status !== 'active') {
       const error = new Error(`Your account is ${tenantWithPassword.status}. Please contact support.`);
       (error as any).status = 403;
       throw error;
     }
 
-    // Step 3: Check tenant business is active
-    if (tenantWithPassword.businessStatus && tenantWithPassword.businessStatus !== 'active') {
+    // Step 3: Validate associated business status
+    // A tenant user MUST belong to an active business to log in
+    if (!tenantWithPassword.businessStatus) {
+      const error = new Error('Your account is not associated with any business. Please contact support.');
+      (error as any).status = 403;
+      throw error;
+    }
+
+    if (tenantWithPassword.businessStatus !== 'active') {
       const error = new Error(`Your business account is ${tenantWithPassword.businessStatus}. Please contact support.`);
       (error as any).status = 403;
       throw error;
@@ -285,7 +292,13 @@ export class AuthService {
         throw error;
       }
 
-      if (tenant.business && tenant.business.status && tenant.business.status !== 'active') {
+      if (!tenant.business) {
+        const error = new Error('Your account is no longer associated with a business. Please login again.');
+        (error as any).status = 403;
+        throw error;
+      }
+
+      if (tenant.business.status !== 'active') {
         const error = new Error(`Your business account is ${tenant.business.status}. Please login again.`);
         (error as any).status = 403;
         throw error;
@@ -357,6 +370,18 @@ export class AuthService {
 
     if (tenant.status !== 'active') {
       const error = new Error(`Cannot switch to a ${tenant.status} tenant account`);
+      (error as any).status = 403;
+      throw error;
+    }
+
+    if (!tenant.business) {
+      const error = new Error('Cannot switch to a tenant account with no associated business');
+      (error as any).status = 403;
+      throw error;
+    }
+
+    if (tenant.business.status !== 'active') {
+      const error = new Error(`Cannot switch to a tenant account with a ${tenant.business.status} business`);
       (error as any).status = 403;
       throw error;
     }

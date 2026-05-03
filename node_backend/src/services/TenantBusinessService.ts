@@ -1,14 +1,17 @@
 import { TenantBusinessRepository } from '../repositories/TenantBusinessRepository.js';
 import { CountryRepository } from '../repositories/CountryRepository.js';
+import { TenantRepository } from '../repositories/TenantRepository.js';
 import { TenantBusiness, CreateTenantBusinessDTO, UpdateTenantBusinessDTO } from '../models/TenantBusiness.js';
 
 export class TenantBusinessService {
   private repo: TenantBusinessRepository;
   private countryRepo: CountryRepository;
+  private tenantRepo: TenantRepository;
 
-  constructor(repo: TenantBusinessRepository, countryRepo: CountryRepository) {
+  constructor(repo: TenantBusinessRepository, countryRepo: CountryRepository, tenantRepo: TenantRepository) {
     this.repo = repo;
     this.countryRepo = countryRepo;
+    this.tenantRepo = tenantRepo;
   }
 
   async getAllBusinesses(params: any = {}): Promise<{ businesses: TenantBusiness[]; total: number }> {
@@ -41,6 +44,21 @@ export class TenantBusinessService {
       const error = new Error('Email is already registered');
       (error as any).status = 409;
       throw error;
+    }
+
+    if (data.phone) {
+      const existingBusiness = await this.repo.findByPhone(String(data.phone));
+      if (existingBusiness) {
+        const error = new Error('Phone number is already registered to another business');
+        (error as any).status = 409;
+        throw error;
+      }
+      const existingTenant = await this.tenantRepo.findByPhone(String(data.phone));
+      if (existingTenant) {
+        const error = new Error('Phone number is already registered to a tenant');
+        (error as any).status = 409;
+        throw error;
+      }
     }
 
     let countryId: number | null = null;
@@ -84,6 +102,22 @@ export class TenantBusinessService {
         throw error;
       }
     }
+
+    if (data.phone && String(data.phone) !== String(business.phone)) {
+      const existingBusiness = await this.repo.findByPhone(String(data.phone));
+      if (existingBusiness) {
+        const error = new Error('Phone number is already registered to another business');
+        (error as any).status = 409;
+        throw error;
+      }
+      const existingTenant = await this.tenantRepo.findByPhone(String(data.phone));
+      if (existingTenant) {
+        const error = new Error('Phone number is already registered to a tenant');
+        (error as any).status = 409;
+        throw error;
+      }
+    }
+
     if (data.type && !['operator', 'distributor'].includes(data.type)) {
       const error = new Error("type must be 'operator' or 'distributor'");
       (error as any).status = 400;

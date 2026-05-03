@@ -126,6 +126,14 @@ export class TenantBusinessRepository {
     return db(this.table).where('email', email).select('uuid').first() ?? null;
   }
 
+  async findByPhone(phone: string): Promise<{ uuid: string } | null> {
+    return db(this.table)
+      .where('phone', String(phone))
+      .whereNot('status', 'deleted')
+      .select('uuid')
+      .first() ?? null;
+  }
+
   async create(data: {
     name: string; address: string; email: string; phone: string;
     type: string; countryId: number | null;

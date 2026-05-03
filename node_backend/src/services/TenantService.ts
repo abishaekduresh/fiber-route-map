@@ -44,6 +44,11 @@ export class TenantService {
       (error as any).status = 409;
       throw error;
     }
+    if (await this.repo.findByPhone(data.phone)) {
+      const error = new Error('Phone number is already registered by another tenant');
+      (error as any).status = 409;
+      throw error;
+    }
 
     let countryId: number | null = null;
     if (data.countryUuid) {
@@ -117,6 +122,13 @@ export class TenantService {
     if (data.username && data.username !== tenant.username) {
       if (await this.repo.findByUsername(data.username)) {
         const error = new Error(`Username '${data.username}' is already taken`);
+        (error as any).status = 409;
+        throw error;
+      }
+    }
+    if (data.phone && data.phone !== tenant.phone) {
+      if (await this.repo.findByPhone(data.phone)) {
+        const error = new Error('Phone number is already registered by another tenant');
         (error as any).status = 409;
         throw error;
       }

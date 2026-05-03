@@ -888,4 +888,52 @@ export interface TenantRoleData {
   slug: string;
 }
 
+// ─── Tenant LCO Management ───────────────────────────────────────────────────
+
+export interface LcoData {
+  id: string;
+  type: string;
+  attributes: {
+    businessName: string;
+    code: string;
+    lcoName: string;
+    phone: string;
+    email: string;
+    address_line1: string;
+    city: string;
+    state: string;
+    pincode: string;
+    status: 'active' | 'inactive' | 'deleted';
+    countryId: number | null;
+  };
+  meta: { createdAt: string; updatedAt: string };
+}
+
+export async function getLcos(params?: { page?: number; limit?: number; filter?: { lcoName?: string } }): Promise<ApiResponse<LcoData[]>> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set('page', String(params.page));
+  if (params?.limit) qs.set('limit', String(params.limit));
+  if (params?.filter?.lcoName) qs.set('filter[lcoName]', params.filter.lcoName);
+  const query = qs.toString() ? `?${qs.toString()}` : '';
+  return apiFetch(`/api/tenant/lcos${query}`);
+}
+
+export async function createLco(data: any): Promise<ApiResponse<LcoData>> {
+  return apiFetch('/api/tenant/lcos', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateLco(uuid: string, data: any): Promise<ApiResponse<LcoData>> {
+  return apiFetch(`/api/tenant/lcos/${uuid}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteLco(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/tenant/lcos/${uuid}`, { method: 'DELETE' });
+}
+
 export { apiFetch };

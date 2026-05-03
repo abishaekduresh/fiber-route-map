@@ -29,6 +29,7 @@ import { authRoutes } from './routes/authRoutes.js';
 import setupRoutes from './routes/setupRoutes.js';
 import tenantRoutes from './routes/tenantRoutes.js';
 import tenantBusinessRoutes from './routes/tenantBusinessRoutes.js';
+import lcoRoutes from './routes/lcoRoutes.js';
 import tenantUserRoutes from './routes/tenantUserRoutes.js';
 import auditLogRoutes, { auditLogService } from './routes/auditLogRoutes.js';
 import { auditLog } from './middleware/auditLog.js';
@@ -81,6 +82,7 @@ app.use('/api/roles', auth(authService), roleRoutes);
 app.use('/api/permissions', permissionRoutes);
 app.use('/api/tenants', auth(authService), tenantRoutes);
 app.use('/api/tenant-business', auth(authService), tenantBusinessRoutes);
+app.use('/api/tenant/lcos', lcoRoutes);
 app.use('/api/tenant/users', tenantUserRoutes);
 app.use('/api/audit-logs', auth(authService), auditLogRoutes);
 app.use('/api/health', healthRoutes);
@@ -251,6 +253,42 @@ const ensureTenantUsersTable = async () => {
   }
 };
 
+// Ensure tenant_lcos table exists (auto-migration for v1.40.0)
+const ensureTenantLcosTable = async () => {
+  try {
+    const exists = await db.schema.hasTable('tenant_lcos');
+    if (!exists) {
+      await db.schema.createTable('tenant_lcos', (t: any) => {
+        t.bigIncrements('id').primary();
+        t.string('uuid', 36).notNullable().unique();
+        t.integer('tenantId').unsigned().notNullable();
+        t.integer('tenantBusinessId').unsigned().notNullable();
+        t.string('businessName', 100).notNullable();
+        t.string('code', 50).notNullable();
+        t.string('lcoName', 255).notNullable();
+        t.string('phone', 30).notNullable();
+        t.string('email', 191).notNullable();
+        t.string('address_line1', 255).notNullable();
+        t.string('city', 100).notNullable();
+        t.string('state', 100).notNullable();
+        t.string('pincode', 20).notNullable();
+        t.integer('countryId').unsigned().nullable();
+        t.enum('status', ['active', 'inactive', 'deleted']).notNullable().defaultTo('active');
+        t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('deletedAt').nullable();
+
+        t.index(['tenantId'], 'idx_lcos_tenant_id');
+        t.index(['tenantBusinessId'], 'idx_lcos_business_id');
+        t.unique(['tenantBusinessId', 'code'], 'uq_lcos_business_code');
+      });
+      logger.info('Auto-migration: tenant_lcos table created');
+    }
+  } catch (err: any) {
+    logger.warn('Auto-migration for tenant_lcos skipped or failed', { error: err.message });
+  }
+};
+
 // Start server
 const startServer = async () => {
   try {
@@ -266,6 +304,9 @@ const startServer = async () => {
 
     // Ensure tenant_users table exists (v1.39.0)
     await ensureTenantUsersTable();
+
+    // Ensure tenant_lcos table exists (v1.40.0)
+    await ensureTenantLcosTable();
   } catch (error: any) {
     logger.error('Initial database connection failed. Server is starting but database-dependent routes will return connectivity errors.', {
       error: error.message,

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import {
   createTenantUser,
   updateTenantUser,
@@ -80,6 +81,13 @@ export default function TenantUserModal({ isOpen, onClose, onSuccess, user }: Pr
 
     if (!isEditing && form.password !== form.confirmPassword) {
       setError('Passwords do not match.');
+      toast.error('Passwords do not match.');
+      return;
+    }
+
+    if (isEditing && form.password && form.password !== form.confirmPassword) {
+      setError('Passwords do not match.');
+      toast.error('Passwords do not match.');
       return;
     }
 
@@ -94,9 +102,11 @@ export default function TenantUserModal({ isOpen, onClose, onSuccess, user }: Pr
           address: form.address || undefined,
           countryUuid: form.countryUuid || undefined,
           roleUuid: form.roleUuid || undefined,
+          password: form.password || undefined,
         };
         const res = await updateTenantUser(user.id, data);
         if (!res.success) throw new Error((res as any).message ?? 'Update failed');
+        toast.success('User updated successfully');
       } else {
         const res = await createTenantUser({
           name: form.name,
@@ -109,10 +119,13 @@ export default function TenantUserModal({ isOpen, onClose, onSuccess, user }: Pr
           roleUuid: form.roleUuid || undefined,
         });
         if (!res.success) throw new Error((res as any).message ?? 'Create failed');
+        toast.success('User created successfully');
       }
       onSuccess();
     } catch (err: any) {
-      setError(err.message ?? 'An unexpected error occurred.');
+      const msg = err.message ?? 'An unexpected error occurred.';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -123,13 +136,14 @@ export default function TenantUserModal({ isOpen, onClose, onSuccess, user }: Pr
   const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '0.625rem 0.875rem',
-    background: 'var(--color-bg-input, rgba(255,255,255,0.04))',
+    background: 'var(--color-bg-input)',
     border: '1px solid var(--color-border)',
     borderRadius: 'var(--radius-md)',
     color: 'var(--color-text-primary)',
     fontSize: '0.875rem',
     outline: 'none',
     boxSizing: 'border-box',
+    colorScheme: 'dark',
   };
 
   const labelStyle: React.CSSProperties = {
@@ -262,35 +276,34 @@ export default function TenantUserModal({ isOpen, onClose, onSuccess, user }: Pr
               />
             </div>
 
-            {/* Password (create only) */}
-            {!isEditing && (
-              <>
-                <div>
-                  <label style={labelStyle}>Password <span style={{ color: '#f87171' }}>*</span></label>
-                  <input
-                    type="password"
-                    value={form.password}
-                    onChange={set('password')}
-                    required
-                    autoComplete="new-password"
-                    placeholder="Min 8 characters"
-                    style={inputStyle}
-                  />
-                </div>
-                <div>
-                  <label style={labelStyle}>Confirm Password <span style={{ color: '#f87171' }}>*</span></label>
-                  <input
-                    type="password"
-                    value={form.confirmPassword}
-                    onChange={set('confirmPassword')}
-                    required
-                    autoComplete="new-password"
-                    placeholder="Repeat password"
-                    style={inputStyle}
-                  />
-                </div>
-              </>
-            )}
+            {/* Password */}
+            <div>
+              <label style={labelStyle}>
+                {isEditing ? 'New Password' : <>Password <span style={{ color: '#f87171' }}>*</span></>}
+                {isEditing && <span style={{ color: 'var(--color-text-secondary)', fontWeight: 400, textTransform: 'none', letterSpacing: 0, marginLeft: '0.3rem' }}>(leave blank to keep current)</span>}
+              </label>
+              <input
+                type="password"
+                value={form.password}
+                onChange={set('password')}
+                required={!isEditing}
+                autoComplete="new-password"
+                placeholder={isEditing ? 'Enter new password' : 'Min 8 characters'}
+                style={inputStyle}
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>{isEditing ? 'Confirm New Password' : <>Confirm Password <span style={{ color: '#f87171' }}>*</span></>}</label>
+              <input
+                type="password"
+                value={form.confirmPassword}
+                onChange={set('confirmPassword')}
+                required={!isEditing}
+                autoComplete="new-password"
+                placeholder="Repeat password"
+                style={inputStyle}
+              />
+            </div>
 
             {/* Address (full width) */}
             <div style={{ gridColumn: '1 / -1' }}>
@@ -314,7 +327,7 @@ export default function TenantUserModal({ isOpen, onClose, onSuccess, user }: Pr
                 autoComplete="off"
                 style={{ ...inputStyle, cursor: 'pointer' }}
               >
-                <option value="">Select country…</option>
+                <option value="">Select country...</option>
                 {countries.map((c) => (
                   <option key={c.id} value={c.id}>{c.attributes.name}</option>
                 ))}
@@ -330,7 +343,7 @@ export default function TenantUserModal({ isOpen, onClose, onSuccess, user }: Pr
                 autoComplete="off"
                 style={{ ...inputStyle, cursor: 'pointer' }}
               >
-                <option value="">Select role…</option>
+                <option value="">Select role...</option>
                 {roles.map((r) => (
                   <option key={r.id} value={r.id}>{r.name}</option>
                 ))}
@@ -376,7 +389,7 @@ export default function TenantUserModal({ isOpen, onClose, onSuccess, user }: Pr
                 opacity: isLoading ? 0.7 : 1,
               }}
             >
-              {isLoading ? 'Processing…' : isEditing ? 'Update' : 'Create'}
+              {isLoading ? 'Processing...' : isEditing ? 'Update' : 'Create'}
             </button>
           </div>
         </form>

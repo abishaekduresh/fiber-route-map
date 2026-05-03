@@ -2,6 +2,21 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.41.0] - 2026-05-03
+### Added
+- **LCO Management Module**: Complete CRUD functionality for Local Cable Operators.
+  - Standardized LCO code generation using the `LCO000X` sequential format.
+  - Integrated country selection linked to the central `countries` database.
+- **Real-time Notifications**: Integrated `sonner` toast notifications across the Tenant Portal for immediate feedback on all actions (Create, Update, Delete, Block/Unblock).
+- **Phone Uniqueness Enforcement**: Implemented global phone number uniqueness across Tenants, LCOs, and Tenant Businesses.
+  - Cross-table validation ensures no duplicate active phone numbers exist between different entity types.
+  - Soft-delete aware: deleted records are ignored during uniqueness checks.
+### Fixed
+- Resolved `ReferenceError: useState is not defined` in the LCO management interface.
+- Fixed 404 and parsing errors in the Tenant User management modals.
+- Corrected status assignment logic in LCO creation flow.
+- Unified project versioning (v1.41.0) across all backend controllers, frontend package, and API documentation.
+
 ## [1.40.0] - 2026-05-03
 ### Changed
 - **Tenant User Management — Refactored**: Replaced the separate `tenant_users` table approach with direct reuse of the `tenants` table for sub-users.
