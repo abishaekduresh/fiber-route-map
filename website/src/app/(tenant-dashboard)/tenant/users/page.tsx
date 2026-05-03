@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import TenantDashboardLayout from '@/components/layout/TenantDashboardLayout';
 import {
   getTenantUsers,
   createTenantUser,
@@ -339,7 +338,7 @@ export default function TenantUsersPage() {
   };
 
   return (
-    <TenantDashboardLayout title="Manage Users">
+    <>
       <div className={styles.tableContainer}>
         <div className={styles.tableHeader}>
           <div className={styles.headerTop}>
@@ -470,6 +469,6 @@ export default function TenantUsersPage() {
           </div>
         </div>
       )}
-    </TenantDashboardLayout>
+    </>
   );
 }
