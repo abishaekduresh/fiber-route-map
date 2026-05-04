@@ -31,6 +31,7 @@ import tenantRoutes from './routes/tenantRoutes.js';
 import tenantBusinessRoutes from './routes/tenantBusinessRoutes.js';
 import lcoRoutes from './routes/lcoRoutes.js';
 import tenantUserRoutes from './routes/tenantUserRoutes.js';
+import tenantUpstreamProviderRoutes from './routes/tenantUpstreamProviderRoutes.js';
 import auditLogRoutes, { auditLogService } from './routes/auditLogRoutes.js';
 import { auditLog } from './middleware/auditLog.js';
 import logger from './utils/logger.js';
@@ -84,6 +85,7 @@ app.use('/api/tenants', auth(authService), tenantRoutes);
 app.use('/api/tenant-business', auth(authService), tenantBusinessRoutes);
 app.use('/api/tenant/lcos', lcoRoutes);
 app.use('/api/tenant/users', tenantUserRoutes);
+app.use('/api/tenant/upstream-providers', tenantUpstreamProviderRoutes);
 app.use('/api/audit-logs', auth(authService), auditLogRoutes);
 app.use('/api/health', healthRoutes);
 app.get('/api/docs/spec', (_req: express.Request, res: express.Response) => res.json(swaggerSpec));
@@ -289,6 +291,42 @@ const ensureTenantLcosTable = async () => {
   }
 };
 
+// Ensure tenant_upstream_providers table exists (auto-migration for v1.41.0)
+const ensureTenantUpstreamProvidersTable = async () => {
+  try {
+    const exists = await db.schema.hasTable('tenant_upstream_providers');
+    if (!exists) {
+      await db.schema.createTable('tenant_upstream_providers', (t: any) => {
+        t.increments('id').primary();
+        t.string('uuid', 36).notNullable().unique();
+        t.integer('tenantBusinessId').unsigned().notNullable();
+        t.string('name', 255).notNullable();
+        t.string('code', 20).notNullable();
+        t.enum('serviceCategory', ['cabletv', 'bandwidth', 'iptv', 'hybrid']).notNullable();
+        t.string('contactPerson', 255).notNullable();
+        t.string('phone', 30).notNullable();
+        t.string('email', 191).notNullable();
+        t.string('addressLine1', 255).notNullable();
+        t.string('city', 100).notNullable();
+        t.string('state', 100).notNullable();
+        t.integer('countryId').unsigned().nullable();
+        t.enum('status', ['active', 'inactive', 'blocked', 'deleted']).notNullable().defaultTo('active');
+        t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('deletedAt').nullable();
+        t.index(['tenantBusinessId'], 'idx_upstream_providers_business_id');
+        t.index(['status'], 'idx_upstream_providers_status');
+        t.unique(['tenantBusinessId', 'code'], 'uq_upstream_providers_business_code');
+        t.unique(['tenantBusinessId', 'email'], 'uq_upstream_providers_business_email');
+        t.unique(['tenantBusinessId', 'phone'], 'uq_upstream_providers_business_phone');
+      });
+      logger.info('Auto-migration: tenant_upstream_providers table created');
+    }
+  } catch (err: any) {
+    logger.warn('Auto-migration for tenant_upstream_providers skipped or failed', { error: err.message });
+  }
+};
+
 // Start server
 const startServer = async () => {
   try {
@@ -307,6 +345,9 @@ const startServer = async () => {
 
     // Ensure tenant_lcos table exists (v1.40.0)
     await ensureTenantLcosTable();
+
+    // Ensure tenant_upstream_providers table exists (v1.41.0)
+    await ensureTenantUpstreamProvidersTable();
   } catch (error: any) {
     logger.error('Initial database connection failed. Server is starting but database-dependent routes will return connectivity errors.', {
       error: error.message,

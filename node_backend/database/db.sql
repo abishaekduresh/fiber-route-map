@@ -315,6 +315,39 @@ ALTER TABLE `tenant_business`
 ALTER TABLE `tenant_business`
   ADD CONSTRAINT `FK_tenant_business_countries` FOREIGN KEY (`countryId`) REFERENCES `countries` (`id`) ON DELETE SET NULL;
 
+-- Dumping structure for table fiber_route_map.tenant_upstream_providers
+CREATE TABLE IF NOT EXISTS `tenant_upstream_providers` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `uuid` varchar(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tenantBusinessId` int unsigned NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `code` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `serviceCategory` enum('cabletv','bandwidth','iptv','hybrid') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `contactPerson` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `phone` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `addressLine1` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `city` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `state` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `countryId` int unsigned DEFAULT NULL,
+  `status` enum('active','inactive','blocked','deleted') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
+  `createdAt` datetime NOT NULL DEFAULT (now()),
+  `updatedAt` datetime NOT NULL DEFAULT (now()),
+  `deletedAt` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `tenant_upstream_providers_uuid_unique` (`uuid`),
+  UNIQUE KEY `uq_upstream_providers_business_code` (`tenantBusinessId`,`code`),
+  UNIQUE KEY `uq_upstream_providers_business_email` (`tenantBusinessId`,`email`),
+  UNIQUE KEY `uq_upstream_providers_business_phone` (`tenantBusinessId`,`phone`),
+  KEY `idx_upstream_providers_business_id` (`tenantBusinessId`),
+  KEY `idx_upstream_providers_status` (`status`),
+  KEY `FK_upstream_providers_countries` (`countryId`),
+  CONSTRAINT `FK_upstream_providers_business` FOREIGN KEY (`tenantBusinessId`) REFERENCES `tenant_business` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_upstream_providers_countries` FOREIGN KEY (`countryId`) REFERENCES `countries` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Data exporting was unselected.
+
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
 /*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
