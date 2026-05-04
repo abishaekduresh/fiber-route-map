@@ -80,6 +80,7 @@ export default function Sidebar({
       subItems: [
         { name: 'Businesses', href: '/manage/tenant-businesses' },
         { name: 'Tenants', href: '/manage/tenants' },
+        { name: 'Support Tickets', href: '/manage/support-tickets', permission: 'support_ticket.view' },
       ]
     },
     {

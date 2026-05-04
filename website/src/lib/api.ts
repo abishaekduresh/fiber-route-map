@@ -1135,4 +1135,38 @@ export async function addTicketMessage(uuid: string, data: { message: string; at
   return apiFetch(`/api/tenant/support-tickets/${uuid}/messages`, { method: 'POST', body: JSON.stringify(data) });
 }
 
+// ─── Admin Support Tickets ────────────────────────────────────────────────────
+
+export async function adminGetSupportTickets(params?: {
+  page?: number;
+  limit?: number;
+  filter?: { status?: string; priority?: string; category?: string; search?: string };
+}): Promise<ApiResponse<SupportTicketData[]>> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set('page', String(params.page));
+  if (params?.limit) qs.set('limit', String(params.limit));
+  if (params?.filter?.status) qs.set('filter[status]', params.filter.status);
+  if (params?.filter?.priority) qs.set('filter[priority]', params.filter.priority);
+  if (params?.filter?.category) qs.set('filter[category]', params.filter.category);
+  if (params?.filter?.search) qs.set('filter[search]', params.filter.search);
+  const query = qs.toString() ? `?${qs.toString()}` : '';
+  return apiFetch(`/api/support-tickets${query}`);
+}
+
+export async function adminGetSupportTicket(uuid: string): Promise<ApiResponse<SupportTicketData>> {
+  return apiFetch(`/api/support-tickets/${uuid}`);
+}
+
+export async function adminUpdateSupportTicket(uuid: string, data: any): Promise<ApiResponse<SupportTicketData>> {
+  return apiFetch(`/api/support-tickets/${uuid}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export async function adminGetTicketMessages(uuid: string): Promise<ApiResponse<TicketMessageData[]>> {
+  return apiFetch(`/api/support-tickets/${uuid}/messages`);
+}
+
+export async function adminAddTicketMessage(uuid: string, data: { message: string; attachments?: any }): Promise<ApiResponse<TicketMessageData>> {
+  return apiFetch(`/api/support-tickets/${uuid}/messages`, { method: 'POST', body: JSON.stringify(data) });
+}
+
 export { apiFetch };
