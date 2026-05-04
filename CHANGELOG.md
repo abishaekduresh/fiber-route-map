@@ -2,6 +2,25 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.44.0] - 2026-05-04
+
+### Added
+- **Upstream Providers Backend Module**: Complete REST API for `tenant_upstream_providers`.
+  - Auto-migration: `tenant_upstream_providers` table with `uuid`, `tenantBusinessId`, `name`, `code`, `serviceCategory` (cabletv/bandwidth/iptv/hybrid), `contactPerson`, `phone`, `email`, `addressLine1`, `city`, `state`, `countryId`, `status` (active/inactive/blocked/deleted), timestamps, and soft-delete.
+  - Sequential `TUP0001`, `TUP0002`, … code generation scoped per tenant business.
+  - Unique constraints per business: `(tenantBusinessId, code)`, `(tenantBusinessId, email)`, `(tenantBusinessId, phone)`.
+  - Endpoints: `GET /`, `GET /:uuid`, `POST /`, `PUT /:uuid`, `POST /:uuid/block`, `PUT /:uuid/unblock`, `DELETE /:uuid` — all under `/api/tenant/upstream-providers`, protected by `tenantAuth` and `rbac`.
+  - Full OpenAPI/Swagger documentation under the `Tenant Upstream Providers` tag.
+- **Upstream Providers Frontend Module**: Full UI at `/tenant/upstream-providers`.
+  - `UpstreamProviderCard`: avatar, code badge, service category, phone/email/status/created detail grid, expandable contact person + country + address, view-details modal, and icon-only action buttons (View / Expand / Edit / Block / Unblock / Delete).
+  - `UpstreamProviderModal`: Create/Edit form — name, service category dropdown, contact person, phone, email, address, city, state, country (fetched), and status field (edit mode only).
+  - Search (name/code/email/phone/contact person), category filter, status filter (active/inactive/blocked), and pagination.
+  - All actions (create/edit/block/unblock/delete) are permission-gated via `upstream_provider.*` RBAC.
+- **Collapsible "Manage" Sidebar Dropdown**: Tenant sidebar refactored to group LCOs and Upstream Providers under a collapsible "Manage" section. Auto-expands when navigating to a managed route. Each item hidden when the user lacks the respective `view` permission.
+- **Permission Sync**: Added `upstream_provider` resource (`view`, `create`, `update`, `delete`) to `ROUTE_PERMISSIONS` in `SetupService.ts` so the sync endpoint inserts missing upstream provider permissions.
+- **Improved Permissions Sync Toast**: Sync result now displays the slugs of newly added permissions with an 8-second duration; shows a neutral message when already up to date.
+- **Readable Resource Chips**: Permissions page resource summary chips now use human-readable labels (e.g. "Tenant Business", "Upstream Provider") via a `RESOURCE_LABELS` map.
+
 ## [1.43.0] - 2026-05-03
 
 ### Fixed

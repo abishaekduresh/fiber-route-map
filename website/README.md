@@ -4,10 +4,12 @@ A futuristic, high-performance web dashboard for managing fiber optic networks.
 Built with **Next.js 16 (Turbopack)** and **TypeScript**, featuring a stunning **Glassmorphism Design System**.
 
 ## Version
-**Current Version:** 1.43.0 (Session Termination & Context Fixes)
+**Current Version:** 1.44.0 (Upstream Providers Module & Manage Sidebar Dropdown)
 
 ## Features
 - **LCO Management** (`/tenant/lcos`): Full CRUD for Local Cable Operators — sequential `LCO000X` code generation, country integration, search, and pagination.
+- **Upstream Provider Management** (`/tenant/upstream-providers`): Full CRUD for upstream providers — sequential `TUP000X` code generation, service categories (Cable TV / Bandwidth / IPTV / Hybrid), block/unblock workflow, category + status filters, search, pagination, and permission-gated actions.
+- **Collapsible Manage Sidebar Dropdown**: Tenant sidebar now groups LCOs and Upstream Providers under a collapsible "Manage" section, auto-expanded when on a managed route, with each item gated by its respective `view` permission.
 - **Tenant User Management** (`/tenant/users`): Tenant portal sub-user CRUD — card grid matching the admin Tenants UI, search, status filter, pagination, create/edit modal, view details modal, block/unblock/delete with confirm dialogs.
 - **Sonner Toast Notifications**: Replaced legacy alerts with premium `sonner` toast notifications for real-time operation status.
 - **Tenant Management UI**: Comprehensive CRUD interface for managing Tenants and Business entities with dedicated visibility controls for roles and lifecycle actions (Block/Unblock/Suspend/Reactivate).

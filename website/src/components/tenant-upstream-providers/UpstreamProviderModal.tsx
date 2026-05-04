@@ -2,35 +2,44 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { createLco, updateLco, LcoData, getTenantCountries } from '@/lib/api';
+import { createUpstreamProvider, updateUpstreamProvider, UpstreamProviderData, getTenantCountries } from '@/lib/api';
 import styles from '@/app/(dashboard)/dashboard/dashboard.module.css';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  lco?: LcoData | null;
+  provider?: UpstreamProviderData | null;
 }
 
 interface FormState {
-  lcoName: string;
+  name: string;
+  serviceCategory: 'cabletv' | 'bandwidth' | 'iptv' | 'hybrid';
+  contactPerson: string;
   phone: string;
   email: string;
-  address_line1: string;
+  addressLine1: string;
   city: string;
   state: string;
-  pincode: string;
   countryUuid: string;
   status: 'active' | 'inactive';
 }
 
 const EMPTY: FormState = {
-  lcoName: '', phone: '', email: '', address_line1: '',
-  city: '', state: '', pincode: '', countryUuid: '', status: 'active',
+  name: '', serviceCategory: 'bandwidth', contactPerson: '',
+  phone: '', email: '', addressLine1: '', city: '', state: '',
+  countryUuid: '', status: 'active',
 };
 
-export default function LcoModal({ isOpen, onClose, onSuccess, lco }: Props) {
-  const isEditing = Boolean(lco);
+const SERVICE_CATEGORIES = [
+  { value: 'cabletv', label: 'Cable TV' },
+  { value: 'bandwidth', label: 'Bandwidth' },
+  { value: 'iptv', label: 'IPTV' },
+  { value: 'hybrid', label: 'Hybrid' },
+];
+
+export default function UpstreamProviderModal({ isOpen, onClose, onSuccess, provider }: Props) {
+  const isEditing = Boolean(provider);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [countries, setCountries] = useState<{ id: string; attributes: { name: string } }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,23 +52,25 @@ export default function LcoModal({ isOpen, onClose, onSuccess, lco }: Props) {
       if (res.success && Array.isArray(res.data)) setCountries(res.data);
     });
 
-    if (lco) {
+    if (provider) {
+      const a = provider.attributes;
       setForm({
-        lcoName: lco.attributes.lcoName ?? '',
-        phone: lco.attributes.phone ?? '',
-        email: lco.attributes.email ?? '',
-        address_line1: lco.attributes.address_line1 ?? '',
-        city: lco.attributes.city ?? '',
-        state: lco.attributes.state ?? '',
-        pincode: lco.attributes.pincode ?? '',
-        countryUuid: (lco.attributes as any).countryUuid ?? '',
-        status: lco.attributes.status === 'active' ? 'active' : 'inactive',
+        name: a.name ?? '',
+        serviceCategory: a.serviceCategory ?? 'bandwidth',
+        contactPerson: a.contactPerson ?? '',
+        phone: a.phone ?? '',
+        email: a.email ?? '',
+        addressLine1: a.addressLine1 ?? '',
+        city: a.city ?? '',
+        state: a.state ?? '',
+        countryUuid: a.country?.uuid ?? '',
+        status: (a.status === 'active' || a.status === 'inactive') ? a.status : 'active',
       });
     } else {
       setForm(EMPTY);
     }
     setError(null);
-  }, [isOpen, lco]);
+  }, [isOpen, provider]);
 
   const set = (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -73,14 +84,14 @@ export default function LcoModal({ isOpen, onClose, onSuccess, lco }: Props) {
     try {
       const data = { ...form };
 
-      if (isEditing && lco) {
-        const res = await updateLco(lco.id, data);
+      if (isEditing && provider) {
+        const res = await updateUpstreamProvider(provider.id, data);
         if (!res.success) throw new Error((res as any).message ?? 'Update failed');
-        toast.success('LCO updated successfully');
+        toast.success('Upstream provider updated successfully');
       } else {
-        const res = await createLco(data);
+        const res = await createUpstreamProvider(data);
         if (!res.success) throw new Error((res as any).message ?? 'Create failed');
-        toast.success('LCO created successfully');
+        toast.success('Upstream provider created successfully');
       }
       onSuccess();
     } catch (err: any) {
@@ -99,7 +110,7 @@ export default function LcoModal({ isOpen, onClose, onSuccess, lco }: Props) {
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.modalHeader}>
           <h3 className={styles.modalTitle}>
-            {isEditing ? 'Edit LCO' : 'Create New LCO'}
+            {isEditing ? 'Edit Upstream Provider' : 'Add Upstream Provider'}
           </h3>
           <button className={styles.closeBtn} onClick={onClose}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -111,15 +122,29 @@ export default function LcoModal({ isOpen, onClose, onSuccess, lco }: Props) {
         <form onSubmit={handleSubmit}>
           <div className={styles.modalContent}>
             {error && (
-              <div className={styles.errorText} style={{ padding: '0.75rem', marginBottom: '1.25rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 'var(--radius-md)', color: '#f87171' }}>
+              <div style={{ padding: '0.75rem', marginBottom: '1.25rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 'var(--radius-md)', color: '#f87171' }}>
                 {error}
               </div>
             )}
 
             <div className={styles.formGrid}>
               <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
-                <label className={styles.label}>LCO Name *</label>
-                <input type="text" className={styles.input} value={form.lcoName} onChange={set('lcoName')} required placeholder="LCO Name" />
+                <label className={styles.label}>Provider Name *</label>
+                <input type="text" className={styles.input} value={form.name} onChange={set('name')} required placeholder="Provider Name" />
+              </div>
+
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>Service Category *</label>
+                <select className={styles.select} value={form.serviceCategory} onChange={set('serviceCategory')} required>
+                  {SERVICE_CATEGORIES.map((c) => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>Contact Person *</label>
+                <input type="text" className={styles.input} value={form.contactPerson} onChange={set('contactPerson')} required placeholder="Contact Person Name" />
               </div>
 
               <div className={styles.inputGroup}>
@@ -134,7 +159,7 @@ export default function LcoModal({ isOpen, onClose, onSuccess, lco }: Props) {
 
               <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
                 <label className={styles.label}>Address Line 1 *</label>
-                <input type="text" className={styles.input} value={form.address_line1} onChange={set('address_line1')} required placeholder="Address" />
+                <input type="text" className={styles.input} value={form.addressLine1} onChange={set('addressLine1')} required placeholder="Address" />
               </div>
 
               <div className={styles.inputGroup}>
@@ -145,11 +170,6 @@ export default function LcoModal({ isOpen, onClose, onSuccess, lco }: Props) {
               <div className={styles.inputGroup}>
                 <label className={styles.label}>State *</label>
                 <input type="text" className={styles.input} value={form.state} onChange={set('state')} required placeholder="State" />
-              </div>
-
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>Pincode *</label>
-                <input type="text" className={styles.input} value={form.pincode} onChange={set('pincode')} required placeholder="Pincode" />
               </div>
 
               <div className={styles.inputGroup}>

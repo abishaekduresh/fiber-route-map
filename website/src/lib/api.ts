@@ -949,4 +949,57 @@ export async function deleteLco(uuid: string): Promise<ApiResponse> {
   return apiFetch(`/api/tenant/lcos/${uuid}`, { method: 'DELETE' });
 }
 
+export interface UpstreamProviderData {
+  id: string;
+  type: string;
+  attributes: {
+    name: string;
+    code: string;
+    serviceCategory: 'cabletv' | 'bandwidth' | 'iptv' | 'hybrid';
+    contactPerson: string;
+    phone: string;
+    email: string;
+    addressLine1: string;
+    city: string;
+    state: string;
+    country: { uuid: string; name: string } | null;
+    status: 'active' | 'inactive' | 'blocked' | 'deleted';
+  };
+  meta: { createdAt: string; updatedAt: string };
+}
+
+export async function getUpstreamProviders(params?: { page?: number; limit?: number }): Promise<ApiResponse<UpstreamProviderData[]>> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set('page', String(params.page));
+  if (params?.limit) qs.set('limit', String(params.limit));
+  const query = qs.toString() ? `?${qs.toString()}` : '';
+  return apiFetch(`/api/tenant/upstream-providers${query}`);
+}
+
+export async function createUpstreamProvider(data: any): Promise<ApiResponse<UpstreamProviderData>> {
+  return apiFetch('/api/tenant/upstream-providers', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateUpstreamProvider(uuid: string, data: any): Promise<ApiResponse<UpstreamProviderData>> {
+  return apiFetch(`/api/tenant/upstream-providers/${uuid}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function blockUpstreamProvider(uuid: string): Promise<ApiResponse<UpstreamProviderData>> {
+  return apiFetch(`/api/tenant/upstream-providers/${uuid}/block`, { method: 'POST' });
+}
+
+export async function unblockUpstreamProvider(uuid: string): Promise<ApiResponse<UpstreamProviderData>> {
+  return apiFetch(`/api/tenant/upstream-providers/${uuid}/unblock`, { method: 'PUT' });
+}
+
+export async function deleteUpstreamProvider(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/tenant/upstream-providers/${uuid}`, { method: 'DELETE' });
+}
+
 export { apiFetch };

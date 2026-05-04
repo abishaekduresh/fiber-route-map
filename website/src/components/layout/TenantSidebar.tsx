@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTenantAuth } from '@/components/providers/TenantAuthContext';
@@ -7,20 +8,23 @@ import styles from './DashboardLayout.module.css';
 
 /**
  * TenantSidebar Component
- * 
+ *
  * Provides navigation for the tenant dashboard.
  */
-export default function TenantSidebar({ 
-  className = '', 
-  onClose 
-}: { 
+export default function TenantSidebar({
+  className = '',
+  onClose
+}: {
   className?: string;
   onClose?: () => void;
 }) {
   const pathname = usePathname();
   const { logout, isImpersonating, hasPermission } = useTenantAuth();
+  const [manageOpen, setManageOpen] = useState(
+    pathname.startsWith('/tenant/lcos') || pathname.startsWith('/tenant/upstream-providers')
+  );
 
-  const navLinks = [
+  const topLinks = [
     {
       name: 'Dashboard',
       href: '/tenant/dashboard',
@@ -30,7 +34,7 @@ export default function TenantSidebar({
           <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
         </svg>
       ),
-      show: true
+      show: true,
     },
     {
       name: 'Users',
@@ -41,8 +45,11 @@ export default function TenantSidebar({
           <path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" />
         </svg>
       ),
-      show: hasPermission('tenant_user.view')
+      show: hasPermission('tenant_user.view'),
     },
+  ].filter((l) => l.show);
+
+  const manageLinks = [
     {
       name: 'LCOs',
       href: '/tenant/lcos',
@@ -53,24 +60,35 @@ export default function TenantSidebar({
           <line x1="9" y1="21" x2="9" y2="9" />
         </svg>
       ),
-      show: hasPermission('lco.view')
+      show: hasPermission('lco.view'),
     },
-  ].filter(link => link.show);
+    {
+      name: 'Upstream Providers',
+      href: '/tenant/upstream-providers',
+      icon: (
+        <svg className={styles.navIcon} style={{ color: '#10b981' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+          <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
+        </svg>
+      ),
+      show: hasPermission('upstream_provider.view'),
+    },
+  ].filter((l) => l.show);
 
   return (
     <aside className={`${styles.sidebar} ${className}`}>
       <div className={styles.brand}>
         <div className={styles.logoIcon}>
-          <img 
-            src="/assets/app/logo.png" 
-            alt="Logo" 
-            className={styles.sidebarLogo} 
+          <img
+            src="/assets/app/logo.png"
+            alt="Logo"
+            className={styles.sidebarLogo}
           />
         </div>
         <span className={styles.brandName}>
           TENANT PORTAL
         </span>
-        
+
         <button className={styles.mobileCloseBtn} onClick={onClose}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M18 6L6 18M6 6l12 12" />
@@ -80,10 +98,10 @@ export default function TenantSidebar({
 
       <nav className={styles.navSection}>
         <ul className={styles.navList}>
-          {navLinks.map((link) => (
+          {topLinks.map((link) => (
             <li key={link.href}>
-              <Link 
-                href={link.href} 
+              <Link
+                href={link.href}
                 className={`${styles.navItem} ${pathname === link.href ? styles.activeNavItem : ''}`}
                 onClick={() => onClose?.()}
               >
@@ -92,6 +110,45 @@ export default function TenantSidebar({
               </Link>
             </li>
           ))}
+
+          {manageLinks.length > 0 && (
+            <li>
+              <button
+                className={styles.navItem}
+                style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', justifyContent: 'space-between' }}
+                onClick={() => setManageOpen((o) => !o)}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <svg className={styles.navIcon} style={{ color: '#10b981' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" />
+                  </svg>
+                  <span>Manage</span>
+                </span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                  style={{ transform: manageOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease', flexShrink: 0 }}>
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+
+              {manageOpen && (
+                <ul className={styles.navList} style={{ paddingLeft: '0.75rem', marginTop: '0.25rem' }}>
+                  {manageLinks.map((link) => (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        className={`${styles.navItem} ${pathname.startsWith(link.href) ? styles.activeNavItem : ''}`}
+                        onClick={() => onClose?.()}
+                      >
+                        {link.icon}
+                        <span>{link.name}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          )}
         </ul>
       </nav>
 

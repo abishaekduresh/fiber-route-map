@@ -2,70 +2,81 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
-import { getLcos, deleteLco, LcoData } from '@/lib/api';
-import LcoModal from '@/components/tenant-lcos/LcoModal';
-import LcoCard from '@/components/tenant-lcos/LcoCard';
+import { getUpstreamProviders, blockUpstreamProvider, unblockUpstreamProvider, deleteUpstreamProvider, UpstreamProviderData } from '@/lib/api';
+import UpstreamProviderModal from '@/components/tenant-upstream-providers/UpstreamProviderModal';
+import UpstreamProviderCard from '@/components/tenant-upstream-providers/UpstreamProviderCard';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useTenantPermissions } from '@/components/providers/TenantAuthContext';
 import styles from '@/app/(dashboard)/dashboard/dashboard.module.css';
 
 const ITEMS_PER_PAGE = 6;
 
-export default function LcosClient() {
-  const [lcos, setLcos] = useState<LcoData[]>([]);
+const SERVICE_CATEGORY_LABELS: Record<string, string> = {
+  cabletv: 'Cable TV',
+  bandwidth: 'Bandwidth',
+  iptv: 'IPTV',
+  hybrid: 'Hybrid',
+};
+
+export default function UpstreamProvidersClient() {
+  const [providers, setProviders] = useState<UpstreamProviderData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedLco, setSelectedLco] = useState<LcoData | null>(null);
+  const [selectedProvider, setSelectedProvider] = useState<UpstreamProviderData | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
     message: string;
+    confirmLabel?: string;
+    variant?: 'danger' | 'warning';
     onConfirm: () => void;
   } | null>(null);
   const { hasPermission } = useTenantPermissions();
 
-  const canCreate = hasPermission('lco.create');
-  const canUpdate = hasPermission('lco.update');
-  const canDelete = hasPermission('lco.delete');
+  const canCreate = hasPermission('upstream_provider.create');
+  const canUpdate = hasPermission('upstream_provider.update');
+  const canDelete = hasPermission('upstream_provider.delete');
 
-  const fetchLcos = useCallback(async () => {
+  const fetchProviders = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Fetch all LCOs for client-side filtering and pagination
-      const res = await getLcos({ limit: -1 });
+      const res = await getUpstreamProviders({ limit: -1 });
       if (res.success && Array.isArray(res.data)) {
-        setLcos(res.data);
+        setProviders(res.data);
       } else {
-        setLcos([]);
+        setProviders([]);
       }
     } catch (err) {
-      console.error('Failed to fetch LCOs:', err);
-      setLcos([]);
-      toast.error('Failed to fetch LCOs');
+      console.error('Failed to fetch upstream providers:', err);
+      setProviders([]);
+      toast.error('Failed to fetch upstream providers');
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchLcos();
-  }, [fetchLcos]);
+    fetchProviders();
+  }, [fetchProviders]);
 
   const filtered = useMemo(() => {
-    return lcos.filter((lco) => {
-      const a = lco.attributes;
+    return providers.filter((p) => {
+      const a = p.attributes;
       const search = searchTerm.toLowerCase();
       const matchSearch =
-        (a.lcoName || '').toLowerCase().includes(search) ||
+        (a.name || '').toLowerCase().includes(search) ||
         (a.code || '').toLowerCase().includes(search) ||
         (a.email || '').toLowerCase().includes(search) ||
-        (a.phone || '').toLowerCase().includes(search);
+        (a.phone || '').toLowerCase().includes(search) ||
+        (a.contactPerson || '').toLowerCase().includes(search);
       const matchStatus = statusFilter === 'all' || (a.status || 'active').toLowerCase() === statusFilter;
-      return matchSearch && matchStatus;
+      const matchCategory = categoryFilter === 'all' || a.serviceCategory === categoryFilter;
+      return matchSearch && matchStatus && matchCategory;
     });
-  }, [lcos, searchTerm, statusFilter]);
+  }, [providers, searchTerm, statusFilter, categoryFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
 
@@ -76,34 +87,82 @@ export default function LcosClient() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, categoryFilter]);
 
   const handleAdd = () => {
-    setSelectedLco(null);
+    setSelectedProvider(null);
     setModalOpen(true);
   };
 
-  const handleEdit = (lco: LcoData) => {
-    setSelectedLco(lco);
+  const handleEdit = (provider: UpstreamProviderData) => {
+    setSelectedProvider(provider);
     setModalOpen(true);
   };
 
-  const handleDelete = (lco: LcoData) => {
+  const handleBlock = (provider: UpstreamProviderData) => {
     setConfirmDialog({
-      title: 'Delete LCO',
-      message: `Are you sure you want to delete "${lco.attributes.lcoName}"? This action cannot be undone.`,
+      title: 'Block Provider',
+      message: `Block "${provider.attributes.name}"? They will lose access.`,
+      confirmLabel: 'Block',
+      variant: 'warning',
       onConfirm: async () => {
+        setConfirmDialog(null);
         try {
-          setConfirmDialog(null);
-          const res = await deleteLco(lco.id);
+          const res = await blockUpstreamProvider(provider.id);
           if (res.success) {
-            toast.success('LCO deleted successfully');
-            fetchLcos();
+            toast.success('Provider blocked successfully');
+            fetchProviders();
           } else {
-            toast.error((res as any).message ?? 'Failed to delete LCO');
+            toast.error((res as any).message ?? 'Failed to block provider');
           }
-        } catch (err: any) {
-          toast.error(err.message ?? 'An error occurred during deletion');
+        } catch {
+          toast.error('An error occurred');
+        }
+      },
+    });
+  };
+
+  const handleUnblock = (provider: UpstreamProviderData) => {
+    setConfirmDialog({
+      title: 'Unblock Provider',
+      message: `Unblock "${provider.attributes.name}"?`,
+      confirmLabel: 'Unblock',
+      variant: 'warning',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          const res = await unblockUpstreamProvider(provider.id);
+          if (res.success) {
+            toast.success('Provider unblocked successfully');
+            fetchProviders();
+          } else {
+            toast.error((res as any).message ?? 'Failed to unblock provider');
+          }
+        } catch {
+          toast.error('An error occurred');
+        }
+      },
+    });
+  };
+
+  const handleDelete = (provider: UpstreamProviderData) => {
+    setConfirmDialog({
+      title: 'Delete Provider',
+      message: `Are you sure you want to delete "${provider.attributes.name}"? This action cannot be undone.`,
+      confirmLabel: 'Delete',
+      variant: 'danger',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          const res = await deleteUpstreamProvider(provider.id);
+          if (res.success) {
+            toast.success('Provider deleted successfully');
+            fetchProviders();
+          } else {
+            toast.error((res as any).message ?? 'Failed to delete provider');
+          }
+        } catch {
+          toast.error('An error occurred during deletion');
         }
       },
     });
@@ -115,10 +174,10 @@ export default function LcosClient() {
       <div className={styles.tableHeader}>
         <div className={styles.headerTop}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <h3 className={styles.tableTitle}>LCO Management</h3>
+            <h3 className={styles.tableTitle}>Upstream Providers</h3>
             <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
-              {filtered.length} {filtered.length === 1 ? 'LCO' : 'LCOs'} found
-              {lcos.length !== filtered.length && ` (filtered from ${lcos.length})`}
+              {filtered.length} {filtered.length === 1 ? 'provider' : 'providers'} found
+              {providers.length !== filtered.length && ` (filtered from ${providers.length})`}
             </span>
           </div>
           <div className={styles.headerActions}>
@@ -127,7 +186,7 @@ export default function LcosClient() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
-                Add LCO
+                Add Provider
               </button>
             )}
           </div>
@@ -150,12 +209,23 @@ export default function LcosClient() {
           </div>
           <select
             className={styles.filterSelect}
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+          >
+            <option value="all">All Categories</option>
+            {Object.entries(SERVICE_CATEGORY_LABELS).map(([val, label]) => (
+              <option key={val} value={val}>{label}</option>
+            ))}
+          </select>
+          <select
+            className={styles.filterSelect}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
             <option value="all">All Status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
+            <option value="blocked">Blocked</option>
           </select>
         </div>
       </div>
@@ -163,31 +233,32 @@ export default function LcosClient() {
       {isLoading ? (
         <div className={styles.tableLoader}>
           <div className="spinner" style={{ margin: '0 auto 1rem' }} />
-          <p>Loading LCOs...</p>
+          <p>Loading upstream providers...</p>
         </div>
       ) : (
         <div className={styles.cardGrid}>
           {paginated.length > 0 ? (
-            paginated.map((lco) => (
-              <LcoCard
-                key={lco.id}
-                lco={lco}
-                onEdit={canUpdate ? () => handleEdit(lco) : undefined}
-                onDelete={canDelete ? () => handleDelete(lco) : undefined}
+            paginated.map((provider) => (
+              <UpstreamProviderCard
+                key={provider.id}
+                provider={provider}
+                onEdit={canUpdate ? () => handleEdit(provider) : undefined}
+                onBlock={canUpdate && provider.attributes.status !== 'blocked' ? () => handleBlock(provider) : undefined}
+                onUnblock={canUpdate && provider.attributes.status === 'blocked' ? () => handleUnblock(provider) : undefined}
+                onDelete={canDelete ? () => handleDelete(provider) : undefined}
               />
             ))
           ) : (
             <div className={styles.emptyState}>
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ marginBottom: '1rem', opacity: 0.5 }}>
-                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
               </svg>
-              <p>No LCOs found{searchTerm || statusFilter !== 'all' ? ' matching your criteria' : ''}.</p>
-              {(searchTerm || statusFilter !== 'all') && (
+              <p>No providers found{searchTerm || statusFilter !== 'all' || categoryFilter !== 'all' ? ' matching your criteria' : ''}.</p>
+              {(searchTerm || statusFilter !== 'all' || categoryFilter !== 'all') && (
                 <button
                   style={{ background: 'transparent', border: 'none', color: 'var(--color-accent-blue)', cursor: 'pointer', marginTop: '0.5rem' }}
-                  onClick={() => { setSearchTerm(''); setStatusFilter('all'); }}
+                  onClick={() => { setSearchTerm(''); setStatusFilter('all'); setCategoryFilter('all'); }}
                 >
                   Clear all filters
                 </button>
@@ -250,18 +321,19 @@ export default function LcosClient() {
         </div>
       )}
 
-      <LcoModal
+      <UpstreamProviderModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        onSuccess={() => { setModalOpen(false); fetchLcos(); }}
-        lco={selectedLco}
+        onSuccess={() => { setModalOpen(false); fetchProviders(); }}
+        provider={selectedProvider}
       />
 
       <ConfirmDialog
         isOpen={confirmDialog !== null}
         title={confirmDialog?.title ?? ''}
         message={confirmDialog?.message ?? ''}
-        confirmLabel="Delete"
+        confirmLabel={confirmDialog?.confirmLabel ?? 'Confirm'}
+        variant={confirmDialog?.variant ?? 'danger'}
         onConfirm={() => confirmDialog?.onConfirm()}
         onCancel={() => setConfirmDialog(null)}
       />
