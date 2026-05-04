@@ -29,11 +29,15 @@ export default function CableTypeCard({ cableType, onEdit, onBlock, onUnblock, o
         <div className={styles.userInfo}>
           <h3 className={styles.userName} title={a.name}>{a.name || 'Unknown Cable Type'}</h3>
           <div className={styles.roleBadge}>{a.code}</div>
-          <div className={styles.userHandle}>{a.fiberCoreCount} cores · ⌀{a.cableDiameter} mm</div>
+          <div className={styles.userHandle}>{a.tubeCount}T · {a.fiberCoreCount} cores · ⌀{a.cableDiameter} mm</div>
         </div>
       </div>
 
       <div className={styles.detailsGrid}>
+        <div className={styles.detailItem}>
+          <span className={styles.detailLabel}>Tubes</span>
+          <span className={styles.detailValue}>{a.tubeCount}</span>
+        </div>
         <div className={styles.detailItem}>
           <span className={styles.detailLabel}>Fiber Cores</span>
           <span className={styles.detailValue}>{a.fiberCoreCount}</span>
@@ -135,6 +139,7 @@ export default function CableTypeCard({ cableType, onEdit, onBlock, onUnblock, o
               fields: [
                 { label: 'Name', value: a.name },
                 { label: 'Code', value: a.code },
+                { label: 'Tube Count', value: String(a.tubeCount) },
                 { label: 'Fiber Core Count', value: String(a.fiberCoreCount) },
                 { label: 'Cable Diameter (mm)', value: String(a.cableDiameter) },
                 { label: 'Status', value: a.status },

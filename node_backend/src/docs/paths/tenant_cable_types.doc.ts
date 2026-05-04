@@ -38,6 +38,7 @@
  *                   attributes:
  *                     name: "G.652D Single Mode"
  *                     code: "xF12"
+ *                     tubeCount: 1
  *                     fiberCoreCount: 12
  *                     cableDiameter: 8.50
  *                     description: "Standard single-mode fiber cable"
@@ -84,6 +85,7 @@
  *             properties:
  *               name:           { type: string, example: "G.652D Single Mode" }
  *               code:           { type: string, example: "xF12", description: "Unique code per business, user-supplied" }
+ *               tubeCount:      { type: integer, example: 1, default: 1, description: "Number of tubes in the cable" }
  *               fiberCoreCount: { type: integer, example: 12 }
  *               cableDiameter:  { type: number, format: float, example: 8.50 }
  *               description:    { type: string, example: "Standard single-mode fiber cable" }
@@ -102,6 +104,7 @@
  *                 attributes:
  *                   name: "G.652D Single Mode"
  *                   code: "xF12"
+ *                   tubeCount: 1
  *                   fiberCoreCount: 12
  *                   cableDiameter: 8.50
  *                   status: "active"
@@ -157,6 +160,7 @@
  *             properties:
  *               name:           { type: string }
  *               code:           { type: string }
+ *               tubeCount:      { type: integer }
  *               fiberCoreCount: { type: integer }
  *               cableDiameter:  { type: number, format: float }
  *               description:    { type: string }

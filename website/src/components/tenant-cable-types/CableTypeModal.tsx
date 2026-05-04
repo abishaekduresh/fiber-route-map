@@ -15,6 +15,7 @@ interface Props {
 interface FormState {
   name: string;
   code: string;
+  tubeCount: string;
   fiberCoreCount: string;
   cableDiameter: string;
   description: string;
@@ -22,7 +23,7 @@ interface FormState {
 }
 
 const EMPTY: FormState = {
-  name: '', code: '', fiberCoreCount: '', cableDiameter: '', description: '', status: 'active',
+  name: '', code: '', tubeCount: '1', fiberCoreCount: '', cableDiameter: '', description: '', status: 'active',
 };
 
 export default function CableTypeModal({ isOpen, onClose, onSuccess, cableType }: Props) {
@@ -39,6 +40,7 @@ export default function CableTypeModal({ isOpen, onClose, onSuccess, cableType }
       setForm({
         name: a.name ?? '',
         code: a.code ?? '',
+        tubeCount: String((a as any).tubeCount ?? 1),
         fiberCoreCount: String(a.fiberCoreCount ?? ''),
         cableDiameter: String(a.cableDiameter ?? ''),
         description: a.description ?? '',
@@ -63,6 +65,7 @@ export default function CableTypeModal({ isOpen, onClose, onSuccess, cableType }
       const payload = {
         name: form.name,
         code: form.code,
+        tubeCount: Number(form.tubeCount) || 1,
         fiberCoreCount: Number(form.fiberCoreCount),
         cableDiameter: parseFloat(form.cableDiameter),
         description: form.description || null,
@@ -121,6 +124,11 @@ export default function CableTypeModal({ isOpen, onClose, onSuccess, cableType }
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Code *</label>
                 <input type="text" className={styles.input} value={form.code} onChange={set('code')} required placeholder="e.g. xF12" />
+              </div>
+
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>Tube Count</label>
+                <input type="number" className={styles.input} value={form.tubeCount} onChange={set('tubeCount')} min={1} placeholder="Default: 1" />
               </div>
 
               <div className={styles.inputGroup}>

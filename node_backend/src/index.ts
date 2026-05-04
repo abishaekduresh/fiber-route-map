@@ -340,6 +340,7 @@ const ensureTenantCableTypesTable = async () => {
         t.integer('tenantBusinessId').unsigned().notNullable();
         t.string('name', 255).notNullable();
         t.string('code', 50).notNullable();
+        t.integer('tubeCount').unsigned().notNullable().defaultTo(1);
         t.integer('fiberCoreCount').unsigned().notNullable();
         t.decimal('cableDiameter', 5, 2).notNullable();
         t.text('description').nullable();
@@ -352,6 +353,15 @@ const ensureTenantCableTypesTable = async () => {
         t.unique(['tenantBusinessId', 'code'], 'uq_cable_types_business_code');
       });
       logger.info('Auto-migration: tenant_cable_types table created');
+    } else {
+      // Add tubeCount column to existing tables (v1.47.0)
+      const hasTubeCount = await db.schema.hasColumn('tenant_cable_types', 'tubeCount');
+      if (!hasTubeCount) {
+        await db.schema.alterTable('tenant_cable_types', (t: any) => {
+          t.integer('tubeCount').unsigned().notNullable().defaultTo(1).after('code');
+        });
+        logger.info('Auto-migration: added tubeCount column to tenant_cable_types');
+      }
     }
   } catch (err: any) {
     logger.warn('Auto-migration for tenant_cable_types skipped or failed', { error: err.message });

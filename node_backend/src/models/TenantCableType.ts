@@ -6,6 +6,7 @@ export interface TenantCableType {
   tenantBusinessId: number;
   name: string;
   code: string;
+  tubeCount: number;
   fiberCoreCount: number;
   cableDiameter: number;
   description: string | null;
@@ -18,6 +19,7 @@ export interface TenantCableType {
 export interface CreateCableTypeDTO {
   name: string;
   code: string;
+  tubeCount?: number;
   fiberCoreCount: number;
   cableDiameter: number;
   description?: string | null;
@@ -26,6 +28,7 @@ export interface CreateCableTypeDTO {
 export interface UpdateCableTypeDTO {
   name?: string;
   code?: string;
+  tubeCount?: number;
   fiberCoreCount?: number;
   cableDiameter?: number;
   description?: string | null;

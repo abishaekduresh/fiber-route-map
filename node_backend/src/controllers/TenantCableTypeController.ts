@@ -13,6 +13,7 @@ export class TenantCableTypeController {
     attributes: {
       name: ct.name,
       code: ct.code,
+      tubeCount: ct.tubeCount,
       fiberCoreCount: ct.fiberCoreCount,
       cableDiameter: ct.cableDiameter,
       description: ct.description,

@@ -355,6 +355,7 @@ CREATE TABLE IF NOT EXISTS `tenant_cable_types` (
   `tenantBusinessId` int unsigned NOT NULL,
   `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `code` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tubeCount` int unsigned NOT NULL DEFAULT '1',
   `fiberCoreCount` int unsigned NOT NULL,
   `cableDiameter` decimal(5,2) NOT NULL,
   `description` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,

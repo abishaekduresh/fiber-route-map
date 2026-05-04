@@ -1008,6 +1008,7 @@ export interface CableTypeData {
   attributes: {
     name: string;
     code: string;
+    tubeCount: number;
     fiberCoreCount: number;
     cableDiameter: number;
     description: string | null;
