@@ -76,6 +76,7 @@ export const ROUTE_PERMISSIONS = [
   { resource: 'tenant_user',       actions: ['view', 'create', 'update', 'delete'] },
   { resource: 'upstream_provider', actions: ['view', 'create', 'update', 'delete'] },
   { resource: 'cable_type',        actions: ['view', 'create', 'update', 'delete'] },
+  { resource: 'support_ticket',    actions: ['view', 'create', 'update', 'delete'] },
   { resource: 'audit_log',         actions: ['view', 'export'] },
   { resource: 'apidoc',            actions: ['view'] },
 ];

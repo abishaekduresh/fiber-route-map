@@ -24,7 +24,8 @@ export default function TenantSidebar({
     pathname.startsWith('/tenant/users') ||
     pathname.startsWith('/tenant/lcos') ||
     pathname.startsWith('/tenant/upstream-providers') ||
-    pathname.startsWith('/tenant/cable-types')
+    pathname.startsWith('/tenant/cable-types') ||
+    pathname.startsWith('/tenant/support-tickets')
   );
 
   const topLinks = [
@@ -86,6 +87,16 @@ export default function TenantSidebar({
         </svg>
       ),
       show: hasPermission('cable_type.view'),
+    },
+    {
+      name: 'Support Tickets',
+      href: '/tenant/support-tickets',
+      icon: (
+        <svg className={styles.navIcon} style={{ color: '#10b981' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+      ),
+      show: hasPermission('support_ticket.view'),
     },
   ].filter((l) => l.show);
 

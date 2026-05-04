@@ -33,6 +33,8 @@ import lcoRoutes from './routes/lcoRoutes.js';
 import tenantUserRoutes from './routes/tenantUserRoutes.js';
 import tenantUpstreamProviderRoutes from './routes/tenantUpstreamProviderRoutes.js';
 import tenantCableTypeRoutes from './routes/tenantCableTypeRoutes.js';
+import tenantSupportTicketRoutes from './routes/tenantSupportTicketRoutes.js';
+import adminSupportTicketRoutes from './routes/adminSupportTicketRoutes.js';
 import auditLogRoutes, { auditLogService } from './routes/auditLogRoutes.js';
 import { auditLog } from './middleware/auditLog.js';
 import logger from './utils/logger.js';
@@ -88,6 +90,8 @@ app.use('/api/tenant/lcos', lcoRoutes);
 app.use('/api/tenant/users', tenantUserRoutes);
 app.use('/api/tenant/upstream-providers', tenantUpstreamProviderRoutes);
 app.use('/api/tenant/cable-types', tenantCableTypeRoutes);
+app.use('/api/tenant/support-tickets', tenantSupportTicketRoutes);
+app.use('/api/support-tickets', auth(authService), adminSupportTicketRoutes);
 app.use('/api/audit-logs', auth(authService), auditLogRoutes);
 app.use('/api/health', healthRoutes);
 app.get('/api/docs/spec', (_req: express.Request, res: express.Response) => res.json(swaggerSpec));
@@ -368,6 +372,82 @@ const ensureTenantCableTypesTable = async () => {
   }
 };
 
+// Ensure tenant_support_tickets tables exist (auto-migration for v1.47.0)
+const ensureSupportTicketTables = async () => {
+  try {
+    const ticketsExists = await db.schema.hasTable('tenant_support_tickets');
+    if (!ticketsExists) {
+      await db.schema.createTable('tenant_support_tickets', (t: any) => {
+        t.bigIncrements('id').primary();
+        t.string('uuid', 36).notNullable().unique();
+        t.integer('tenantId').unsigned().notNullable();
+        t.integer('tenantBusinessId').unsigned().notNullable();
+        t.string('ticketNumber', 30).notNullable().unique();
+        t.string('subject', 255).notNullable();
+        t.text('description').notNullable();
+        t.enum('category', ['network', 'fiber', 'iptv', 'billing', 'account', 'technical', 'other']).notNullable().defaultTo('other');
+        t.enum('priority', ['low', 'medium', 'high', 'critical']).notNullable().defaultTo('medium');
+        t.enum('impactLevel', ['low', 'medium', 'high']).notNullable().defaultTo('medium');
+        t.enum('status', ['open', 'assigned', 'in_progress', 'on_hold', 'resolved', 'closed', 'reopened']).notNullable().defaultTo('open');
+        t.integer('assignedTo').unsigned().nullable();
+        t.datetime('assignedAt').nullable();
+        t.integer('slaResponseTime').unsigned().nullable();
+        t.integer('slaResolutionTime').unsigned().nullable();
+        t.datetime('dueAt').nullable();
+        t.string('relatedNodeId', 36).nullable();
+        t.string('relatedRouteId', 36).nullable();
+        t.string('relatedCustomerId', 36).nullable();
+        t.json('attachments').nullable();
+        t.json('metadata').nullable();
+        t.text('resolutionNotes').nullable();
+        t.datetime('resolvedAt').nullable();
+        t.datetime('closedAt').nullable();
+        t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('deletedAt').nullable();
+        t.index(['tenantId'], 'idx_tickets_tenant_id');
+        t.index(['tenantBusinessId'], 'idx_tickets_business_id');
+        t.index(['status'], 'idx_tickets_status');
+        t.index(['priority'], 'idx_tickets_priority');
+        t.index(['assignedTo'], 'idx_tickets_assigned_to');
+      });
+      logger.info('Auto-migration: tenant_support_tickets table created');
+    }
+
+    const messagesExists = await db.schema.hasTable('tenant_ticket_messages');
+    if (!messagesExists) {
+      await db.schema.createTable('tenant_ticket_messages', (t: any) => {
+        t.bigIncrements('id').primary();
+        t.integer('ticketId').unsigned().notNullable();
+        t.enum('senderType', ['tenant', 'admin', 'system']).notNullable();
+        t.integer('senderId').unsigned().notNullable();
+        t.text('message').notNullable();
+        t.json('attachments').nullable();
+        t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
+        t.index(['ticketId'], 'idx_ticket_messages_ticket_id');
+      });
+      logger.info('Auto-migration: tenant_ticket_messages table created');
+    }
+
+    const logsExists = await db.schema.hasTable('tenant_ticket_logs');
+    if (!logsExists) {
+      await db.schema.createTable('tenant_ticket_logs', (t: any) => {
+        t.bigIncrements('id').primary();
+        t.integer('ticketId').unsigned().notNullable();
+        t.string('action', 100).notNullable();
+        t.string('oldValue', 500).nullable();
+        t.string('newValue', 500).nullable();
+        t.integer('performedBy').unsigned().nullable();
+        t.datetime('performedAt').notNullable().defaultTo(db.fn.now());
+        t.index(['ticketId'], 'idx_ticket_logs_ticket_id');
+      });
+      logger.info('Auto-migration: tenant_ticket_logs table created');
+    }
+  } catch (err: any) {
+    logger.warn('Auto-migration for support ticket tables skipped or failed', { error: err.message });
+  }
+};
+
 // Start server
 const startServer = async () => {
   try {
@@ -392,6 +472,9 @@ const startServer = async () => {
 
     // Ensure tenant_cable_types table exists (v1.45.0)
     await ensureTenantCableTypesTable();
+
+    // Ensure support ticket tables exist (v1.47.0)
+    await ensureSupportTicketTables();
   } catch (error: any) {
     logger.error('Initial database connection failed. Server is starting but database-dependent routes will return connectivity errors.', {
       error: error.message,

@@ -1051,4 +1051,88 @@ export async function deleteCableType(uuid: string): Promise<ApiResponse> {
   return apiFetch(`/api/tenant/cable-types/${uuid}`, { method: 'DELETE' });
 }
 
+// ─── Support Tickets ──────────────────────────────────────────────────────────
+
+export interface SupportTicketData {
+  id: string;
+  type: string;
+  attributes: {
+    ticketNumber: string;
+    subject: string;
+    description: string;
+    category: string;
+    priority: 'low' | 'medium' | 'high' | 'critical';
+    impactLevel: 'low' | 'medium' | 'high';
+    status: 'open' | 'assigned' | 'in_progress' | 'on_hold' | 'resolved' | 'closed' | 'reopened';
+    slaResponseTime: number | null;
+    slaResolutionTime: number | null;
+    dueAt: string | null;
+    assignedTo: number | null;
+    assigneeName: string | null;
+    relatedNodeId: string | null;
+    relatedRouteId: string | null;
+    relatedCustomerId: string | null;
+    attachments: any;
+    resolutionNotes: string | null;
+    resolvedAt: string | null;
+    closedAt: string | null;
+  };
+  meta: {
+    tenantName: string | null;
+    businessName: string | null;
+    createdAt: string;
+    updatedAt: string;
+  };
+}
+
+export interface TicketMessageData {
+  id: number;
+  ticketId: number;
+  senderType: 'tenant' | 'admin' | 'system';
+  senderId: number;
+  message: string;
+  attachments: any;
+  createdAt: string;
+}
+
+export async function getSupportTickets(params?: {
+  page?: number;
+  limit?: number;
+  filter?: { status?: string; priority?: string; category?: string; search?: string };
+}): Promise<ApiResponse<SupportTicketData[]>> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set('page', String(params.page));
+  if (params?.limit) qs.set('limit', String(params.limit));
+  if (params?.filter?.status) qs.set('filter[status]', params.filter.status);
+  if (params?.filter?.priority) qs.set('filter[priority]', params.filter.priority);
+  if (params?.filter?.category) qs.set('filter[category]', params.filter.category);
+  if (params?.filter?.search) qs.set('filter[search]', params.filter.search);
+  const query = qs.toString() ? `?${qs.toString()}` : '';
+  return apiFetch(`/api/tenant/support-tickets${query}`);
+}
+
+export async function getSupportTicket(uuid: string): Promise<ApiResponse<SupportTicketData>> {
+  return apiFetch(`/api/tenant/support-tickets/${uuid}`);
+}
+
+export async function createSupportTicket(data: any): Promise<ApiResponse<SupportTicketData>> {
+  return apiFetch('/api/tenant/support-tickets', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function updateSupportTicket(uuid: string, data: any): Promise<ApiResponse<SupportTicketData>> {
+  return apiFetch(`/api/tenant/support-tickets/${uuid}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export async function closeSupportTicket(uuid: string): Promise<ApiResponse<SupportTicketData>> {
+  return apiFetch(`/api/tenant/support-tickets/${uuid}/close`, { method: 'POST' });
+}
+
+export async function getTicketMessages(uuid: string): Promise<ApiResponse<TicketMessageData[]>> {
+  return apiFetch(`/api/tenant/support-tickets/${uuid}/messages`);
+}
+
+export async function addTicketMessage(uuid: string, data: { message: string; attachments?: any }): Promise<ApiResponse<TicketMessageData>> {
+  return apiFetch(`/api/tenant/support-tickets/${uuid}/messages`, { method: 'POST', body: JSON.stringify(data) });
+}
+
 export { apiFetch };

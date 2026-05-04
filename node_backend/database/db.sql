@@ -373,6 +373,77 @@ CREATE TABLE IF NOT EXISTS `tenant_cable_types` (
 
 -- Data exporting was unselected.
 
+-- Dumping structure for table fiber_route_map.tenant_support_tickets
+CREATE TABLE IF NOT EXISTS `tenant_support_tickets` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `uuid` varchar(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tenantId` int unsigned NOT NULL,
+  `tenantBusinessId` int unsigned NOT NULL,
+  `ticketNumber` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `subject` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `category` enum('network','fiber','iptv','billing','account','technical','other') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'other',
+  `priority` enum('low','medium','high','critical') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'medium',
+  `impactLevel` enum('low','medium','high') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'medium',
+  `status` enum('open','assigned','in_progress','on_hold','resolved','closed','reopened') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'open',
+  `assignedTo` int unsigned DEFAULT NULL,
+  `assignedAt` datetime DEFAULT NULL,
+  `slaResponseTime` int unsigned DEFAULT NULL,
+  `slaResolutionTime` int unsigned DEFAULT NULL,
+  `dueAt` datetime DEFAULT NULL,
+  `relatedNodeId` varchar(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `relatedRouteId` varchar(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `relatedCustomerId` varchar(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `attachments` json DEFAULT NULL,
+  `metadata` json DEFAULT NULL,
+  `resolutionNotes` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `resolvedAt` datetime DEFAULT NULL,
+  `closedAt` datetime DEFAULT NULL,
+  `createdAt` datetime NOT NULL DEFAULT (now()),
+  `updatedAt` datetime NOT NULL DEFAULT (now()),
+  `deletedAt` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `tenant_support_tickets_uuid_unique` (`uuid`),
+  UNIQUE KEY `tenant_support_tickets_ticketNumber_unique` (`ticketNumber`),
+  KEY `idx_tickets_tenant_id` (`tenantId`),
+  KEY `idx_tickets_business_id` (`tenantBusinessId`),
+  KEY `idx_tickets_status` (`status`),
+  KEY `idx_tickets_priority` (`priority`),
+  KEY `idx_tickets_assigned_to` (`assignedTo`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Data exporting was unselected.
+
+-- Dumping structure for table fiber_route_map.tenant_ticket_messages
+CREATE TABLE IF NOT EXISTS `tenant_ticket_messages` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `ticketId` int unsigned NOT NULL,
+  `senderType` enum('tenant','admin','system') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `senderId` int unsigned NOT NULL,
+  `message` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `attachments` json DEFAULT NULL,
+  `createdAt` datetime NOT NULL DEFAULT (now()),
+  PRIMARY KEY (`id`),
+  KEY `idx_ticket_messages_ticket_id` (`ticketId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Data exporting was unselected.
+
+-- Dumping structure for table fiber_route_map.tenant_ticket_logs
+CREATE TABLE IF NOT EXISTS `tenant_ticket_logs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `ticketId` int unsigned NOT NULL,
+  `action` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `oldValue` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `newValue` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `performedBy` int unsigned DEFAULT NULL,
+  `performedAt` datetime NOT NULL DEFAULT (now()),
+  PRIMARY KEY (`id`),
+  KEY `idx_ticket_logs_ticket_id` (`ticketId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Data exporting was unselected.
+
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
 /*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
