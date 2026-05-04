@@ -83,6 +83,7 @@ export default function ManagePermissionsPage() {
     user: 'User', role: 'Role', country: 'Country', permission: 'Permission',
     tenant: 'Tenant', tenant_business: 'Tenant Business', lco: 'LCO',
     tenant_user: 'Tenant User', upstream_provider: 'Upstream Provider',
+    cable_type: 'Cable Type',
     audit_log: 'Audit Log', apidoc: 'API Docs',
   };
 

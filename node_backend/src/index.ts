@@ -32,6 +32,7 @@ import tenantBusinessRoutes from './routes/tenantBusinessRoutes.js';
 import lcoRoutes from './routes/lcoRoutes.js';
 import tenantUserRoutes from './routes/tenantUserRoutes.js';
 import tenantUpstreamProviderRoutes from './routes/tenantUpstreamProviderRoutes.js';
+import tenantCableTypeRoutes from './routes/tenantCableTypeRoutes.js';
 import auditLogRoutes, { auditLogService } from './routes/auditLogRoutes.js';
 import { auditLog } from './middleware/auditLog.js';
 import logger from './utils/logger.js';
@@ -86,6 +87,7 @@ app.use('/api/tenant-business', auth(authService), tenantBusinessRoutes);
 app.use('/api/tenant/lcos', lcoRoutes);
 app.use('/api/tenant/users', tenantUserRoutes);
 app.use('/api/tenant/upstream-providers', tenantUpstreamProviderRoutes);
+app.use('/api/tenant/cable-types', tenantCableTypeRoutes);
 app.use('/api/audit-logs', auth(authService), auditLogRoutes);
 app.use('/api/health', healthRoutes);
 app.get('/api/docs/spec', (_req: express.Request, res: express.Response) => res.json(swaggerSpec));
@@ -327,6 +329,35 @@ const ensureTenantUpstreamProvidersTable = async () => {
   }
 };
 
+// Ensure tenant_cable_types table exists (auto-migration for v1.45.0)
+const ensureTenantCableTypesTable = async () => {
+  try {
+    const exists = await db.schema.hasTable('tenant_cable_types');
+    if (!exists) {
+      await db.schema.createTable('tenant_cable_types', (t: any) => {
+        t.increments('id').primary();
+        t.string('uuid', 36).notNullable().unique();
+        t.integer('tenantBusinessId').unsigned().notNullable();
+        t.string('name', 255).notNullable();
+        t.string('code', 50).notNullable();
+        t.integer('fiberCoreCount').unsigned().notNullable();
+        t.decimal('cableDiameter', 5, 2).notNullable();
+        t.text('description').nullable();
+        t.enum('status', ['active', 'inactive', 'blocked', 'deleted']).notNullable().defaultTo('active');
+        t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('deletedAt').nullable();
+        t.index(['tenantBusinessId'], 'idx_cable_types_business_id');
+        t.index(['status'], 'idx_cable_types_status');
+        t.unique(['tenantBusinessId', 'code'], 'uq_cable_types_business_code');
+      });
+      logger.info('Auto-migration: tenant_cable_types table created');
+    }
+  } catch (err: any) {
+    logger.warn('Auto-migration for tenant_cable_types skipped or failed', { error: err.message });
+  }
+};
+
 // Start server
 const startServer = async () => {
   try {
@@ -348,6 +379,9 @@ const startServer = async () => {
 
     // Ensure tenant_upstream_providers table exists (v1.41.0)
     await ensureTenantUpstreamProvidersTable();
+
+    // Ensure tenant_cable_types table exists (v1.45.0)
+    await ensureTenantCableTypesTable();
   } catch (error: any) {
     logger.error('Initial database connection failed. Server is starting but database-dependent routes will return connectivity errors.', {
       error: error.message,

@@ -348,6 +348,30 @@ CREATE TABLE IF NOT EXISTS `tenant_upstream_providers` (
 
 -- Data exporting was unselected.
 
+-- Dumping structure for table fiber_route_map.tenant_cable_types
+CREATE TABLE IF NOT EXISTS `tenant_cable_types` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `uuid` varchar(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tenantBusinessId` int unsigned NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `code` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `fiberCoreCount` int unsigned NOT NULL,
+  `cableDiameter` decimal(5,2) NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status` enum('active','inactive','blocked','deleted') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
+  `createdAt` datetime NOT NULL DEFAULT (now()),
+  `updatedAt` datetime NOT NULL DEFAULT (now()),
+  `deletedAt` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `tenant_cable_types_uuid_unique` (`uuid`),
+  UNIQUE KEY `uq_cable_types_business_code` (`tenantBusinessId`,`code`),
+  KEY `idx_cable_types_business_id` (`tenantBusinessId`),
+  KEY `idx_cable_types_status` (`status`),
+  CONSTRAINT `FK_cable_types_business` FOREIGN KEY (`tenantBusinessId`) REFERENCES `tenant_business` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Data exporting was unselected.
+
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
 /*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;

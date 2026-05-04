@@ -1002,4 +1002,52 @@ export async function deleteUpstreamProvider(uuid: string): Promise<ApiResponse>
   return apiFetch(`/api/tenant/upstream-providers/${uuid}`, { method: 'DELETE' });
 }
 
+export interface CableTypeData {
+  id: string;
+  type: string;
+  attributes: {
+    name: string;
+    code: string;
+    fiberCoreCount: number;
+    cableDiameter: number;
+    description: string | null;
+    status: 'active' | 'inactive' | 'blocked' | 'deleted';
+  };
+  meta: { createdAt: string; updatedAt: string };
+}
+
+export async function getCableTypes(params?: { page?: number; limit?: number }): Promise<ApiResponse<CableTypeData[]>> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set('page', String(params.page));
+  if (params?.limit) qs.set('limit', String(params.limit));
+  const query = qs.toString() ? `?${qs.toString()}` : '';
+  return apiFetch(`/api/tenant/cable-types${query}`);
+}
+
+export async function createCableType(data: any): Promise<ApiResponse<CableTypeData>> {
+  return apiFetch('/api/tenant/cable-types', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateCableType(uuid: string, data: any): Promise<ApiResponse<CableTypeData>> {
+  return apiFetch(`/api/tenant/cable-types/${uuid}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function blockCableType(uuid: string): Promise<ApiResponse<CableTypeData>> {
+  return apiFetch(`/api/tenant/cable-types/${uuid}/block`, { method: 'POST' });
+}
+
+export async function unblockCableType(uuid: string): Promise<ApiResponse<CableTypeData>> {
+  return apiFetch(`/api/tenant/cable-types/${uuid}/unblock`, { method: 'PUT' });
+}
+
+export async function deleteCableType(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/tenant/cable-types/${uuid}`, { method: 'DELETE' });
+}
+
 export { apiFetch };
