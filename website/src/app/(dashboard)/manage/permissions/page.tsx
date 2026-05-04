@@ -79,6 +79,13 @@ export default function ManagePermissionsPage() {
     setCurrentPage(1);
   }, [searchTerm]);
 
+  const RESOURCE_LABELS: Record<string, string> = {
+    user: 'User', role: 'Role', country: 'Country', permission: 'Permission',
+    tenant: 'Tenant', tenant_business: 'Tenant Business', lco: 'LCO',
+    tenant_user: 'Tenant User', upstream_provider: 'Upstream Provider',
+    audit_log: 'Audit Log', apidoc: 'API Docs',
+  };
+
   const resourceCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     permissions.forEach(perm => {
@@ -131,7 +138,15 @@ export default function ManagePermissionsPage() {
         try {
           const result = await syncPermissions();
           if (result.success) {
-            toast.success(result.message || 'Permissions synced');
+            const added = result.data?.added ?? [];
+            if (added.length > 0) {
+              toast.success(
+                `${result.message} — Added: ${added.join(', ')}`,
+                { duration: 8000 }
+              );
+            } else {
+              toast.success(result.message || 'All permissions are already up to date');
+            }
             fetchPermissions();
           } else {
             toast.error(result.message || 'Sync failed');
@@ -203,7 +218,7 @@ export default function ManagePermissionsPage() {
                   alignItems: 'center',
                   gap: '0.4rem'
                 }}>
-                  <span style={{ textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.02em' }}>{resource}</span>
+                  <span style={{ fontWeight: 700 }}>{RESOURCE_LABELS[resource] ?? resource.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</span>
                   <span style={{ color: 'var(--color-accent-blue)', fontWeight: 800 }}>{count}</span>
                 </div>
               ))}
