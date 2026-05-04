@@ -21,6 +21,7 @@ export default function TenantSidebar({
   const pathname = usePathname();
   const { logout, isImpersonating, hasPermission } = useTenantAuth();
   const [manageOpen, setManageOpen] = useState(
+    pathname.startsWith('/tenant/users') ||
     pathname.startsWith('/tenant/lcos') ||
     pathname.startsWith('/tenant/upstream-providers') ||
     pathname.startsWith('/tenant/cable-types')
@@ -38,6 +39,9 @@ export default function TenantSidebar({
       ),
       show: true,
     },
+  ].filter((l) => l.show);
+
+  const manageLinks = [
     {
       name: 'Users',
       href: '/tenant/users',
@@ -49,9 +53,6 @@ export default function TenantSidebar({
       ),
       show: hasPermission('tenant_user.view'),
     },
-  ].filter((l) => l.show);
-
-  const manageLinks = [
     {
       name: 'LCOs',
       href: '/tenant/lcos',

@@ -114,8 +114,8 @@ export default function CableTypeModal({ isOpen, onClose, onSuccess, cableType }
 
             <div className={styles.formGrid}>
               <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
-                <label className={styles.label}>Cable Type Name *</label>
-                <input type="text" className={styles.input} value={form.name} onChange={set('name')} required placeholder="e.g. G.652D Single Mode" />
+                <label className={styles.label}>Cable Name *</label>
+                <input type="text" className={styles.input} value={form.name} onChange={set('name')} required placeholder="e.g. 12F Fiber" />
               </div>
 
               <div className={styles.inputGroup}>

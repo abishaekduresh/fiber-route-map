@@ -2,6 +2,26 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.46.0] - 2026-05-05
+
+### Added
+- **Cable Types Backend Module**: Complete REST API for `tenant_cable_types`.
+  - Auto-migration: `tenant_cable_types` table with `uuid`, `tenantBusinessId` (FK), `name`, `code` (user-supplied, unique per business), `fiberCoreCount` (int), `cableDiameter` (decimal 5,2), `description` (text), `status` enum (active/inactive/blocked/deleted), timestamps, and soft-delete.
+  - Code uniqueness enforced per `tenantBusinessId` — returns 409 on duplicate.
+  - Endpoints: `GET /`, `GET /:uuid`, `POST /`, `PUT /:uuid`, `POST /:uuid/block`, `PUT /:uuid/unblock`, `DELETE /:uuid` — all under `/api/tenant/cable-types`, protected by `tenantAuth` and `rbac`.
+  - Full OpenAPI/Swagger documentation under the `Tenant Cable Types` tag; Swagger version bumped to 1.45.0.
+  - `cable_type` resource (`view`, `create`, `update`, `delete`) added to `ROUTE_PERMISSIONS` for permission sync.
+  - DDL added to `db.sql`.
+- **Cable Types Frontend Module**: Full UI at `/tenant/cable-types`.
+  - `CableTypeCard`: fiber core count + diameter subtitle, status badge, expandable description, view-details modal, and icon-only action buttons (View / Expand / Edit / Block / Unblock / Delete).
+  - `CableTypeModal`: Create/Edit form — name, user-supplied code, fiber core count (int), cable diameter (decimal), status (edit only), description (textarea).
+  - Search (name/code/description), status filter (active/inactive/blocked), and pagination.
+  - All actions (create/edit/block/unblock/delete) are permission-gated via `cable_type.*` RBAC.
+- **Permissions Page**: `cable_type: 'Cable Type'` added to `RESOURCE_LABELS` chip map.
+
+### Changed
+- **Tenant Sidebar Restructured**: Users nav item moved from top-level into the collapsible Manage dropdown alongside LCOs, Upstream Providers, and Cable Types. Manage dropdown now auto-expands when navigating to `/tenant/users` as well.
+
 ## [1.44.0] - 2026-05-04
 
 ### Added

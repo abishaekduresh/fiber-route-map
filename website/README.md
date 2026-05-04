@@ -4,12 +4,13 @@ A futuristic, high-performance web dashboard for managing fiber optic networks.
 Built with **Next.js 16 (Turbopack)** and **TypeScript**, featuring a stunning **Glassmorphism Design System**.
 
 ## Version
-**Current Version:** 1.44.0 (Upstream Providers Module & Manage Sidebar Dropdown)
+**Current Version:** 1.46.0 (Cable Types Module & Unified Manage Sidebar)
 
 ## Features
 - **LCO Management** (`/tenant/lcos`): Full CRUD for Local Cable Operators — sequential `LCO000X` code generation, country integration, search, and pagination.
 - **Upstream Provider Management** (`/tenant/upstream-providers`): Full CRUD for upstream providers — sequential `TUP000X` code generation, service categories (Cable TV / Bandwidth / IPTV / Hybrid), block/unblock workflow, category + status filters, search, pagination, and permission-gated actions.
-- **Collapsible Manage Sidebar Dropdown**: Tenant sidebar now groups LCOs and Upstream Providers under a collapsible "Manage" section, auto-expanded when on a managed route, with each item gated by its respective `view` permission.
+- **Cable Types Management** (`/tenant/cable-types`): Full CRUD for fiber cable types — user-supplied code (unique per business), fiber core count, cable diameter (mm), description, block/unblock workflow, status filter, search, and pagination.
+- **Unified Manage Sidebar Dropdown**: Tenant sidebar consolidates Users, LCOs, Upstream Providers, and Cable Types under one collapsible "Manage" section, auto-expanded when navigating to any managed route.
 - **Tenant User Management** (`/tenant/users`): Tenant portal sub-user CRUD — card grid matching the admin Tenants UI, search, status filter, pagination, create/edit modal, view details modal, block/unblock/delete with confirm dialogs.
 - **Sonner Toast Notifications**: Replaced legacy alerts with premium `sonner` toast notifications for real-time operation status.
 - **Tenant Management UI**: Comprehensive CRUD interface for managing Tenants and Business entities with dedicated visibility controls for roles and lifecycle actions (Block/Unblock/Suspend/Reactivate).
