@@ -23,5 +23,6 @@ router.delete('/:uuid', rbac('tenant_business.delete'), tenantBusinessController
 router.post('/:uuid/block', rbac('tenant_business.update'), tenantBusinessController.block);
 router.put('/:uuid/unblock', rbac('tenant_business.update'), tenantBusinessController.unblock);
 router.post('/:uuid/suspend', rbac('tenant_business.update'), tenantBusinessController.suspend);
+router.put('/:uuid/reactivate', rbac('tenant_business.update'), tenantBusinessController.reactivate);
 
 export default router;

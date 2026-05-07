@@ -206,4 +206,20 @@ export class TenantBusinessService {
     await this.repo.updateStatus(uuid, 'suspended');
     return this.getBusinessByUuid(uuid);
   }
+
+  async reactivateBusiness(uuid: string): Promise<TenantBusiness> {
+    const business = await this.getBusinessByUuid(uuid);
+    if (business.status === 'deleted') {
+      const error = new Error('Cannot reactivate a deleted tenant business');
+      (error as any).status = 400;
+      throw error;
+    }
+    if (business.status === 'active') {
+      const error = new Error('Tenant business is already active');
+      (error as any).status = 400;
+      throw error;
+    }
+    await this.repo.updateStatus(uuid, 'active');
+    return this.getBusinessByUuid(uuid);
+  }
 }

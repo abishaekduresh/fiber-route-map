@@ -133,4 +133,11 @@ export class TenantBusinessController {
       res.json({ success: true, statusCode: 200, message: 'Tenant business suspended successfully', data: this.transformBusiness(business), meta: this.getMeta(req, {}, null) });
     } catch (error) { next(error); }
   };
+
+  reactivate = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const business = await this.service.reactivateBusiness(req.params.uuid as string);
+      res.json({ success: true, statusCode: 200, message: 'Tenant business reactivated successfully', data: this.transformBusiness(business), meta: this.getMeta(req, {}, null) });
+    } catch (error) { next(error); }
+  };
 }

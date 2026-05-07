@@ -748,6 +748,15 @@ export async function suspendTenantBusiness(uuid: string): Promise<ApiResponse> 
 }
 
 /**
+ * Reactivate a suspended or blocked tenant business.
+ */
+export async function reactivateTenantBusiness(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/tenant-business/${uuid}/reactivate`, {
+    method: 'PUT',
+  });
+}
+
+/**
  * Audit Log query parameters shape.
  */
 export interface AuditLogFilter {

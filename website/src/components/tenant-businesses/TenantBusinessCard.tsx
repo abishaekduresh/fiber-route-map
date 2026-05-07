@@ -12,9 +12,10 @@ interface TenantBusinessCardProps {
   onBlock: (business: any) => void;
   onUnblock: (business: any) => void;
   onSuspend: (business: any) => void;
+  onReactivate: (business: any) => void;
 }
 
-export default function TenantBusinessCard({ business, onEdit, onDelete, onBlock, onUnblock, onSuspend }: TenantBusinessCardProps) {
+export default function TenantBusinessCard({ business, onEdit, onDelete, onBlock, onUnblock, onSuspend, onReactivate }: TenantBusinessCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
 
@@ -96,6 +97,12 @@ export default function TenantBusinessCard({ business, onEdit, onDelete, onBlock
             <button className={`${styles.actionBtn} ${styles.unblockBtn}`} onClick={() => onUnblock(business)} title="Unblock Business">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 019.9-1" />
+              </svg>
+            </button>
+          ) : status === 'suspended' ? (
+            <button className={`${styles.actionBtn} ${styles.unblockBtn}`} onClick={() => onReactivate(business)} title="Reactivate Business">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
               </svg>
             </button>
           ) : null}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { getTenantBusinesses, deleteTenantBusiness, blockTenantBusiness, unblockTenantBusiness, suspendTenantBusiness } from '@/lib/api';
+import { getTenantBusinesses, deleteTenantBusiness, blockTenantBusiness, unblockTenantBusiness, suspendTenantBusiness, reactivateTenantBusiness } from '@/lib/api';
 import TenantBusinessCard from '@/components/tenant-businesses/TenantBusinessCard';
 import TenantBusinessModal from '@/components/tenant-businesses/TenantBusinessModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
@@ -125,6 +125,14 @@ export default function ManageTenantBusinessesPage() {
     } catch { toast.error('Network error'); }
   };
 
+  const handleReactivate = async (business: any) => {
+    try {
+      const result = await reactivateTenantBusiness(business.id);
+      if (result.success) { toast.success(`Business "${business.attributes?.name}" reactivated`); fetchBusinesses(); }
+      else toast.error(result.message || 'Reactivate failed');
+    } catch { toast.error('Network error'); }
+  };
+
   const handleExportCSV = () => {
     if (filteredBusinesses.length === 0) { toast.error('No data to export'); return; }
     const headers = ['ID', 'Name', 'Email', 'Phone', 'Type', 'Status', 'Country', 'Created At'];
@@ -229,6 +237,7 @@ export default function ManageTenantBusinessesPage() {
                   onBlock={handleBlock}
                   onUnblock={handleUnblock}
                   onSuspend={handleSuspend}
+                  onReactivate={handleReactivate}
                 />
               ))
             ) : (
