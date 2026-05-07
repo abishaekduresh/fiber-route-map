@@ -27,7 +27,6 @@ export interface TenantDeviceType {
 export interface CreateDeviceTypeDTO {
   tenantDeviceCategoryId: number;
   name: string;
-  code: string;
   isModelNumberRequired?: boolean;
   isSerialNumberRequired?: boolean;
   isMacAddressRequired?: boolean;
@@ -42,7 +41,6 @@ export interface CreateDeviceTypeDTO {
 export interface UpdateDeviceTypeDTO {
   tenantDeviceCategoryId?: number;
   name?: string;
-  code?: string;
   isModelNumberRequired?: boolean;
   isSerialNumberRequired?: boolean;
   isMacAddressRequired?: boolean;

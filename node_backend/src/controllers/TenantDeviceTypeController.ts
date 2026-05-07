@@ -83,9 +83,7 @@ export class TenantDeviceTypeController {
   create = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { tenantBusinessId } = await this.getAuthContext(req);
-      const body = { ...req.body };
-      if (body.code) body.code = String(body.code).toUpperCase();
-      const dt = await this.service.create(tenantBusinessId, body);
+      const dt = await this.service.create(tenantBusinessId, req.body);
       return res.status(201).json({
         success: true, statusCode: 201,
         message: 'Device type created successfully',
@@ -98,9 +96,7 @@ export class TenantDeviceTypeController {
   update = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { tenantBusinessId } = await this.getAuthContext(req);
-      const body = { ...req.body };
-      if (body.code) body.code = String(body.code).toUpperCase();
-      const dt = await this.service.update(req.params.uuid, tenantBusinessId, body);
+      const dt = await this.service.update(req.params.uuid, tenantBusinessId, req.body);
       return res.json({
         success: true, statusCode: 200,
         message: 'Device type updated successfully',

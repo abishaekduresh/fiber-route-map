@@ -29,7 +29,6 @@ type BoolKey = typeof BOOL_FIELDS[number]['key'];
 interface FormState {
   tenantDeviceCategoryId: string;
   name: string;
-  code: string;
   isModelNumberRequired: boolean;
   isSerialNumberRequired: boolean;
   isMacAddressRequired: boolean;
@@ -45,7 +44,6 @@ interface FormState {
 const EMPTY: FormState = {
   tenantDeviceCategoryId: '',
   name: '',
-  code: '',
   isModelNumberRequired: false,
   isSerialNumberRequired: false,
   isMacAddressRequired: false,
@@ -76,7 +74,6 @@ export default function DeviceTypeModal({ isOpen, onClose, onSuccess, deviceType
       setForm({
         tenantDeviceCategoryId: String(a.tenantDeviceCategoryId ?? ''),
         name: a.name ?? '',
-        code: a.code ?? '',
         isModelNumberRequired: Boolean(a.isModelNumberRequired),
         isSerialNumberRequired: Boolean(a.isSerialNumberRequired),
         isMacAddressRequired: Boolean(a.isMacAddressRequired),
@@ -108,7 +105,6 @@ export default function DeviceTypeModal({ isOpen, onClose, onSuccess, deviceType
     e.preventDefault();
     if (!form.tenantDeviceCategoryId) { setError('Category is required'); return; }
     if (!form.name.trim()) { setError('Name is required'); return; }
-    if (!form.code.trim()) { setError('Code is required'); return; }
 
     setError(null);
     setIsLoading(true);
@@ -117,7 +113,6 @@ export default function DeviceTypeModal({ isOpen, onClose, onSuccess, deviceType
       const payload: any = {
         tenantDeviceCategoryId: Number(form.tenantDeviceCategoryId),
         name: form.name,
-        code: form.code,
         isModelNumberRequired: form.isModelNumberRequired,
         isSerialNumberRequired: form.isSerialNumberRequired,
         isMacAddressRequired: form.isMacAddressRequired,
@@ -200,23 +195,6 @@ export default function DeviceTypeModal({ isOpen, onClose, onSuccess, deviceType
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Name *</label>
                 <input type="text" className={styles.input} value={form.name} onChange={set('name')} required placeholder="e.g. OLT" />
-              </div>
-
-              {/* Code */}
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>Code *</label>
-                <input
-                  type="text"
-                  className={styles.input}
-                  value={form.code}
-                  onChange={set('code')}
-                  required
-                  placeholder="e.g. TDTOLT"
-                  style={{ textTransform: 'uppercase' }}
-                />
-                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: '0.25rem', display: 'block' }}>
-                  Unique per business · auto-uppercased
-                </span>
               </div>
 
               {/* Status (edit only) */}

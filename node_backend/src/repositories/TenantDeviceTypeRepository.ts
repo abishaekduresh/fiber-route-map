@@ -79,16 +79,16 @@ export class TenantDeviceTypeRepository {
       .first() ?? null;
   }
 
-  async findByCode(code: string, tenantBusinessId: number, excludeUuid?: string): Promise<{ uuid: string } | null> {
-    let q = db(this.table)
-      .where({ code, tenantBusinessId })
-      .whereNot('status', 'deleted')
-      .select(`${this.table}.uuid`);
-    if (excludeUuid) q = q.whereNot(`${this.table}.uuid`, excludeUuid);
-    return q.first() ?? null;
+  async getLastCode(tenantBusinessId: number): Promise<string | null> {
+    const last = await db(this.table)
+      .where('tenantBusinessId', tenantBusinessId)
+      .orderBy('id', 'desc')
+      .select('code')
+      .first();
+    return last?.code ?? null;
   }
 
-  async create(data: CreateDeviceTypeDTO & { tenantBusinessId: number }): Promise<TenantDeviceType> {
+  async create(data: CreateDeviceTypeDTO & { tenantBusinessId: number; code: string }): Promise<TenantDeviceType> {
     const uuid = generateUuidV7();
     const now = nowDb();
     await db(this.table).insert({
