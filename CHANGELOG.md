@@ -2,6 +2,19 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.49.0] - 2026-05-08
+
+### Added
+- **Tenant Device Categories Module**: Full-stack management of device categories scoped per tenant business.
+  - **Backend**: `tenant_device_categories` table with `uuid` (v7), `tenantBusinessId` (FK), `name`, `code` (unique per business, user-supplied `TDCxx` format), `description`, `status` (active/inactive/deleted), timestamps, and soft-delete. Auto-migration creates the table on first run.
+  - **REST API** (`/api/tenant/device-categories`): `GET /`, `GET /:uuid`, `POST /`, `PUT /:uuid`, `POST /:uuid/deactivate`, `PUT /:uuid/activate`, `DELETE /:uuid` — protected by `tenantAuth` and `rbac`.
+  - **RBAC**: `device_category` resource (`view`, `create`, `update`, `delete`) added to `ROUTE_PERMISSIONS` and permission sync engine.
+  - **Frontend** (`/tenant/device-categories`): Card grid with name/code/description/status display, search (name/code/description), status filter, pagination, create/edit modal, activate/deactivate/delete with confirm dialogs. All actions permission-gated via `device_category.*` RBAC.
+  - **Tenant Sidebar**: "Device Categories" nav item added to the Manage dropdown, visible when user has `device_category.view`. Auto-expands when navigating to `/tenant/device-categories`.
+  - **Permissions Page**: `device_category: 'Device Category'` added to `RESOURCE_LABELS` chip map.
+  - **OpenAPI Docs**: Full Swagger documentation for all device category endpoints. Swagger version bumped to `1.49.0`.
+  - **DDL**: `CREATE TABLE` for `tenant_device_categories` added to `db.sql`.
+
 ## [1.48.0] - 2026-05-07
 
 ### Added

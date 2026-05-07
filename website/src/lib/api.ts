@@ -1084,6 +1084,50 @@ export async function deleteCableType(uuid: string): Promise<ApiResponse> {
   return apiFetch(`/api/tenant/cable-types/${uuid}`, { method: 'DELETE' });
 }
 
+// ─── Device Categories ────────────────────────────────────────────────────────
+
+export interface DeviceCategoryData {
+  id: string;
+  type: string;
+  attributes: {
+    name: string;
+    code: string;
+    description: string | null;
+    status: 'active' | 'inactive' | 'deleted';
+  };
+  meta: { createdAt: string; updatedAt: string };
+}
+
+export async function getDeviceCategories(params?: { page?: number; limit?: number; filter?: { status?: string; search?: string } }): Promise<ApiResponse<DeviceCategoryData[]>> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set('page', String(params.page));
+  if (params?.limit) qs.set('limit', String(params.limit));
+  if (params?.filter?.status) qs.set('filter[status]', params.filter.status);
+  if (params?.filter?.search) qs.set('filter[search]', params.filter.search);
+  const query = qs.toString() ? `?${qs.toString()}` : '';
+  return apiFetch(`/api/tenant/device-categories${query}`);
+}
+
+export async function createDeviceCategory(data: any): Promise<ApiResponse<DeviceCategoryData>> {
+  return apiFetch('/api/tenant/device-categories', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function updateDeviceCategory(uuid: string, data: any): Promise<ApiResponse<DeviceCategoryData>> {
+  return apiFetch(`/api/tenant/device-categories/${uuid}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export async function deactivateDeviceCategory(uuid: string): Promise<ApiResponse<DeviceCategoryData>> {
+  return apiFetch(`/api/tenant/device-categories/${uuid}/deactivate`, { method: 'POST' });
+}
+
+export async function activateDeviceCategory(uuid: string): Promise<ApiResponse<DeviceCategoryData>> {
+  return apiFetch(`/api/tenant/device-categories/${uuid}/activate`, { method: 'PUT' });
+}
+
+export async function deleteDeviceCategory(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/tenant/device-categories/${uuid}`, { method: 'DELETE' });
+}
+
 // ─── Support Tickets ──────────────────────────────────────────────────────────
 
 export interface SupportTicketData {

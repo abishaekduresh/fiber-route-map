@@ -4,7 +4,7 @@ A futuristic, high-performance web dashboard for managing fiber optic networks.
 Built with **Next.js 16 (Turbopack)** and **TypeScript**, featuring a stunning **Glassmorphism Design System**.
 
 ## Version
-**Current Version:** 1.48.0 (Support Ticket System, History Log, Auto-Logout, Business Reactivation)
+**Current Version:** 1.49.0 (Device Categories Module)
 
 ## Features
 - **Support Ticket System** (`/tenant/support-tickets`, `/manage/support-tickets`): Full multi-tenant support ticket platform — tenants raise and track tickets; admins manage, assign, transition status, and view the full history log with performer names and timestamps.

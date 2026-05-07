@@ -2,6 +2,18 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
+## [1.49.0] - 2026-05-08
+### Added
+- **Device Categories Module** (`/tenant/device-categories`): Full CRUD UI for tenant device categories.
+  - Card grid with name, code badge, description, status badge, created date.
+  - Search (name/code/description), status filter (active/inactive), client-side pagination.
+  - Create/Edit modal: name, user-supplied code (hint: `TDCxx`), description, status (edit mode only).
+  - Activate/Deactivate/Delete actions with confirm dialogs, all permission-gated via `device_category.*`.
+  - View Details modal shows all fields and timestamps.
+- **Tenant Sidebar**: "Device Categories" added to the Manage dropdown, gated by `device_category.view`, auto-expands for `/tenant/device-categories`.
+- **Permissions Page**: `device_category: 'Device Category'` added to `RESOURCE_LABELS`.
+- **`DeviceCategoryData` interface** and API functions (`getDeviceCategories`, `createDeviceCategory`, `updateDeviceCategory`, `deactivateDeviceCategory`, `activateDeviceCategory`, `deleteDeviceCategory`) added to `api.ts`.
+
 ## [1.48.0] - 2026-05-07
 ### Added
 - **Performer Name in History Log**: Admin support ticket History Log tab now displays the name of the user who made each change (e.g. "by John Doe") instead of a raw numeric ID. Falls back to `#<id>` if name is unavailable, or omits the "by" line entirely for system actions.

@@ -5,6 +5,17 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.49.0] - 2026-05-08
+### Added
+- **Tenant Device Categories API** (`/api/tenant/device-categories`): Full CRUD for device categories scoped per tenant business.
+  - Table: `tenant_device_categories` — `id` (auto-increment), `uuid` (v7, unique), `tenantBusinessId` (FK → `tenant_business.id`, CASCADE), `name VARCHAR(255)`, `code VARCHAR(50)` (unique per business), `description TEXT`, `status ENUM(active,inactive,deleted)`, `createdAt`, `updatedAt`, `deletedAt`.
+  - Auto-migration: table created on startup if absent.
+  - Endpoints: `GET /`, `GET /:uuid`, `POST /`, `PUT /:uuid`, `POST /:uuid/deactivate`, `PUT /:uuid/activate`, `DELETE /:uuid`.
+  - Code uniqueness enforced per `tenantBusinessId` — returns 409 on duplicate (excludes self on update).
+  - `device_category` resource (`view`, `create`, `update`, `delete`) added to `ROUTE_PERMISSIONS`.
+  - Full OpenAPI/Swagger documentation under the `Tenant Device Categories` tag; version bumped to `1.49.0`.
+  - DDL added to `db.sql`.
+
 ## [1.48.0] - 2026-05-07
 ### Added
 - **`performerName` column in `tenant_ticket_logs`**: Activity logs now persist the human-readable name of whoever triggered each action at write time, avoiding ambiguous joins between `users` and `tenants` tables (both have independent ID sequences). Auto-migration adds the column to existing tables via `hasColumn` guard.

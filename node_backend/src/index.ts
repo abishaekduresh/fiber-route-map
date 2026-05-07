@@ -33,6 +33,7 @@ import lcoRoutes from './routes/lcoRoutes.js';
 import tenantUserRoutes from './routes/tenantUserRoutes.js';
 import tenantUpstreamProviderRoutes from './routes/tenantUpstreamProviderRoutes.js';
 import tenantCableTypeRoutes from './routes/tenantCableTypeRoutes.js';
+import tenantDeviceCategoryRoutes from './routes/tenantDeviceCategoryRoutes.js';
 import tenantSupportTicketRoutes from './routes/tenantSupportTicketRoutes.js';
 import adminSupportTicketRoutes from './routes/adminSupportTicketRoutes.js';
 import auditLogRoutes, { auditLogService } from './routes/auditLogRoutes.js';
@@ -90,6 +91,7 @@ app.use('/api/tenant/lcos', lcoRoutes);
 app.use('/api/tenant/users', tenantUserRoutes);
 app.use('/api/tenant/upstream-providers', tenantUpstreamProviderRoutes);
 app.use('/api/tenant/cable-types', tenantCableTypeRoutes);
+app.use('/api/tenant/device-categories', tenantDeviceCategoryRoutes);
 app.use('/api/tenant/support-tickets', tenantSupportTicketRoutes);
 app.use('/api/support-tickets', auth(authService), adminSupportTicketRoutes);
 app.use('/api/audit-logs', auth(authService), auditLogRoutes);
@@ -372,6 +374,33 @@ const ensureTenantCableTypesTable = async () => {
   }
 };
 
+// Ensure tenant_device_categories table exists (auto-migration for v1.49.0)
+const ensureTenantDeviceCategoriesTable = async () => {
+  try {
+    const exists = await db.schema.hasTable('tenant_device_categories');
+    if (!exists) {
+      await db.schema.createTable('tenant_device_categories', (t: any) => {
+        t.increments('id').primary();
+        t.string('uuid', 36).notNullable().unique();
+        t.integer('tenantBusinessId').unsigned().notNullable();
+        t.string('name', 255).notNullable();
+        t.string('code', 50).notNullable();
+        t.text('description').nullable();
+        t.enum('status', ['active', 'inactive', 'deleted']).notNullable().defaultTo('active');
+        t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('deletedAt').nullable();
+        t.index(['tenantBusinessId'], 'idx_device_categories_business_id');
+        t.index(['status'], 'idx_device_categories_status');
+        t.unique(['tenantBusinessId', 'code'], 'uq_device_categories_business_code');
+      });
+      logger.info('Auto-migration: tenant_device_categories table created');
+    }
+  } catch (err: any) {
+    logger.warn('Auto-migration for tenant_device_categories skipped or failed', { error: err.message });
+  }
+};
+
 // Ensure tenant_support_tickets tables exist (auto-migration for v1.47.0)
 const ensureSupportTicketTables = async () => {
   try {
@@ -481,6 +510,9 @@ const startServer = async () => {
 
     // Ensure tenant_cable_types table exists (v1.45.0)
     await ensureTenantCableTypesTable();
+
+    // Ensure tenant_device_categories table exists (v1.49.0)
+    await ensureTenantDeviceCategoriesTable();
 
     // Ensure support ticket tables exist (v1.47.0)
     await ensureSupportTicketTables();
