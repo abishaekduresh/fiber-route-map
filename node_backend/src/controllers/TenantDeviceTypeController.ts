@@ -1,24 +1,34 @@
 import { Request, Response, NextFunction } from 'express';
 import db from '../config/database.js';
-import { TenantDeviceCategoryService } from '../services/TenantDeviceCategoryService.js';
+import { TenantDeviceTypeService } from '../services/TenantDeviceTypeService.js';
 
-const VERSION = '1.49.0';
+const VERSION = '1.50.0';
 
-export class TenantDeviceCategoryController {
-  constructor(private service: TenantDeviceCategoryService) {}
+export class TenantDeviceTypeController {
+  constructor(private service: TenantDeviceTypeService) {}
 
-  private transform = (dc: any) => ({
-    id: dc.uuid,
-    type: 'device_category',
+  private transform = (dt: any) => ({
+    id: dt.uuid,
+    type: 'device_type',
     attributes: {
-      numericId: dc.id,
-      name: dc.name,
-      code: dc.code,
-      description: dc.description ?? null,
-      status: dc.status,
+      name: dt.name,
+      code: dt.code,
+      tenantDeviceCategoryId: dt.tenantDeviceCategoryId,
+      categoryName: dt.categoryName ?? null,
+      categoryUuid: dt.categoryUuid ?? null,
+      isModelNumberRequired: Boolean(dt.isModelNumberRequired),
+      isSerialNumberRequired: Boolean(dt.isSerialNumberRequired),
+      isMacAddressRequired: Boolean(dt.isMacAddressRequired),
+      isIPAddressRequired: Boolean(dt.isIPAddressRequired),
+      isPortRequired: Boolean(dt.isPortRequired),
+      isGpsLocationRequired: Boolean(dt.isGpsLocationRequired),
+      isMonitoringEnabled: Boolean(dt.isMonitoringEnabled),
+      icon: dt.icon ?? null,
+      description: dt.description ?? null,
+      status: dt.status,
     },
-    meta: { createdAt: dc.createdAt, updatedAt: dc.updatedAt },
-    links: { self: `/api/tenant/device-categories/${dc.uuid}` },
+    meta: { createdAt: dt.createdAt, updatedAt: dt.updatedAt },
+    links: { self: `/api/tenant/device-types/${dt.uuid}` },
   });
 
   private getMeta = (req: Request, extra: any = {}) => ({
@@ -48,15 +58,15 @@ export class TenantDeviceCategoryController {
       const limit = Number(req.query.limit) === -1 ? -1 : (Number(req.query.limit) || 10);
       const filter = (req.query.filter as any) || {};
 
-      const { deviceCategories, total } = await this.service.getAll(tenantBusinessId, { page, limit, filter });
+      const { deviceTypes, total } = await this.service.getAll(tenantBusinessId, { page, limit, filter });
       const totalPages = limit === -1 ? 1 : Math.ceil(total / limit);
 
       return res.json({
         success: true, statusCode: 200,
-        message: deviceCategories.length ? 'Device categories retrieved successfully' : 'No device categories found',
-        data: deviceCategories.map(this.transform),
+        message: deviceTypes.length ? 'Device types retrieved successfully' : 'No device types found',
+        data: deviceTypes.map(this.transform),
         meta: this.getMeta(req, {
-          pagination: { total, count: deviceCategories.length, perPage: limit === -1 ? total : limit, currentPage: page, totalPages },
+          pagination: { total, count: deviceTypes.length, perPage: limit === -1 ? total : limit, currentPage: page, totalPages },
         }),
       });
     } catch (error) { next(error); }
@@ -65,19 +75,21 @@ export class TenantDeviceCategoryController {
   show = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { tenantBusinessId } = await this.getAuthContext(req);
-      const dc = await this.service.getOne(req.params.uuid, tenantBusinessId);
-      return res.json({ success: true, statusCode: 200, data: this.transform(dc), meta: this.getMeta(req) });
+      const dt = await this.service.getOne(req.params.uuid, tenantBusinessId);
+      return res.json({ success: true, statusCode: 200, data: this.transform(dt), meta: this.getMeta(req) });
     } catch (error) { next(error); }
   };
 
   create = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { tenantBusinessId } = await this.getAuthContext(req);
-      const dc = await this.service.create(tenantBusinessId, req.body);
+      const body = { ...req.body };
+      if (body.code) body.code = String(body.code).toUpperCase();
+      const dt = await this.service.create(tenantBusinessId, body);
       return res.status(201).json({
         success: true, statusCode: 201,
-        message: 'Device category created successfully',
-        data: this.transform(dc),
+        message: 'Device type created successfully',
+        data: this.transform(dt),
         meta: this.getMeta(req),
       });
     } catch (error) { next(error); }
@@ -86,34 +98,14 @@ export class TenantDeviceCategoryController {
   update = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { tenantBusinessId } = await this.getAuthContext(req);
-      const dc = await this.service.update(req.params.uuid, tenantBusinessId, req.body);
+      const body = { ...req.body };
+      if (body.code) body.code = String(body.code).toUpperCase();
+      const dt = await this.service.update(req.params.uuid, tenantBusinessId, body);
       return res.json({
         success: true, statusCode: 200,
-        message: 'Device category updated successfully',
-        data: this.transform(dc),
+        message: 'Device type updated successfully',
+        data: this.transform(dt),
         meta: this.getMeta(req),
-      });
-    } catch (error) { next(error); }
-  };
-
-  deactivate = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { tenantBusinessId } = await this.getAuthContext(req);
-      const dc = await this.service.setInactive(req.params.uuid, tenantBusinessId);
-      return res.json({
-        success: true, statusCode: 200, message: 'Device category deactivated',
-        data: this.transform(dc), meta: this.getMeta(req),
-      });
-    } catch (error) { next(error); }
-  };
-
-  activate = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { tenantBusinessId } = await this.getAuthContext(req);
-      const dc = await this.service.setActive(req.params.uuid, tenantBusinessId);
-      return res.json({
-        success: true, statusCode: 200, message: 'Device category activated',
-        data: this.transform(dc), meta: this.getMeta(req),
       });
     } catch (error) { next(error); }
   };
@@ -122,7 +114,7 @@ export class TenantDeviceCategoryController {
     try {
       const { tenantBusinessId } = await this.getAuthContext(req);
       await this.service.delete(req.params.uuid, tenantBusinessId);
-      return res.json({ success: true, statusCode: 200, message: 'Device category deleted successfully', meta: this.getMeta(req) });
+      return res.json({ success: true, statusCode: 200, message: 'Device type deleted successfully', meta: this.getMeta(req) });
     } catch (error) { next(error); }
   };
 }

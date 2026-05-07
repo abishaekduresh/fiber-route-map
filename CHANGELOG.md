@@ -2,6 +2,20 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.50.0] - 2026-05-07
+
+### Added
+- **Tenant Device Types Module**: Full-stack management of device types scoped per tenant business.
+  - **Backend**: `tenant_device_types` table with `uuid` (v7), `tenantBusinessId` (FK), `tenantDeviceCategoryId` (FK), `name`, `code` (unique per business, user-supplied e.g. `TDTOLT`), 7 boolean capability flags (`isModelNumberRequired`, `isSerialNumberRequired`, `isMacAddressRequired`, `isIPAddressRequired`, `isPortRequired`, `isGpsLocationRequired`, `isMonitoringEnabled`), `icon`, `description`, `status` (active/inactive/deleted), timestamps, and soft-delete. Auto-migration creates the table on first run.
+  - **REST API** (`/api/tenant/device-types`): `GET /`, `GET /:uuid`, `POST /`, `PUT /:uuid`, `DELETE /:uuid` — protected by `tenantAuth` and `rbac`. Supports filtering by `status`, `categoryId`, and `search`.
+  - **RBAC**: `device_type` resource (`view`, `create`, `update`, `delete`) added to `ROUTE_PERMISSIONS` and permission sync engine.
+  - **Frontend** (`/tenant/device-types`): Card grid with name/code/category/status/required-field pills display, search, category filter, status filter, pagination, create/edit modal with toggle switches for boolean flags, emoji icon picker, and category dropdown. All actions permission-gated via `device_type.*` RBAC.
+  - **Tenant Sidebar**: "Device Types" nav item added to the Manage dropdown, visible when user has `device_type.view`. Auto-expands when navigating to `/tenant/device-types`.
+  - **Permissions Page**: `device_type: 'Device Type'` added to `RESOURCE_LABELS` chip map.
+  - **Category Numeric ID**: Exposed `numericId` in device category API response so the device type modal can correctly set `tenantDeviceCategoryId` as an integer FK.
+  - **OpenAPI Docs**: Full Swagger documentation for all device type endpoints. Swagger version bumped to `1.50.0`.
+  - **DDL**: `CREATE TABLE` for `tenant_device_types` added to `db.sql`.
+
 ## [1.49.0] - 2026-05-08
 
 ### Added

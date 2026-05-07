@@ -85,6 +85,7 @@ export default function ManagePermissionsPage() {
     tenant_user: 'Tenant User', upstream_provider: 'Upstream Provider',
     cable_type: 'Cable Type',
     device_category: 'Device Category',
+    device_type: 'Device Type',
     support_ticket: 'Support Ticket',
     audit_log: 'Audit Log', apidoc: 'API Docs',
   };

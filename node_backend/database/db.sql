@@ -373,6 +373,39 @@ CREATE TABLE IF NOT EXISTS `tenant_cable_types` (
 
 -- Data exporting was unselected.
 
+-- Dumping structure for table fiber_route_map.tenant_device_types
+CREATE TABLE IF NOT EXISTS `tenant_device_types` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `uuid` varchar(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tenantBusinessId` bigint unsigned NOT NULL,
+  `tenantDeviceCategoryId` bigint unsigned NOT NULL,
+  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `code` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `isModelNumberRequired` tinyint(1) NOT NULL DEFAULT '0',
+  `isSerialNumberRequired` tinyint(1) NOT NULL DEFAULT '0',
+  `isMacAddressRequired` tinyint(1) NOT NULL DEFAULT '0',
+  `isIPAddressRequired` tinyint(1) NOT NULL DEFAULT '0',
+  `isPortRequired` tinyint(1) NOT NULL DEFAULT '0',
+  `isGpsLocationRequired` tinyint(1) NOT NULL DEFAULT '0',
+  `isMonitoringEnabled` tinyint(1) NOT NULL DEFAULT '0',
+  `icon` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status` enum('active','inactive','deleted') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
+  `createdAt` datetime NOT NULL DEFAULT (now()),
+  `updatedAt` datetime NOT NULL DEFAULT (now()),
+  `deletedAt` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `tenant_device_types_uuid_unique` (`uuid`),
+  UNIQUE KEY `uq_device_types_business_code` (`tenantBusinessId`,`code`),
+  KEY `idx_device_types_business_id` (`tenantBusinessId`),
+  KEY `idx_device_types_category_id` (`tenantDeviceCategoryId`),
+  KEY `idx_device_types_status` (`status`),
+  CONSTRAINT `FK_device_types_business` FOREIGN KEY (`tenantBusinessId`) REFERENCES `tenant_business` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_device_types_category` FOREIGN KEY (`tenantDeviceCategoryId`) REFERENCES `tenant_device_categories` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Data exporting was unselected.
+
 -- Dumping structure for table fiber_route_map.tenant_device_categories
 CREATE TABLE IF NOT EXISTS `tenant_device_categories` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,

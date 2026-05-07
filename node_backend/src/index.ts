@@ -34,6 +34,7 @@ import tenantUserRoutes from './routes/tenantUserRoutes.js';
 import tenantUpstreamProviderRoutes from './routes/tenantUpstreamProviderRoutes.js';
 import tenantCableTypeRoutes from './routes/tenantCableTypeRoutes.js';
 import tenantDeviceCategoryRoutes from './routes/tenantDeviceCategoryRoutes.js';
+import tenantDeviceTypeRoutes from './routes/tenantDeviceTypeRoutes.js';
 import tenantSupportTicketRoutes from './routes/tenantSupportTicketRoutes.js';
 import adminSupportTicketRoutes from './routes/adminSupportTicketRoutes.js';
 import auditLogRoutes, { auditLogService } from './routes/auditLogRoutes.js';
@@ -92,6 +93,7 @@ app.use('/api/tenant/users', tenantUserRoutes);
 app.use('/api/tenant/upstream-providers', tenantUpstreamProviderRoutes);
 app.use('/api/tenant/cable-types', tenantCableTypeRoutes);
 app.use('/api/tenant/device-categories', tenantDeviceCategoryRoutes);
+app.use('/api/tenant/device-types', tenantDeviceTypeRoutes);
 app.use('/api/tenant/support-tickets', tenantSupportTicketRoutes);
 app.use('/api/support-tickets', auth(authService), adminSupportTicketRoutes);
 app.use('/api/audit-logs', auth(authService), auditLogRoutes);
@@ -401,6 +403,43 @@ const ensureTenantDeviceCategoriesTable = async () => {
   }
 };
 
+// Ensure tenant_device_types table exists (auto-migration for v1.50.0)
+const ensureTenantDeviceTypesTable = async () => {
+  try {
+    const exists = await db.schema.hasTable('tenant_device_types');
+    if (!exists) {
+      await db.schema.createTable('tenant_device_types', (t: any) => {
+        t.bigIncrements('id').primary();
+        t.string('uuid', 36).notNullable().unique();
+        t.bigInteger('tenantBusinessId').unsigned().notNullable();
+        t.bigInteger('tenantDeviceCategoryId').unsigned().notNullable();
+        t.string('name', 100).notNullable();
+        t.string('code', 50).notNullable();
+        t.boolean('isModelNumberRequired').notNullable().defaultTo(false);
+        t.boolean('isSerialNumberRequired').notNullable().defaultTo(false);
+        t.boolean('isMacAddressRequired').notNullable().defaultTo(false);
+        t.boolean('isIPAddressRequired').notNullable().defaultTo(false);
+        t.boolean('isPortRequired').notNullable().defaultTo(false);
+        t.boolean('isGpsLocationRequired').notNullable().defaultTo(false);
+        t.boolean('isMonitoringEnabled').notNullable().defaultTo(false);
+        t.string('icon', 255).nullable();
+        t.text('description').nullable();
+        t.enum('status', ['active', 'inactive', 'deleted']).notNullable().defaultTo('active');
+        t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('deletedAt').nullable();
+        t.index(['tenantBusinessId'], 'idx_device_types_business_id');
+        t.index(['tenantDeviceCategoryId'], 'idx_device_types_category_id');
+        t.index(['status'], 'idx_device_types_status');
+        t.unique(['tenantBusinessId', 'code'], 'uq_device_types_business_code');
+      });
+      logger.info('Auto-migration: tenant_device_types table created');
+    }
+  } catch (err: any) {
+    logger.warn('Auto-migration for tenant_device_types skipped or failed', { error: err.message });
+  }
+};
+
 // Ensure tenant_support_tickets tables exist (auto-migration for v1.47.0)
 const ensureSupportTicketTables = async () => {
   try {
@@ -513,6 +552,9 @@ const startServer = async () => {
 
     // Ensure tenant_device_categories table exists (v1.49.0)
     await ensureTenantDeviceCategoriesTable();
+
+    // Ensure tenant_device_types table exists (v1.50.0)
+    await ensureTenantDeviceTypesTable();
 
     // Ensure support ticket tables exist (v1.47.0)
     await ensureSupportTicketTables();

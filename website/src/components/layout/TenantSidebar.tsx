@@ -25,7 +25,8 @@ export default function TenantSidebar({
     pathname.startsWith('/tenant/lcos') ||
     pathname.startsWith('/tenant/upstream-providers') ||
     pathname.startsWith('/tenant/cable-types') ||
-    pathname.startsWith('/tenant/device-categories')
+    pathname.startsWith('/tenant/device-categories') ||
+    pathname.startsWith('/tenant/device-types')
   );
 
   const topLinks = [
@@ -107,6 +108,16 @@ export default function TenantSidebar({
         </svg>
       ),
       show: hasPermission('device_category.view'),
+    },
+    {
+      name: 'Device Types',
+      href: '/tenant/device-types',
+      icon: (
+        <svg className={styles.navIcon} style={{ color: '#f59e0b' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M5 12H3l9-9 9 9h-2" /><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" /><rect x="9" y="12" width="6" height="7" />
+        </svg>
+      ),
+      show: hasPermission('device_type.view'),
     },
   ].filter((l) => l.show);
 

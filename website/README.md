@@ -4,9 +4,11 @@ A futuristic, high-performance web dashboard for managing fiber optic networks.
 Built with **Next.js 16 (Turbopack)** and **TypeScript**, featuring a stunning **Glassmorphism Design System**.
 
 ## Version
-**Current Version:** 1.49.0 (Device Categories Module)
+**Current Version:** 1.50.0 (Device Types Module)
 
 ## Features
+- **Device Types Management** (`/tenant/device-types`): Full CRUD for device types per tenant business — category assignment, user-supplied unique code (e.g. `TDTOLT`), 7 boolean capability flags (Model #, Serial #, MAC Address, IP Address, Port, GPS Location, Monitoring) with toggle switches, emoji icon picker, description, status, and category/status/search filters. Permission-gated via `device_type.*` RBAC.
+- **Device Categories Management** (`/tenant/device-categories`): Full CRUD for device categories — auto-generated sequential codes (`TDC01`, `TDC02`...) per tenant, name, description, activate/deactivate/delete workflows, search, and pagination. Permission-gated via `device_category.*` RBAC.
 - **Support Ticket System** (`/tenant/support-tickets`, `/manage/support-tickets`): Full multi-tenant support ticket platform — tenants raise and track tickets; admins manage, assign, transition status, and view the full history log with performer names and timestamps.
 - **Admin Support Ticket Panel**: Table with status/priority/search filters, slide-in detail panel with status-transition buttons, resolution notes, Messages tab, and History Log tab (vertical timeline, colour-coded, performer name attribution).
 - **Auto-Logout on Auth Errors**: `apiFetch` automatically clears tokens and redirects to the correct login page when a 401 or auth-token error is detected — no stale sessions left hanging.
