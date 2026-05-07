@@ -8,8 +8,10 @@ import {
   adminUpdateSupportTicket,
   adminGetTicketMessages,
   adminAddTicketMessage,
+  adminGetTicketLogs,
   SupportTicketData,
   TicketMessageData,
+  TicketLogData,
 } from '@/lib/api';
 import { Can } from '@/components/auth/Can';
 import { toast } from 'sonner';
@@ -71,6 +73,13 @@ const filterSelectStyle: React.CSSProperties = {
 
 // ─── Detail Panel ─────────────────────────────────────────────────────────────
 
+const LOG_ACTION_LABELS: Record<string, string> = {
+  created: 'Ticket Created',
+  status_changed: 'Status Changed',
+  assigned: 'Assigned',
+  message_added: 'Message Added',
+};
+
 function TicketDetail({
   ticket,
   onClose,
@@ -80,8 +89,11 @@ function TicketDetail({
   onClose: () => void;
   onUpdate: () => void;
 }) {
+  const [activeTab, setActiveTab] = useState<'messages' | 'history'>('messages');
   const [messages, setMessages] = useState<TicketMessageData[]>([]);
   const [msgLoading, setMsgLoading] = useState(true);
+  const [logs, setLogs] = useState<TicketLogData[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [sending, setSending] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
@@ -102,7 +114,17 @@ function TicketDetail({
     finally { setMsgLoading(false); }
   }, [ticket.id]);
 
+  const loadLogs = useCallback(async () => {
+    setLogsLoading(true);
+    try {
+      const res = await adminGetTicketLogs(ticket.id);
+      if (res.success && Array.isArray(res.data)) setLogs(res.data);
+    } catch { /* ignore */ }
+    finally { setLogsLoading(false); }
+  }, [ticket.id]);
+
   useEffect(() => { loadMessages(); }, [loadMessages]);
+  useEffect(() => { if (activeTab === 'history') loadLogs(); }, [activeTab, loadLogs]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
   const handleSend = async (e: React.FormEvent) => {
@@ -142,6 +164,21 @@ function TicketDetail({
     } catch { toast.error('Failed to save notes'); }
     finally { setSavingNotes(false); }
   };
+
+  const tabBtn = (tab: 'messages' | 'history', label: string) => (
+    <button
+      onClick={() => setActiveTab(tab)}
+      style={{
+        padding: '6px 16px', borderRadius: '6px', fontSize: '12px', fontWeight: 600,
+        cursor: 'pointer', border: 'none',
+        background: activeTab === tab ? 'var(--color-accent-primary)' : 'transparent',
+        color: activeTab === tab ? '#fff' : 'var(--color-text-secondary)',
+        transition: 'all 0.15s',
+      }}
+    >
+      {label}
+    </button>
+  );
 
   return (
     <div style={{
@@ -261,63 +298,142 @@ function TicketDetail({
             </button>
           </div>
 
-          {/* Messages */}
-          <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>
-            Messages
+          {/* Tab bar */}
+          <div style={{
+            display: 'flex', gap: '4px', marginBottom: '12px',
+            background: 'var(--color-bg-secondary)', borderRadius: '8px',
+            padding: '4px', border: '1px solid var(--color-border)',
+          }}>
+            {tabBtn('messages', 'Messages')}
+            {tabBtn('history', 'History Log')}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minHeight: '60px' }}>
-            {msgLoading ? (
-              <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>Loading...</p>
-            ) : messages.length === 0 ? (
-              <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>No messages yet.</p>
-            ) : messages.map((msg) => {
-              const isAdmin = msg.senderType === 'admin';
-              return (
-                <div key={msg.id} style={{
-                  alignSelf: isAdmin ? 'flex-start' : 'flex-end',
-                  maxWidth: '78%',
-                  background: isAdmin ? 'rgba(99,102,241,0.1)' : 'rgba(59,130,246,0.1)',
-                  border: `1px solid ${isAdmin ? 'rgba(99,102,241,0.2)' : 'rgba(59,130,246,0.2)'}`,
-                  borderRadius: '8px', padding: '8px 12px',
-                }}>
-                  <div style={{ fontSize: '10px', color: 'var(--color-text-secondary)', marginBottom: '3px' }}>
-                    {isAdmin ? 'You (Admin)' : 'Tenant'} · {new Date(msg.createdAt).toLocaleString()}
+
+          {/* Messages tab */}
+          {activeTab === 'messages' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minHeight: '60px' }}>
+              {msgLoading ? (
+                <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>Loading...</p>
+              ) : messages.length === 0 ? (
+                <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>No messages yet.</p>
+              ) : messages.map((msg) => {
+                const isAdmin = msg.senderType === 'admin';
+                return (
+                  <div key={msg.id} style={{
+                    alignSelf: isAdmin ? 'flex-start' : 'flex-end',
+                    maxWidth: '78%',
+                    background: isAdmin ? 'rgba(99,102,241,0.1)' : 'rgba(59,130,246,0.1)',
+                    border: `1px solid ${isAdmin ? 'rgba(99,102,241,0.2)' : 'rgba(59,130,246,0.2)'}`,
+                    borderRadius: '8px', padding: '8px 12px',
+                  }}>
+                    <div style={{ fontSize: '10px', color: 'var(--color-text-secondary)', marginBottom: '3px' }}>
+                      {isAdmin ? 'You (Admin)' : 'Tenant'} · {new Date(msg.createdAt).toLocaleString()}
+                    </div>
+                    <div style={{ fontSize: '13px', lineHeight: '1.45', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                      {msg.message}
+                    </div>
                   </div>
-                  <div style={{ fontSize: '13px', lineHeight: '1.45', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                    {msg.message}
-                  </div>
+                );
+              })}
+              <div ref={bottomRef} />
+            </div>
+          )}
+
+          {/* History Log tab */}
+          {activeTab === 'history' && (
+            <div>
+              {logsLoading ? (
+                <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>Loading history...</p>
+              ) : logs.length === 0 ? (
+                <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px' }}>No history yet.</p>
+              ) : (
+                <div style={{ position: 'relative', paddingLeft: '20px' }}>
+                  {/* vertical line */}
+                  <div style={{
+                    position: 'absolute', left: '7px', top: '8px',
+                    bottom: '8px', width: '2px',
+                    background: 'var(--color-border)',
+                  }} />
+                  {[...logs].reverse().map((log) => {
+                    const actionLabel = LOG_ACTION_LABELS[log.action] || log.action;
+                    const isStatusChange = log.action === 'status_changed';
+                    const dotColor = isStatusChange
+                      ? (STATUS_COLORS[log.newValue ?? ''] || '#64748b')
+                      : '#64748b';
+
+                    return (
+                      <div key={log.id} style={{ display: 'flex', gap: '12px', marginBottom: '14px', position: 'relative' }}>
+                        {/* dot */}
+                        <div style={{
+                          position: 'absolute', left: '-17px', top: '3px',
+                          width: '10px', height: '10px', borderRadius: '50%',
+                          background: dotColor,
+                          border: '2px solid var(--color-bg-card)',
+                          flexShrink: 0,
+                        }} />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '3px' }}>
+                            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                              {actionLabel}
+                            </span>
+                            {isStatusChange && log.oldValue && log.newValue && (
+                              <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <StatusBadge status={log.oldValue} />
+                                <span>→</span>
+                                <StatusBadge status={log.newValue} />
+                              </span>
+                            )}
+                            {log.action === 'assigned' && log.newValue && (
+                              <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+                                to user #{log.newValue}
+                              </span>
+                            )}
+                            {log.action === 'created' && log.newValue && (
+                              <span style={{ fontSize: '12px', fontFamily: 'monospace', color: 'var(--color-text-secondary)' }}>
+                                {log.newValue}
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
+                            {new Date(log.performedAt).toLocaleString()}
+                            {log.performedBy && ` · by #${log.performedBy}`}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
-            <div ref={bottomRef} />
-          </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Reply footer */}
-        <div style={{ flexShrink: 0, borderTop: '1px solid var(--color-border)', padding: '14px 20px' }}>
-          <form onSubmit={handleSend} style={{ display: 'flex', gap: '8px' }}>
-            <textarea
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-              placeholder="Type your reply to the tenant..."
-              rows={2}
-              style={{ ...filterSelectStyle, flex: 1, resize: 'none', fontFamily: 'inherit' }}
-              onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSend(e as any); }}
-            />
-            <button
-              type="submit"
-              disabled={sending || !replyText.trim()}
-              style={{
-                padding: '8px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-                background: 'var(--color-accent-primary)', border: 'none', color: '#fff',
-                cursor: sending || !replyText.trim() ? 'not-allowed' : 'pointer',
-                opacity: sending || !replyText.trim() ? 0.6 : 1, alignSelf: 'flex-end',
-              }}
-            >
-              {sending ? '...' : 'Reply'}
-            </button>
-          </form>
-        </div>
+        {/* Reply footer — only on messages tab */}
+        {activeTab === 'messages' && (
+          <div style={{ flexShrink: 0, borderTop: '1px solid var(--color-border)', padding: '14px 20px' }}>
+            <form onSubmit={handleSend} style={{ display: 'flex', gap: '8px' }}>
+              <textarea
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Type your reply to the tenant..."
+                rows={2}
+                style={{ ...filterSelectStyle, flex: 1, resize: 'none', fontFamily: 'inherit' }}
+                onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSend(e as any); }}
+              />
+              <button
+                type="submit"
+                disabled={sending || !replyText.trim()}
+                style={{
+                  padding: '8px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
+                  background: 'var(--color-accent-primary)', border: 'none', color: '#fff',
+                  cursor: sending || !replyText.trim() ? 'not-allowed' : 'pointer',
+                  opacity: sending || !replyText.trim() ? 0.6 : 1, alignSelf: 'flex-end',
+                }}
+              >
+                {sending ? '...' : 'Reply'}
+              </button>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   );

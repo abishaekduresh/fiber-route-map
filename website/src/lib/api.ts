@@ -1202,4 +1202,18 @@ export async function adminAddTicketMessage(uuid: string, data: { message: strin
   return apiFetch(`/api/support-tickets/${uuid}/messages`, { method: 'POST', body: JSON.stringify(data) });
 }
 
+export interface TicketLogData {
+  id: number;
+  ticketId: number;
+  action: string;
+  oldValue: string | null;
+  newValue: string | null;
+  performedBy: number | null;
+  performedAt: string;
+}
+
+export async function adminGetTicketLogs(uuid: string): Promise<ApiResponse<TicketLogData[]>> {
+  return apiFetch(`/api/support-tickets/${uuid}/logs`);
+}
+
 export { apiFetch };
