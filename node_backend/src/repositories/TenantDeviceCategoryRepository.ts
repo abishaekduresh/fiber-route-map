@@ -12,7 +12,7 @@ export class TenantDeviceCategoryRepository {
 
   async getAll(
     tenantBusinessId: number,
-    params: { page?: number; limit?: number; filter?: { name?: string; status?: string; search?: string } } = {},
+    params: { page?: number; limit?: number; filter?: { status?: string; search?: string } } = {},
   ): Promise<{ deviceCategories: any[]; total: number }> {
     const page = Number(params.page) || 1;
     const limit = Number(params.limit) === -1 ? -1 : (Number(params.limit) || 10);
@@ -54,16 +54,16 @@ export class TenantDeviceCategoryRepository {
       .first() ?? null;
   }
 
-  async findByCode(code: string, tenantBusinessId: number, excludeUuid?: string): Promise<{ uuid: string } | null> {
-    let q = db(this.table)
-      .where({ code, tenantBusinessId })
-      .whereNot('status', 'deleted')
-      .select('uuid');
-    if (excludeUuid) q = q.whereNot('uuid', excludeUuid);
-    return q.first() ?? null;
+  async getLastCode(tenantBusinessId: number): Promise<string | null> {
+    const last = await db(this.table)
+      .where('tenantBusinessId', tenantBusinessId)
+      .orderBy('id', 'desc')
+      .select('code')
+      .first();
+    return last?.code ?? null;
   }
 
-  async create(data: CreateDeviceCategoryDTO & { tenantBusinessId: number }): Promise<TenantDeviceCategory> {
+  async create(data: CreateDeviceCategoryDTO & { tenantBusinessId: number; code: string }): Promise<TenantDeviceCategory> {
     const uuid = generateUuidV7();
     const now = nowDb();
     await db(this.table).insert({

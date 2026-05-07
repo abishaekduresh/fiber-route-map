@@ -14,12 +14,11 @@ interface Props {
 
 interface FormState {
   name: string;
-  code: string;
   description: string;
   status: 'active' | 'inactive';
 }
 
-const EMPTY: FormState = { name: '', code: '', description: '', status: 'active' };
+const EMPTY: FormState = { name: '', description: '', status: 'active' };
 
 export default function DeviceCategoryModal({ isOpen, onClose, onSuccess, deviceCategory }: Props) {
   const isEditing = Boolean(deviceCategory);
@@ -33,7 +32,6 @@ export default function DeviceCategoryModal({ isOpen, onClose, onSuccess, device
       const a = deviceCategory.attributes;
       setForm({
         name: a.name ?? '',
-        code: a.code ?? '',
         description: a.description ?? '',
         status: (a.status === 'active' || a.status === 'inactive') ? a.status : 'active',
       });
@@ -56,7 +54,6 @@ export default function DeviceCategoryModal({ isOpen, onClose, onSuccess, device
     try {
       const payload = {
         name: form.name,
-        code: form.code,
         description: form.description || null,
         ...(isEditing ? { status: form.status } : {}),
       };
@@ -115,21 +112,6 @@ export default function DeviceCategoryModal({ isOpen, onClose, onSuccess, device
                   required
                   placeholder="e.g. Router"
                 />
-              </div>
-
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>Code *</label>
-                <input
-                  type="text"
-                  className={styles.input}
-                  value={form.code}
-                  onChange={set('code')}
-                  required
-                  placeholder="e.g. TDC01"
-                />
-                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: '0.25rem', display: 'block' }}>
-                  Unique per business (e.g. TDC01, TDC02)
-                </span>
               </div>
 
               {isEditing && (

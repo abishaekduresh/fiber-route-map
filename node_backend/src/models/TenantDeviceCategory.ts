@@ -15,13 +15,11 @@ export interface TenantDeviceCategory {
 
 export interface CreateDeviceCategoryDTO {
   name: string;
-  code: string;
   description?: string | null;
 }
 
 export interface UpdateDeviceCategoryDTO {
   name?: string;
-  code?: string;
   description?: string | null;
   status?: DeviceCategoryStatus;
 }

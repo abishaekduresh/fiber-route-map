@@ -4,6 +4,16 @@ import { CreateDeviceCategoryDTO, UpdateDeviceCategoryDTO } from '../models/Tena
 export class TenantDeviceCategoryService {
   constructor(private repo: TenantDeviceCategoryRepository) {}
 
+  private async generateCode(tenantBusinessId: number): Promise<string> {
+    const lastCode = await this.repo.getLastCode(tenantBusinessId);
+    let nextNum = 1;
+    if (lastCode && lastCode.startsWith('TDC')) {
+      const n = parseInt(lastCode.substring(3), 10);
+      if (!isNaN(n)) nextNum = n + 1;
+    }
+    return `TDC${String(nextNum).padStart(2, '0')}`;
+  }
+
   async getAll(tenantBusinessId: number, params: any) {
     return this.repo.getAll(tenantBusinessId, params);
   }
@@ -17,25 +27,12 @@ export class TenantDeviceCategoryService {
   }
 
   async create(tenantBusinessId: number, data: CreateDeviceCategoryDTO) {
-    const dup = await this.repo.findByCode(data.code, tenantBusinessId);
-    if (dup) {
-      const e = new Error('A device category with this code already exists in your business');
-      (e as any).status = 409; throw e;
-    }
-    return this.repo.create({ ...data, tenantBusinessId });
+    const code = await this.generateCode(tenantBusinessId);
+    return this.repo.create({ ...data, tenantBusinessId, code });
   }
 
   async update(uuid: string, tenantBusinessId: number, data: UpdateDeviceCategoryDTO) {
-    const current = await this.getOne(uuid, tenantBusinessId);
-
-    if (data.code && data.code !== current.code) {
-      const dup = await this.repo.findByCode(data.code, tenantBusinessId, uuid);
-      if (dup) {
-        const e = new Error('A device category with this code already exists in your business');
-        (e as any).status = 409; throw e;
-      }
-    }
-
+    await this.getOne(uuid, tenantBusinessId);
     await this.repo.update(uuid, tenantBusinessId, data);
     return this.getOne(uuid, tenantBusinessId);
   }
