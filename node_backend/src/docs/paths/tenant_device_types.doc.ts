@@ -50,7 +50,6 @@
  *                     isMacAddressRequired: false
  *                     isIPAddressRequired: true
  *                     isGpsLocationRequired: false
- *                     icon: "📡"
  *                     description: "Optical Line Terminal"
  *                     status: "active"
  *                   meta:
@@ -89,7 +88,6 @@
  *               isMacAddressRequired: { type: boolean, default: false }
  *               isIPAddressRequired: { type: boolean, default: false }
  *               isGpsLocationRequired: { type: boolean, default: false }
- *               icon: { type: string, example: "server" }
  *               description: { type: string, example: "Optical Line Terminal" }
  *     responses:
  *       201:
@@ -141,7 +139,6 @@
  *               isMacAddressRequired: { type: boolean }
  *               isIPAddressRequired: { type: boolean }
  *               isGpsLocationRequired: { type: boolean }
- *               icon: { type: string }
  *               description: { type: string }
  *               status: { type: string, enum: [active, inactive] }
  *     responses:

@@ -12,7 +12,6 @@ export interface TenantDeviceType {
   isMacAddressRequired: boolean;
   isIPAddressRequired: boolean;
   isGpsLocationRequired: boolean;
-  icon: string | null;
   description: string | null;
   status: DeviceTypeStatus;
   createdAt: string;
@@ -30,7 +29,6 @@ export interface CreateDeviceTypeDTO {
   isMacAddressRequired?: boolean;
   isIPAddressRequired?: boolean;
   isGpsLocationRequired?: boolean;
-  icon?: string | null;
   description?: string | null;
 }
 
@@ -42,7 +40,6 @@ export interface UpdateDeviceTypeDTO {
   isMacAddressRequired?: boolean;
   isIPAddressRequired?: boolean;
   isGpsLocationRequired?: boolean;
-  icon?: string | null;
   description?: string | null;
   status?: DeviceTypeStatus;
 }

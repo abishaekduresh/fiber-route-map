@@ -12,8 +12,6 @@ interface Props {
   deviceType?: DeviceTypeData | null;
 }
 
-const ICONS = ['📡', '🖥️', '🔌', '📶', '🔧', '⚡', '🛰️', '📟', '🔗', '💡', '🖧', '📦'];
-
 const BOOL_FIELDS = [
   { key: 'isModelNumberRequired',  label: 'Model Number Required' },
   { key: 'isSerialNumberRequired', label: 'Serial Number Required' },
@@ -32,7 +30,6 @@ interface FormState {
   isMacAddressRequired: boolean;
   isIPAddressRequired: boolean;
   isGpsLocationRequired: boolean;
-  icon: string;
   description: string;
   status: 'active' | 'inactive';
 }
@@ -45,7 +42,6 @@ const EMPTY: FormState = {
   isMacAddressRequired: false,
   isIPAddressRequired: false,
   isGpsLocationRequired: false,
-  icon: '',
   description: '',
   status: 'active',
 };
@@ -73,7 +69,6 @@ export default function DeviceTypeModal({ isOpen, onClose, onSuccess, deviceType
         isMacAddressRequired: Boolean(a.isMacAddressRequired),
         isIPAddressRequired: Boolean(a.isIPAddressRequired),
         isGpsLocationRequired: Boolean(a.isGpsLocationRequired),
-        icon: a.icon ?? '',
         description: a.description ?? '',
         status: (a.status === 'active' || a.status === 'inactive') ? a.status : 'active',
       });
@@ -110,7 +105,6 @@ export default function DeviceTypeModal({ isOpen, onClose, onSuccess, deviceType
         isMacAddressRequired: form.isMacAddressRequired,
         isIPAddressRequired: form.isIPAddressRequired,
         isGpsLocationRequired: form.isGpsLocationRequired,
-        icon: form.icon || null,
         description: form.description || null,
         ...(isEditing ? { status: form.status } : {}),
       };
@@ -197,39 +191,6 @@ export default function DeviceTypeModal({ isOpen, onClose, onSuccess, deviceType
                   </select>
                 </div>
               )}
-
-              {/* Icon picker */}
-              <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
-                <label className={styles.label}>Icon</label>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-                  {ICONS.map((ic) => (
-                    <button
-                      type="button"
-                      key={ic}
-                      onClick={() => setForm((p) => ({ ...p, icon: p.icon === ic ? '' : ic }))}
-                      style={{
-                        width: '2.25rem', height: '2.25rem', borderRadius: 'var(--radius-sm)',
-                        border: form.icon === ic ? '2px solid #10b981' : '1px solid rgba(255,255,255,0.1)',
-                        background: form.icon === ic ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
-                        cursor: 'pointer', fontSize: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}
-                    >
-                      {ic}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => setForm((p) => ({ ...p, icon: '' }))}
-                    style={{
-                      padding: '0 0.75rem', height: '2.25rem', borderRadius: 'var(--radius-sm)',
-                      border: '1px solid rgba(255,255,255,0.1)', background: 'transparent',
-                      color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: '0.75rem',
-                    }}
-                  >
-                    None
-                  </button>
-                </div>
-              </div>
 
               {/* Description */}
               <div className={`${styles.inputGroup} ${styles.fullWidth}`}>

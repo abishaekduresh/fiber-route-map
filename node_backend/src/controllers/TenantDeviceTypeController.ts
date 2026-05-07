@@ -21,7 +21,6 @@ export class TenantDeviceTypeController {
       isMacAddressRequired: Boolean(dt.isMacAddressRequired),
       isIPAddressRequired: Boolean(dt.isIPAddressRequired),
       isGpsLocationRequired: Boolean(dt.isGpsLocationRequired),
-      icon: dt.icon ?? null,
       description: dt.description ?? null,
       status: dt.status,
     },

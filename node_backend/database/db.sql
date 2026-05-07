@@ -386,7 +386,6 @@ CREATE TABLE IF NOT EXISTS `tenant_device_types` (
   `isMacAddressRequired` tinyint(1) NOT NULL DEFAULT '0',
   `isIPAddressRequired` tinyint(1) NOT NULL DEFAULT '0',
   `isGpsLocationRequired` tinyint(1) NOT NULL DEFAULT '0',
-  `icon` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `description` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `status` enum('active','inactive','deleted') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
   `createdAt` datetime NOT NULL DEFAULT (now()),

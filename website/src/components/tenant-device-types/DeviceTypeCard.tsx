@@ -31,11 +31,7 @@ export default function DeviceTypeCard({ deviceType, onEdit, onDelete }: Props) 
     <div className={styles.card}>
       <div className={styles.cardHeader}>
         <div className={styles.avatar}>
-          {a.icon ? (
-            <span style={{ fontSize: '1.2rem' }}>{a.icon}</span>
-          ) : (
-            a.name?.[0]?.toUpperCase() || 'D'
-          )}
+          {a.name?.[0]?.toUpperCase() || 'D'}
         </div>
         <div className={styles.userInfo}>
           <h3 className={styles.userName} title={a.name}>{a.name}</h3>
@@ -124,7 +120,6 @@ export default function DeviceTypeCard({ deviceType, onEdit, onDelete }: Props) 
                 { label: 'Name', value: a.name },
                 { label: 'Code', value: a.code },
                 { label: 'Category', value: a.categoryName ?? null },
-                { label: 'Icon', value: a.icon ?? null },
                 { label: 'Status', value: a.status },
                 { label: 'Description', value: a.description ?? null, fullWidth: true },
               ],

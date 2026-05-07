@@ -420,7 +420,6 @@ const ensureTenantDeviceTypesTable = async () => {
         t.boolean('isMacAddressRequired').notNullable().defaultTo(false);
         t.boolean('isIPAddressRequired').notNullable().defaultTo(false);
         t.boolean('isGpsLocationRequired').notNullable().defaultTo(false);
-        t.string('icon', 255).nullable();
         t.text('description').nullable();
         t.enum('status', ['active', 'inactive', 'deleted']).notNullable().defaultTo('active');
         t.datetime('createdAt').notNullable().defaultTo(db.fn.now());

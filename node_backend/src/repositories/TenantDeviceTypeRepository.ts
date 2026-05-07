@@ -102,7 +102,6 @@ export class TenantDeviceTypeRepository {
       isMacAddressRequired: data.isMacAddressRequired ? 1 : 0,
       isIPAddressRequired: data.isIPAddressRequired ? 1 : 0,
       isGpsLocationRequired: data.isGpsLocationRequired ? 1 : 0,
-      icon: data.icon ?? null,
       description: data.description ?? null,
       status: 'active',
       createdAt: now,
