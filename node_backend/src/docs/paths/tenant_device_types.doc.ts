@@ -41,7 +41,7 @@
  *                   type: "device_type"
  *                   attributes:
  *                     name: "OLT"
- *                     code: "TDTOLT"
+ *                     code: "TDT01"
  *                     tenantDeviceCategoryId: 1
  *                     categoryName: "Active Equipment"
  *                     categoryUuid: "019f1ab2-0000-7000-0000-000000000001"
@@ -50,7 +50,7 @@
  *                     isMacAddressRequired: false
  *                     isIPAddressRequired: true
  *                     isGpsLocationRequired: false
- *                     icon: "server"
+ *                     icon: "📡"
  *                     description: "Optical Line Terminal"
  *                     status: "active"
  *                   meta:
@@ -69,7 +69,7 @@
  *     tags:
  *       - Tenant Device Types
  *     summary: Create Device Type
- *     description: Creates a new device type. Code is converted to uppercase and must be unique per business. Requires `device_type.create`.
+ *     description: Creates a new device type. Code is auto-generated sequentially per business (TDT01, TDT02, ...). Requires `device_type.create`.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -118,7 +118,7 @@
  *     tags:
  *       - Tenant Device Types
  *     summary: Update Device Type
- *     description: Updates any fields including boolean flags. Code is uppercased if provided. Requires `device_type.update`.
+ *     description: Updates any fields including boolean flags. Code is auto-generated and cannot be changed. Requires `device_type.update`.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -136,7 +136,6 @@
  *             properties:
  *               tenantDeviceCategoryId: { type: integer }
  *               name: { type: string }
- *               code: { type: string }
  *               isModelNumberRequired: { type: boolean }
  *               isSerialNumberRequired: { type: boolean }
  *               isMacAddressRequired: { type: boolean }
