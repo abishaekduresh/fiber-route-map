@@ -1209,6 +1209,7 @@ export interface TicketLogData {
   oldValue: string | null;
   newValue: string | null;
   performedBy: number | null;
+  performerName: string | null;
   performedAt: string;
 }
 

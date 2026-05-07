@@ -4,13 +4,17 @@ A futuristic, high-performance web dashboard for managing fiber optic networks.
 Built with **Next.js 16 (Turbopack)** and **TypeScript**, featuring a stunning **Glassmorphism Design System**.
 
 ## Version
-**Current Version:** 1.46.0 (Cable Types Module & Unified Manage Sidebar)
+**Current Version:** 1.48.0 (Support Ticket System, History Log, Auto-Logout, Business Reactivation)
 
 ## Features
+- **Support Ticket System** (`/tenant/support-tickets`, `/manage/support-tickets`): Full multi-tenant support ticket platform — tenants raise and track tickets; admins manage, assign, transition status, and view the full history log with performer names and timestamps.
+- **Admin Support Ticket Panel**: Table with status/priority/search filters, slide-in detail panel with status-transition buttons, resolution notes, Messages tab, and History Log tab (vertical timeline, colour-coded, performer name attribution).
+- **Auto-Logout on Auth Errors**: `apiFetch` automatically clears tokens and redirects to the correct login page when a 401 or auth-token error is detected — no stale sessions left hanging.
+- **Reactivate Suspended Businesses** (`/manage/tenant-businesses`): One-click reactivation for suspended tenant businesses directly from the business card.
 - **LCO Management** (`/tenant/lcos`): Full CRUD for Local Cable Operators — sequential `LCO000X` code generation, country integration, search, and pagination.
 - **Upstream Provider Management** (`/tenant/upstream-providers`): Full CRUD for upstream providers — sequential `TUP000X` code generation, service categories (Cable TV / Bandwidth / IPTV / Hybrid), block/unblock workflow, category + status filters, search, pagination, and permission-gated actions.
 - **Cable Types Management** (`/tenant/cable-types`): Full CRUD for fiber cable types — user-supplied code (unique per business), fiber core count, cable diameter (mm), description, block/unblock workflow, status filter, search, and pagination.
-- **Unified Manage Sidebar Dropdown**: Tenant sidebar consolidates Users, LCOs, Upstream Providers, and Cable Types under one collapsible "Manage" section, auto-expanded when navigating to any managed route.
+- **Unified Manage Sidebar Dropdown**: Tenant sidebar consolidates Users, LCOs, Upstream Providers, and Cable Types under one collapsible "Manage" section, auto-expanded when navigating to any managed route. Support Tickets is a top-level nav item.
 - **Tenant User Management** (`/tenant/users`): Tenant portal sub-user CRUD — card grid matching the admin Tenants UI, search, status filter, pagination, create/edit modal, view details modal, block/unblock/delete with confirm dialogs.
 - **Sonner Toast Notifications**: Replaced legacy alerts with premium `sonner` toast notifications for real-time operation status.
 - **Tenant Management UI**: Comprehensive CRUD interface for managing Tenants and Business entities with dedicated visibility controls for roles and lifecycle actions (Block/Unblock/Suspend/Reactivate).

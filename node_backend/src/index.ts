@@ -438,10 +438,19 @@ const ensureSupportTicketTables = async () => {
         t.string('oldValue', 500).nullable();
         t.string('newValue', 500).nullable();
         t.integer('performedBy').unsigned().nullable();
+        t.string('performerName', 255).nullable();
         t.datetime('performedAt').notNullable().defaultTo(db.fn.now());
         t.index(['ticketId'], 'idx_ticket_logs_ticket_id');
       });
       logger.info('Auto-migration: tenant_ticket_logs table created');
+    } else {
+      const hasPerformerName = await db.schema.hasColumn('tenant_ticket_logs', 'performerName');
+      if (!hasPerformerName) {
+        await db.schema.alterTable('tenant_ticket_logs', (t: any) => {
+          t.string('performerName', 255).nullable().after('performedBy');
+        });
+        logger.info('Auto-migration: tenant_ticket_logs.performerName column added');
+      }
     }
   } catch (err: any) {
     logger.warn('Auto-migration for support ticket tables skipped or failed', { error: err.message });

@@ -5,6 +5,29 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.48.0] - 2026-05-07
+### Added
+- **`performerName` column in `tenant_ticket_logs`**: Activity logs now persist the human-readable name of whoever triggered each action at write time, avoiding ambiguous joins between `users` and `tenants` tables (both have independent ID sequences). Auto-migration adds the column to existing tables via `hasColumn` guard.
+- **`PUT /api/tenant-business/:uuid/reactivate`**: Reactivates a suspended tenant business. Validates business exists, is not deleted, and is currently suspended before setting `status='active'`. Protected by `rbac('tenant_business.update')`.
+
+### Changed
+- **`AdminSupportTicketController`**: `update` and `addMessage` handlers now call `getAdmin()` (returns `{ id, name }`) and pass `adminName` through to `adminUpdate()` for logging.
+- **`TenantSupportTicketService.adminUpdate()`**: Accepts optional `performerName` and passes it to all `addLog()` calls.
+- **`TenantSupportTicketRepository.addLog()`**: Accepts and persists `performerName?: string | null`.
+
+## [1.47.0] - 2026-05-06
+### Added
+- **Multi-Tenant Support Ticket API**: Full backend for `tenant_support_tickets`, `tenant_ticket_messages`, and `tenant_ticket_logs` with auto-migration.
+  - Endpoints (tenant): `GET/POST /api/tenant/support-tickets`, `GET/PUT /:uuid`, `POST /:uuid/close`, `GET/POST /:uuid/messages`, `GET /:uuid/logs`.
+  - Endpoints (admin): `GET /api/support-tickets`, `GET/PUT /:uuid`, `GET/POST /:uuid/messages`, `GET /:uuid/logs`.
+  - SLA times derived from priority at creation: critical 60/240 min, high 240/480 min, medium 480/1440 min, low 1440/4320 min.
+  - Sequential ticket numbers `TKT-YYYY-XXXX` scoped per calendar year.
+  - Status machine: `open → assigned → in_progress ↔ on_hold → resolved → closed ↔ reopened`.
+  - `performedBy` + `performerName` stored at log-write time (no ambiguous join at read time).
+  - `support_ticket` resource (`view`, `create`, `update`, `delete`) added to `ROUTE_PERMISSIONS`.
+  - Full OpenAPI documentation added; Swagger version bumped to `1.47.0`.
+  - DDL for all three tables added to `db.sql`.
+
 ## [1.23.0] - 2026-04-09
 ### Added
 - **`POST /api/permissions/sync`**: Reads `ROUTE_PERMISSIONS` and `INSERT IGNORE`s any missing slugs. Returns `{ added: string[], total: number }`. Requires `permission.create`.

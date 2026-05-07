@@ -191,6 +191,7 @@ export class TenantSupportTicketRepository {
     oldValue?: string | null;
     newValue?: string | null;
     performedBy: number | null;
+    performerName?: string | null;
   }): Promise<void> {
     await db(this.logTable).insert({
       ticketId: data.ticketId,
@@ -198,6 +199,7 @@ export class TenantSupportTicketRepository {
       oldValue: data.oldValue ?? null,
       newValue: data.newValue ?? null,
       performedBy: data.performedBy,
+      performerName: data.performerName ?? null,
       performedAt: nowDb(),
     });
   }

@@ -60,10 +60,10 @@ export class TenantSupportTicketController {
     return { tenantId: row.tenantId as number, tenantBusinessId: row.tenantBusinessId as number };
   };
 
-  private getSenderId = async (req: Request): Promise<number | null> => {
+  private getSender = async (req: Request): Promise<{ id: number | null; name: string | null }> => {
     const userUuid = (req as any).user?.uuid || (req as any).user?.id;
-    const row = await db('tenants').where('uuid', userUuid).select('id').first();
-    return row?.id ?? null;
+    const row = await db('tenants').where('uuid', userUuid).select('id', 'name').first();
+    return { id: row?.id ?? null, name: row?.name ?? null };
   };
 
   index = async (req: Request, res: Response, next: NextFunction) => {
@@ -98,8 +98,8 @@ export class TenantSupportTicketController {
   create = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { tenantId, tenantBusinessId } = await this.getAuthContext(req);
-      const senderId = await this.getSenderId(req);
-      const ticket = await this.service.create(tenantId, tenantBusinessId, req.body, senderId);
+      const { id: senderId, name: senderName } = await this.getSender(req);
+      const ticket = await this.service.create(tenantId, tenantBusinessId, req.body, senderId, senderName);
       return res.status(201).json({
         success: true, statusCode: 201,
         message: 'Ticket created successfully',
@@ -112,8 +112,8 @@ export class TenantSupportTicketController {
   update = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { tenantId } = await this.getAuthContext(req);
-      const senderId = await this.getSenderId(req);
-      const ticket = await this.service.update(req.params.uuid, tenantId, req.body, senderId);
+      const { id: senderId, name: senderName } = await this.getSender(req);
+      const ticket = await this.service.update(req.params.uuid, tenantId, req.body, senderId, senderName);
       return res.json({
         success: true, statusCode: 200,
         message: 'Ticket updated successfully',
@@ -126,8 +126,8 @@ export class TenantSupportTicketController {
   close = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { tenantId } = await this.getAuthContext(req);
-      const senderId = await this.getSenderId(req);
-      const ticket = await this.service.close(req.params.uuid, tenantId, senderId);
+      const { id: senderId, name: senderName } = await this.getSender(req);
+      const ticket = await this.service.close(req.params.uuid, tenantId, senderId, senderName);
       return res.json({
         success: true, statusCode: 200, message: 'Ticket closed',
         data: this.transform(ticket), meta: this.getMeta(req),
@@ -146,7 +146,7 @@ export class TenantSupportTicketController {
   addMessage = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { tenantId } = await this.getAuthContext(req);
-      const senderId = await this.getSenderId(req);
+      const { id: senderId } = await this.getSender(req);
       const message = await this.service.addMessage(
         req.params.uuid, tenantId, senderId!, req.body.message, req.body.attachments,
       );

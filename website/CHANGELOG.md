@@ -2,6 +2,18 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
+## [1.48.0] - 2026-05-07
+### Added
+- **Performer Name in History Log**: Admin support ticket History Log tab now displays the name of the user who made each change (e.g. "by John Doe") instead of a raw numeric ID. Falls back to `#<id>` if name is unavailable, or omits the "by" line entirely for system actions.
+- **History Log Tab — Admin Support Tickets**: Ticket detail panel now includes a "History Log" tab with a vertical timeline — colour-coded dots, `LOG_ACTION_LABELS` for human-readable action names, `StatusBadge` for status values, and performer + timestamp per entry.
+- **Support Tickets — Admin Panel** (`/manage/support-tickets`): Full admin view — filterable/paginated ticket table, slide-in detail panel with status-transition buttons, resolution notes, Messages tab, and History Log tab. Nav item added to admin sidebar under Tenants, gated by `support_ticket.view`.
+- **Reactivate Suspended Businesses** (`/manage/tenant-businesses`): Refresh icon action button on business cards with `status='suspended'`; calls `PUT /api/tenant-business/:uuid/reactivate` and refreshes the list on success.
+- **Auto-Logout on Auth Errors**: `apiFetch` in `api.ts` detects HTTP 401 responses or any API message containing authentication-token phrases, clears all localStorage tokens (admin + tenant), and redirects to `/superadmin` or `/login` as appropriate.
+
+### Changed
+- **Support Tickets — Tenant Sidebar**: Moved from the collapsible "Manage" dropdown to a top-level nav item (below Dashboard). `topLinks` active check uses `startsWith` for the tickets path.
+- **`TicketLogData` interface**: Added `performerName: string | null` field.
+
 ## [1.28.0] - 2026-05-02
 ### Added
 - **API Versioning Support**: Added an "API Version" field to the "Try it out" section of `ApiDocsViewer`. It automatically resolves the default version from the OpenAPI spec and sends it as the `X-API-Version` header.

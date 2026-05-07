@@ -4,7 +4,7 @@ The authoritative backend REST API for the Fiber Route Map system, replicated in
 Built using [Express](https://expressjs.com/) and [TypeScript](https://www.typescriptlang.org/), leveraging [Knex.js](https://knexjs.org/) for database interaction.
 
 ## Version
-**Current Version:** 1.46.0 (Cable Types API & Permission Sync)
+**Current Version:** 1.48.0 (Support Ticket System + Performer Name Audit Logs)
 
 ## Interactive Documentation
 The API is fully documented using Swagger/OpenAPI 3.0.

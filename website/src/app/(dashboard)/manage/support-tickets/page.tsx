@@ -395,7 +395,7 @@ function TicketDetail({
                           </div>
                           <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
                             {new Date(log.performedAt).toLocaleString()}
-                            {log.performedBy && ` · by #${log.performedBy}`}
+                            {(log.performerName || log.performedBy) && ` · by ${log.performerName ?? `#${log.performedBy}`}`}
                           </div>
                         </div>
                       </div>

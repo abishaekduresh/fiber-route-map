@@ -2,6 +2,30 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.48.0] - 2026-05-07
+
+### Added
+- **Performer Name in History Log**: Ticket activity logs now store and display the name of the user who performed each action (status change, assignment, creation) instead of a raw numeric ID. `performerName VARCHAR(255)` column added to `tenant_ticket_logs`; auto-migration applies the column to existing installations.
+- **History Log Tab in Admin Support Tickets**: Admin ticket detail panel now includes a "History Log" tab — vertical timeline showing every status change and assignment event with colour-coded dots, human-readable action labels, timestamps, and performer name.
+- **Support Tickets — Admin Panel**: Full admin support ticket management at `/manage/support-tickets` — filterable table, detail panel with status-transition buttons, resolution notes, Messages tab, and History Log tab. Nav item added to admin sidebar under Tenants, gated by `support_ticket.view`.
+- **Reactivate Suspended Tenant Businesses**: `/manage/tenant-businesses` now shows a reactivate action for businesses with `status='suspended'`. Backend `PUT /api/tenant-business/:uuid/reactivate` validates the business is not deleted or already active before setting status to `active`.
+- **Auto-Logout on Auth Token Errors**: `apiFetch` now detects HTTP 401 responses or API messages containing authentication-token error phrases, clears all local storage tokens (admin + tenant), and redirects to the correct login page automatically.
+
+### Changed
+- **Support Tickets — Tenant Sidebar**: Moved Support Tickets from the collapsible "Manage" dropdown to the top-level sidebar navigation (below Dashboard), matching the importance of the module.
+
+## [1.47.0] - 2026-05-06
+
+### Added
+- **Multi-Tenant SaaS Support Ticket System**: Complete end-to-end support ticket platform for tenants and admins.
+  - **Backend**: `tenant_support_tickets`, `tenant_ticket_messages`, `tenant_ticket_logs` tables with full auto-migration. REST API under `/api/tenant/support-tickets` (tenant-facing) and `/api/support-tickets` (admin-facing). SLA times auto-calculated from priority at creation (`critical 60/240 min`, `high 240/480 min`, `medium 480/1440 min`, `low 1440/4320 min`). Sequential ticket numbers `TKT-YYYY-XXXX`. Status machine with validated transitions. Message threading with `senderType` (tenant/admin). Full activity logging on every state change.
+  - **Frontend (Tenant)**: `/tenant/support-tickets` — card grid with priority/status filters and search. Slide-in detail panel with chat-style message thread, close-ticket action, and send-reply form. "Raise Ticket" modal (subject, description, category, priority, impact level, optional related node/route/customer IDs).
+  - **Frontend (Admin)**: `/manage/support-tickets` — paginated table with status/priority/search filters. Detail panel with status-transition buttons, assignee management, resolution notes, Messages tab, and History Log timeline.
+  - **RBAC**: `support_ticket` resource (`view`, `create`, `update`, `delete`) added to `ROUTE_PERMISSIONS` and permission sync engine.
+  - **Permissions Page**: `support_ticket: 'Support Ticket'` label added to `RESOURCE_LABELS` chip map.
+  - **OpenAPI Docs**: Full Swagger documentation for all tenant + admin support ticket endpoints. Swagger version bumped to `1.47.0`.
+  - **DDL**: Full `CREATE TABLE` statements for all three tables added to `db.sql`.
+
 ## [1.46.0] - 2026-05-05
 
 ### Added

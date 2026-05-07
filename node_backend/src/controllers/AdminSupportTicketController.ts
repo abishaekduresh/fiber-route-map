@@ -49,11 +49,11 @@ export class AdminSupportTicketController {
     ...extra,
   });
 
-  private getAdminId = async (req: Request): Promise<number | null> => {
+  private getAdmin = async (req: Request): Promise<{ id: number | null; name: string | null }> => {
     const userUuid = (req as any).user?.uuid || (req as any).user?.id;
-    if (!userUuid) return null;
-    const row = await db('users').where('uuid', userUuid).select('id').first();
-    return row?.id ?? null;
+    if (!userUuid) return { id: null, name: null };
+    const row = await db('users').where('uuid', userUuid).select('id', 'name').first();
+    return { id: row?.id ?? null, name: row?.name ?? null };
   };
 
   index = async (req: Request, res: Response, next: NextFunction) => {
@@ -85,8 +85,8 @@ export class AdminSupportTicketController {
 
   update = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const adminId = await this.getAdminId(req);
-      const ticket = await this.service.adminUpdate(req.params.uuid, req.body, adminId);
+      const { id: adminId, name: adminName } = await this.getAdmin(req);
+      const ticket = await this.service.adminUpdate(req.params.uuid, req.body, adminId, adminName);
       return res.json({
         success: true, statusCode: 200,
         message: 'Ticket updated successfully',
@@ -105,7 +105,7 @@ export class AdminSupportTicketController {
 
   addMessage = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const adminId = await this.getAdminId(req);
+      const { id: adminId } = await this.getAdmin(req);
       const message = await this.service.adminAddMessage(
         req.params.uuid, adminId!, req.body.message, req.body.attachments,
       );

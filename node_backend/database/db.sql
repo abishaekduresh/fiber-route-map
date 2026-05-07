@@ -437,6 +437,7 @@ CREATE TABLE IF NOT EXISTS `tenant_ticket_logs` (
   `oldValue` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `newValue` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `performedBy` int unsigned DEFAULT NULL,
+  `performerName` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `performedAt` datetime NOT NULL DEFAULT (now()),
   PRIMARY KEY (`id`),
   KEY `idx_ticket_logs_ticket_id` (`ticketId`)

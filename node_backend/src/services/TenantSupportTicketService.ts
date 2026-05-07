@@ -41,7 +41,13 @@ export class TenantSupportTicketService {
     return ticket;
   }
 
-  async create(tenantId: number, tenantBusinessId: number, data: CreateTicketDTO, performedBy: number | null) {
+  async create(
+    tenantId: number,
+    tenantBusinessId: number,
+    data: CreateTicketDTO,
+    performedBy: number | null,
+    performerName?: string | null,
+  ) {
     const priority = (data.priority ?? 'medium') as TicketPriority;
     const impactLevel = data.impactLevel ?? 'medium';
     const sla = SLA_TIMES[priority];
@@ -66,12 +72,19 @@ export class TenantSupportTicketService {
       action: 'created',
       newValue: ticket.ticketNumber,
       performedBy,
+      performerName: performerName ?? null,
     });
 
     return ticket;
   }
 
-  async update(uuid: string, tenantId: number, data: UpdateTicketDTO, performedBy: number | null) {
+  async update(
+    uuid: string,
+    tenantId: number,
+    data: UpdateTicketDTO,
+    performedBy: number | null,
+    performerName?: string | null,
+  ) {
     const current = await this.getOne(uuid, tenantId);
 
     if (data.status && data.status !== current.status) {
@@ -91,6 +104,7 @@ export class TenantSupportTicketService {
         oldValue: current.status,
         newValue: data.status,
         performedBy,
+        performerName: performerName ?? null,
       });
     }
 
@@ -118,8 +132,8 @@ export class TenantSupportTicketService {
     return this.repo.getLogs(ticket.id);
   }
 
-  async close(uuid: string, tenantId: number, performedBy: number | null) {
-    return this.update(uuid, tenantId, { status: 'closed' }, performedBy);
+  async close(uuid: string, tenantId: number, performedBy: number | null, performerName?: string | null) {
+    return this.update(uuid, tenantId, { status: 'closed' }, performedBy, performerName);
   }
 
   // ─── Admin-facing ──────────────────────────────────────────────────────────
@@ -136,7 +150,12 @@ export class TenantSupportTicketService {
     return ticket;
   }
 
-  async adminUpdate(uuid: string, data: UpdateTicketDTO, performedBy: number | null) {
+  async adminUpdate(
+    uuid: string,
+    data: UpdateTicketDTO,
+    performedBy: number | null,
+    performerName?: string | null,
+  ) {
     const current = await this.adminGetOne(uuid);
 
     if (data.status && data.status !== current.status) {
@@ -156,6 +175,7 @@ export class TenantSupportTicketService {
         oldValue: current.status,
         newValue: data.status,
         performedBy,
+        performerName: performerName ?? null,
       });
     }
 
@@ -166,6 +186,7 @@ export class TenantSupportTicketService {
         oldValue: current.assignedTo ? String(current.assignedTo) : null,
         newValue: data.assignedTo ? String(data.assignedTo) : null,
         performedBy,
+        performerName: performerName ?? null,
       });
     }
 
