@@ -49,9 +49,7 @@
  *                     isSerialNumberRequired: true
  *                     isMacAddressRequired: false
  *                     isIPAddressRequired: true
- *                     isPortRequired: true
  *                     isGpsLocationRequired: false
- *                     isMonitoringEnabled: true
  *                     icon: "server"
  *                     description: "Optical Line Terminal"
  *                     status: "active"
@@ -82,25 +80,20 @@
  *         application/json:
  *           schema:
  *             type: object
- *             required: [tenantDeviceCategoryId, name, code]
+ *             required: [tenantDeviceCategoryId, name]
  *             properties:
  *               tenantDeviceCategoryId: { type: integer, example: 1 }
  *               name: { type: string, example: "OLT" }
- *               code: { type: string, example: "TDTOLT", description: "Auto-uppercased, unique per business" }
  *               isModelNumberRequired: { type: boolean, default: false }
  *               isSerialNumberRequired: { type: boolean, default: false }
  *               isMacAddressRequired: { type: boolean, default: false }
  *               isIPAddressRequired: { type: boolean, default: false }
- *               isPortRequired: { type: boolean, default: false }
  *               isGpsLocationRequired: { type: boolean, default: false }
- *               isMonitoringEnabled: { type: boolean, default: false }
  *               icon: { type: string, example: "server" }
  *               description: { type: string, example: "Optical Line Terminal" }
  *     responses:
  *       201:
  *         description: Device type created
- *       409:
- *         description: Code already exists in this business
  *
  * /tenant/device-types/{uuid}:
  *   get:
@@ -148,17 +141,13 @@
  *               isSerialNumberRequired: { type: boolean }
  *               isMacAddressRequired: { type: boolean }
  *               isIPAddressRequired: { type: boolean }
- *               isPortRequired: { type: boolean }
  *               isGpsLocationRequired: { type: boolean }
- *               isMonitoringEnabled: { type: boolean }
  *               icon: { type: string }
  *               description: { type: string }
  *               status: { type: string, enum: [active, inactive] }
  *     responses:
  *       200:
  *         description: Device type updated
- *       409:
- *         description: Code conflict
  *   delete:
  *     tags:
  *       - Tenant Device Types

@@ -101,9 +101,7 @@ export class TenantDeviceTypeRepository {
       isSerialNumberRequired: data.isSerialNumberRequired ? 1 : 0,
       isMacAddressRequired: data.isMacAddressRequired ? 1 : 0,
       isIPAddressRequired: data.isIPAddressRequired ? 1 : 0,
-      isPortRequired: data.isPortRequired ? 1 : 0,
       isGpsLocationRequired: data.isGpsLocationRequired ? 1 : 0,
-      isMonitoringEnabled: data.isMonitoringEnabled ? 1 : 0,
       icon: data.icon ?? null,
       description: data.description ?? null,
       status: 'active',
@@ -118,7 +116,7 @@ export class TenantDeviceTypeRepository {
     // coerce booleans to 0/1 for MySQL
     const bools = [
       'isModelNumberRequired', 'isSerialNumberRequired', 'isMacAddressRequired',
-      'isIPAddressRequired', 'isPortRequired', 'isGpsLocationRequired', 'isMonitoringEnabled',
+      'isIPAddressRequired', 'isGpsLocationRequired',
     ] as const;
     for (const key of bools) {
       if (payload[key] !== undefined) payload[key] = payload[key] ? 1 : 0;

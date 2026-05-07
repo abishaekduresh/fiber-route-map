@@ -19,9 +19,7 @@ const BOOL_FIELDS = [
   { key: 'isSerialNumberRequired', label: 'Serial Number Required' },
   { key: 'isMacAddressRequired',   label: 'MAC Address Required' },
   { key: 'isIPAddressRequired',    label: 'IP Address Required' },
-  { key: 'isPortRequired',         label: 'Port Required' },
   { key: 'isGpsLocationRequired',  label: 'GPS Location Required' },
-  { key: 'isMonitoringEnabled',    label: 'Monitoring Enabled' },
 ] as const;
 
 type BoolKey = typeof BOOL_FIELDS[number]['key'];
@@ -33,9 +31,7 @@ interface FormState {
   isSerialNumberRequired: boolean;
   isMacAddressRequired: boolean;
   isIPAddressRequired: boolean;
-  isPortRequired: boolean;
   isGpsLocationRequired: boolean;
-  isMonitoringEnabled: boolean;
   icon: string;
   description: string;
   status: 'active' | 'inactive';
@@ -48,9 +44,7 @@ const EMPTY: FormState = {
   isSerialNumberRequired: false,
   isMacAddressRequired: false,
   isIPAddressRequired: false,
-  isPortRequired: false,
   isGpsLocationRequired: false,
-  isMonitoringEnabled: false,
   icon: '',
   description: '',
   status: 'active',
@@ -78,9 +72,7 @@ export default function DeviceTypeModal({ isOpen, onClose, onSuccess, deviceType
         isSerialNumberRequired: Boolean(a.isSerialNumberRequired),
         isMacAddressRequired: Boolean(a.isMacAddressRequired),
         isIPAddressRequired: Boolean(a.isIPAddressRequired),
-        isPortRequired: Boolean(a.isPortRequired),
         isGpsLocationRequired: Boolean(a.isGpsLocationRequired),
-        isMonitoringEnabled: Boolean(a.isMonitoringEnabled),
         icon: a.icon ?? '',
         description: a.description ?? '',
         status: (a.status === 'active' || a.status === 'inactive') ? a.status : 'active',
@@ -93,7 +85,7 @@ export default function DeviceTypeModal({ isOpen, onClose, onSuccess, deviceType
 
   const set = (field: keyof FormState) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-      const value = field === 'code' ? e.target.value.toUpperCase() : e.target.value;
+      const value = e.target.value;
       setForm((prev) => ({ ...prev, [field]: value }));
     };
 
@@ -117,9 +109,7 @@ export default function DeviceTypeModal({ isOpen, onClose, onSuccess, deviceType
         isSerialNumberRequired: form.isSerialNumberRequired,
         isMacAddressRequired: form.isMacAddressRequired,
         isIPAddressRequired: form.isIPAddressRequired,
-        isPortRequired: form.isPortRequired,
         isGpsLocationRequired: form.isGpsLocationRequired,
-        isMonitoringEnabled: form.isMonitoringEnabled,
         icon: form.icon || null,
         description: form.description || null,
         ...(isEditing ? { status: form.status } : {}),

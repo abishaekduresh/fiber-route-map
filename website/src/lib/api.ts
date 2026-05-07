@@ -1144,9 +1144,7 @@ export interface DeviceTypeData {
     isSerialNumberRequired: boolean;
     isMacAddressRequired: boolean;
     isIPAddressRequired: boolean;
-    isPortRequired: boolean;
     isGpsLocationRequired: boolean;
-    isMonitoringEnabled: boolean;
     icon: string | null;
     description: string | null;
     status: 'active' | 'inactive' | 'deleted';

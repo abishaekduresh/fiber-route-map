@@ -11,9 +11,7 @@ export interface TenantDeviceType {
   isSerialNumberRequired: boolean;
   isMacAddressRequired: boolean;
   isIPAddressRequired: boolean;
-  isPortRequired: boolean;
   isGpsLocationRequired: boolean;
-  isMonitoringEnabled: boolean;
   icon: string | null;
   description: string | null;
   status: DeviceTypeStatus;
@@ -31,9 +29,7 @@ export interface CreateDeviceTypeDTO {
   isSerialNumberRequired?: boolean;
   isMacAddressRequired?: boolean;
   isIPAddressRequired?: boolean;
-  isPortRequired?: boolean;
   isGpsLocationRequired?: boolean;
-  isMonitoringEnabled?: boolean;
   icon?: string | null;
   description?: string | null;
 }
@@ -45,9 +41,7 @@ export interface UpdateDeviceTypeDTO {
   isSerialNumberRequired?: boolean;
   isMacAddressRequired?: boolean;
   isIPAddressRequired?: boolean;
-  isPortRequired?: boolean;
   isGpsLocationRequired?: boolean;
-  isMonitoringEnabled?: boolean;
   icon?: string | null;
   description?: string | null;
   status?: DeviceTypeStatus;

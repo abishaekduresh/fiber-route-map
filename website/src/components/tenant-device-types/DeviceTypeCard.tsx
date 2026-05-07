@@ -16,9 +16,7 @@ const BOOL_FLAGS = [
   { key: 'isSerialNumberRequired', label: 'Serial #' },
   { key: 'isMacAddressRequired',   label: 'MAC Addr' },
   { key: 'isIPAddressRequired',    label: 'IP Addr' },
-  { key: 'isPortRequired',         label: 'Port' },
   { key: 'isGpsLocationRequired',  label: 'GPS' },
-  { key: 'isMonitoringEnabled',    label: 'Monitor' },
 ] as const;
 
 export default function DeviceTypeCard({ deviceType, onEdit, onDelete }: Props) {

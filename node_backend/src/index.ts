@@ -419,9 +419,7 @@ const ensureTenantDeviceTypesTable = async () => {
         t.boolean('isSerialNumberRequired').notNullable().defaultTo(false);
         t.boolean('isMacAddressRequired').notNullable().defaultTo(false);
         t.boolean('isIPAddressRequired').notNullable().defaultTo(false);
-        t.boolean('isPortRequired').notNullable().defaultTo(false);
         t.boolean('isGpsLocationRequired').notNullable().defaultTo(false);
-        t.boolean('isMonitoringEnabled').notNullable().defaultTo(false);
         t.string('icon', 255).nullable();
         t.text('description').nullable();
         t.enum('status', ['active', 'inactive', 'deleted']).notNullable().defaultTo('active');
