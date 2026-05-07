@@ -194,13 +194,37 @@ async function apiFetch<T = unknown>(
 
   const contentType = response.headers.get('content-type');
   if (contentType && contentType.includes('application/json')) {
-    return response.json();
+    const data = await response.json();
+
+    // Auto-logout on authentication errors
+    if (
+      response.status === 401 ||
+      (data?.message && typeof data.message === 'string' &&
+        (data.message.toLowerCase().includes('authentication token') ||
+         data.message.toLowerCase().includes('token is required') ||
+         data.message.toLowerCase().includes('token is invalid') ||
+         data.message.toLowerCase().includes('invalid token') ||
+         data.message.toLowerCase().includes('session expired')))
+    ) {
+      if (typeof window !== 'undefined') {
+        const isTenant = !!localStorage.getItem('fiber_tenant_token');
+        localStorage.removeItem('fiber_auth_token');
+        localStorage.removeItem('fiber_auth_user');
+        localStorage.removeItem('fiber_tenant_token');
+        localStorage.removeItem('fiber_tenant_refresh');
+        localStorage.removeItem('fiber_tenant_data');
+        localStorage.removeItem('fiber_tenant_impersonating');
+        window.location.href = isTenant ? '/login' : '/superadmin';
+      }
+    }
+
+    return data;
   }
 
   // If not JSON, it's likely an HTML error page (404/500) from the server
   const text = await response.text();
   console.error(`[apiFetch] Non-JSON response from ${endpoint}:`, text.substring(0, 200));
-  
+
   throw new Error(`Server returned non-JSON response (${response.status}). This usually means a 404 Not Found or 500 Internal Error. Check the URL and backend logs.`);
 }
 
