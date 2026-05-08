@@ -9,6 +9,7 @@ import styles from './map.module.css';
 const LeafletMap = dynamic(() => import('./LeafletMap'), { ssr: false });
 
 type LayerKey = 'street' | 'terrain' | 'dark';
+type GeoStatus = 'idle' | 'requesting' | 'granted' | 'denied' | 'unsupported';
 
 const LAYER_OPTIONS: { value: LayerKey; label: string }[] = [
   { value: 'street', label: 'Street' },
@@ -16,9 +17,7 @@ const LAYER_OPTIONS: { value: LayerKey; label: string }[] = [
   { value: 'dark', label: 'Dark' },
 ];
 
-// Default center: India
-const DEFAULT_CENTER: [number, number] = [20.5937, 78.9629];
-const DEFAULT_ZOOM = 5;
+const DEFAULT_ZOOM = 13;
 
 // Sample markers — replace with real API data once geographic fields exist
 const SAMPLE_MARKERS: MapMarker[] = [
@@ -30,6 +29,8 @@ const SAMPLE_MARKERS: MapMarker[] = [
 ];
 
 export default function MapClient() {
+  const [geoStatus, setGeoStatus]       = useState<GeoStatus>('idle');
+  const [center, setCenter]             = useState<[number, number]>([0, 0]);
   const [layer, setLayer]               = useState<LayerKey>('street');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -41,6 +42,29 @@ export default function MapClient() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
+  // ── Geolocation ──────────────────────────────────────────────────────────
+  const requestLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setGeoStatus('unsupported');
+      return;
+    }
+    setGeoStatus('requesting');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCenter([pos.coords.latitude, pos.coords.longitude]);
+        setGeoStatus('granted');
+      },
+      () => {
+        setGeoStatus('denied');
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }, []);
+
+  // Request on mount
+  useEffect(() => { requestLocation(); }, [requestLocation]);
+
+  // ── Fullscreen ───────────────────────────────────────────────────────────
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
       wrapperRef.current?.requestFullscreen();
@@ -55,6 +79,7 @@ export default function MapClient() {
     return () => document.removeEventListener('fullscreenchange', onFsChange);
   }, []);
 
+  // ── API data ─────────────────────────────────────────────────────────────
   useEffect(() => {
     getDeviceCategories({ limit: -1 }).then((r) => {
       if (r.success && Array.isArray(r.data)) setCategories(r.data);
@@ -88,6 +113,81 @@ export default function MapClient() {
   const activeCount   = SAMPLE_MARKERS.filter((m) => m.status === 'active').length;
   const inactiveCount = SAMPLE_MARKERS.filter((m) => m.status === 'inactive').length;
 
+  // ── Permission screens ───────────────────────────────────────────────────
+  if (geoStatus === 'idle' || geoStatus === 'requesting') {
+    return (
+      <div className={styles.geoScreen}>
+        <div className={styles.geoCard}>
+          <div className={styles.geoIconWrap} style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)' }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="1.5">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
+          <h2 className={styles.geoTitle}>Location Access Required</h2>
+          <p className={styles.geoDesc}>
+            The Network Map requires your GPS location to display the map centred on your area.
+            Please allow location access when prompted by your browser.
+          </p>
+          <div className={styles.geoSpinner} />
+          <p className={styles.geoHint}>Waiting for location permission…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (geoStatus === 'denied') {
+    return (
+      <div className={styles.geoScreen}>
+        <div className={styles.geoCard}>
+          <div className={styles.geoIconWrap} style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="1.5">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
+              <line x1="4" y1="4" x2="20" y2="20" strokeWidth="2" />
+            </svg>
+          </div>
+          <h2 className={styles.geoTitle}>Location Access Denied</h2>
+          <p className={styles.geoDesc}>
+            Location permission was denied. To use the Network Map you must allow location access.
+          </p>
+          <ol className={styles.geoSteps}>
+            <li>Click the <strong>lock / info icon</strong> in your browser's address bar.</li>
+            <li>Set <strong>Location</strong> to <strong>Allow</strong>.</li>
+            <li>Reload this page.</li>
+          </ol>
+          <button className={styles.geoRetryBtn} onClick={requestLocation}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" />
+              <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+            </svg>
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (geoStatus === 'unsupported') {
+    return (
+      <div className={styles.geoScreen}>
+        <div className={styles.geoCard}>
+          <div className={styles.geoIconWrap} style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.5">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          </div>
+          <h2 className={styles.geoTitle}>GPS Not Supported</h2>
+          <p className={styles.geoDesc}>
+            Your browser does not support the Geolocation API. Please use a modern browser such as Chrome, Firefox, or Safari to access the Network Map.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Main map UI (geoStatus === 'granted') ────────────────────────────────
   return (
     <div className={`${styles.wrapper} ${isFullscreen ? styles.wrapperFullscreen : ''}`} ref={wrapperRef}>
       {/* Header */}
@@ -100,16 +200,16 @@ export default function MapClient() {
           </p>
         </div>
         <div className={styles.headerRight}>
-        <div className={styles.stats}>
-          <div className={styles.statBadge} style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', color: '#10b981' }}>
-            <span className={styles.statDot} style={{ background: '#10b981' }} />
-            {activeCount} Active
+          <div className={styles.stats}>
+            <div className={styles.statBadge} style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', color: '#10b981' }}>
+              <span className={styles.statDot} style={{ background: '#10b981' }} />
+              {activeCount} Active
+            </div>
+            <div className={styles.statBadge} style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444' }}>
+              <span className={styles.statDot} style={{ background: '#ef4444' }} />
+              {inactiveCount} Inactive
+            </div>
           </div>
-          <div className={styles.statBadge} style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444' }}>
-            <span className={styles.statDot} style={{ background: '#ef4444' }} />
-            {inactiveCount} Inactive
-          </div>
-        </div>
           <button
             className={styles.fullscreenBtn}
             onClick={toggleFullscreen}
@@ -242,7 +342,7 @@ export default function MapClient() {
           <LeafletMap
             layer={layer}
             markers={filteredMarkers}
-            center={DEFAULT_CENTER}
+            center={center}
             zoom={DEFAULT_ZOOM}
           />
           {filteredMarkers.length === 0 && (
