@@ -9,10 +9,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.25rem 2.5rem;
-  background: var(--color-bg-glass);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  padding: 1rem 2.5rem;
+  background: var(--color-bg-secondary);
   border-bottom: 1px solid var(--color-border);
   position: sticky;
   top: 0;
@@ -89,7 +87,7 @@
 }
 
 .welcomeCard {
-  background: var(--color-bg-glass);
+  background: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: 2rem;
@@ -137,17 +135,17 @@
 }
 
 .card {
-  background: var(--color-bg-glass);
+  background: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: 2rem;
-  transition: all var(--transition-base);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  box-shadow: var(--shadow-sm);
 }
 
 .card:hover {
-  transform: translateY(-4px);
   border-color: #10b981;
-  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.1);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.12);
 }
 
 .card h3 {

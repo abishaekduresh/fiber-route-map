@@ -2,6 +2,19 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.54.0] - 2026-05-08
+
+### Changed
+- **Corporate SaaS UI/UX Redesign**: Transformed the dashboard aesthetic from dark glassmorphism to a clean, structured corporate SaaS look (inspired by Linear, Vercel, and Stripe).
+  - **Design tokens** (`globals.css`): Dark theme backgrounds updated to structured dark-gray palette (`#111118` / `#16161e` / `#1d1d28`); borders changed from near-invisible transparent to `rgba(255,255,255,0.08)`; light theme uses crisp whites and `#e5e7eb` borders; shadows use elevation-based `box-shadow` instead of blue glow.
+  - **Sidebar**: `backdrop-filter` blur removed; sidebar now uses a solid `var(--color-bg-secondary)` background. Brand name uses solid text color instead of gradient clip. Nav items have tighter padding and faster transitions.
+  - **TopBar**: Height reduced from 64px to 56px; `backdrop-filter` removed; solid background. Avatar shadow removed. User menu simplified.
+  - **Animated orbs removed**: `.orb1`, `.orb2`, and `.bgMesh` decorative background elements removed from both `DashboardLayout` and `TenantDashboardLayout`.
+  - **Cards & Tables**: `.glassCard`, `.statCard`, `.tableContainer` no longer use `backdrop-filter`; they use solid `var(--color-bg-elevated)` with `var(--shadow-sm)` elevation. Table `<th>` headers use `var(--color-bg-secondary)` background. Stat card hover no longer lifts with `transform`.
+  - **Buttons**: Primary action buttons (`createBtn`, `submitBtn`) changed from blue-purple gradient to solid `#3b82f6` blue with a clean hover darkening (matching Stripe/Linear CTA style); gradient removed.
+  - **Modal footer**: Uses solid `var(--color-bg-secondary)` instead of glass background.
+  - **Tenant dashboard header**: `backdrop-filter` removed; solid background.
+
 ## [1.53.0] - 2026-05-08
 
 ### Changed

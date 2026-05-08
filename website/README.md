@@ -4,9 +4,10 @@ A futuristic, high-performance web dashboard for managing fiber optic networks.
 Built with **Next.js 16 (Turbopack)** and **TypeScript**, featuring a stunning **Glassmorphism Design System**.
 
 ## Version
-**Current Version:** 1.53.0 (Cable Type Auto-generated Name & Code)
+**Current Version:** 1.54.0 (Corporate SaaS UI/UX Redesign)
 
 ## Features
+- **Corporate SaaS UI/UX**: Clean, structured dashboard aesthetic (sidebar, topbar, cards, tables) inspired by Linear, Vercel, and Stripe — solid surfaces, elevation shadows, solid-blue primary buttons, no animated orbs or backdrop-blur glass effects.
 - **Live Location Pointer with Direction** (`/tenant/map`): Blue dot with direction cone pointing in the direction of travel, pulsing ring animation, and a GPS accuracy circle. Position and heading update continuously via `watchPosition`; watch is cleared on unmount.
 - **Compass Rose** (`/tenant/map`): N/E/S/W compass rendered as a Leaflet custom control at the top-right of the map — dark glass circle, two-tone needle (red north, slate south), cardinal and diagonal tick marks.
 - **Map Refresh Button** (`/tenant/map`): Header button re-fetches device categories and device types; icon spins while in progress.

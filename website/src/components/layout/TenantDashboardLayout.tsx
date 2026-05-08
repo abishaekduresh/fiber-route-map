@@ -26,13 +26,6 @@ export default function TenantDashboardLayout({
   return (
     <TenantAuthGuard>
       <div className={styles.layout}>
-        {/* Futuristic Background Elements — Emerald Tint */}
-        <div className={styles.bgMesh} style={{ 
-          background: 'radial-gradient(circle at 18% 45%, rgba(16, 185, 129, 0.04) 0%, transparent 50%), radial-gradient(circle at 82% 75%, rgba(6, 182, 212, 0.04) 0%, transparent 50%)' 
-        }} />
-        <div className={styles.orb1} style={{ background: 'radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%)' }} />
-        <div className={styles.orb2} style={{ background: 'radial-gradient(circle, rgba(6, 182, 212, 0.08) 0%, transparent 70%)' }} />
-        
         {/* Mobile Sidebar Overlay */}
         {isSidebarOpen && (
           <div className={styles.sidebarOverlay} onClick={closeSidebar} />

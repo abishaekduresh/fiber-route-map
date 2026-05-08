@@ -27,11 +27,6 @@ export default function DashboardLayout({
   return (
     <AuthGuard>
       <div className={styles.layout}>
-        {/* Futuristic Background Elements */}
-        <div className={styles.bgMesh} />
-        <div className={styles.orb1} />
-        <div className={styles.orb2} />
-        
         {/* Mobile Sidebar Overlay */}
         {isSidebarOpen && (
           <div className={styles.sidebarOverlay} onClick={closeSidebar} />
