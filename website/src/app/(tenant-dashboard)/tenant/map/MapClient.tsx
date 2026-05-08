@@ -20,14 +20,6 @@ const LAYER_OPTIONS: { value: LayerKey; label: string }[] = [
   { value: 'dark', label: 'Dark' },
 ];
 
-// Sample markers — replace with real API data once geographic fields exist
-const SAMPLE_MARKERS: MapMarker[] = [
-  { id: '1', lat: 28.6139, lng: 77.209,  label: 'Node A — Delhi',     category: 'Active Equipment', status: 'active' },
-  { id: '2', lat: 19.076,  lng: 72.8777, label: 'Node B — Mumbai',    category: 'Passive Equipment', status: 'active' },
-  { id: '3', lat: 13.0827, lng: 80.2707, label: 'Node C — Chennai',   category: 'Active Equipment', status: 'inactive' },
-  { id: '4', lat: 22.5726, lng: 88.3639, label: 'Node D — Kolkata',   category: 'Passive Equipment', status: 'active' },
-  { id: '5', lat: 17.385,  lng: 78.4867, label: 'Node E — Hyderabad', category: 'Active Equipment', status: 'active' },
-];
 
 function parseSettings(raw: { key: string; value: string }[]): MapSettings {
   const m: Record<string, string> = {};
@@ -129,19 +121,10 @@ export default function MapClient() {
     setCategoryFilter(val); setDeviceTypeFilter('');
   }, []);
 
-  const filteredMarkers = useMemo(() => {
-    return SAMPLE_MARKERS.filter((m) => {
-      const matchStatus   = statusFilter === 'all' || m.status === statusFilter;
-      const matchCategory = !categoryFilter || m.category === categories.find(
-        (c) => String(c.attributes.numericId) === categoryFilter
-      )?.attributes.name;
-      const matchSearch   = !search || m.label.toLowerCase().includes(search.toLowerCase());
-      return matchStatus && matchCategory && matchSearch;
-    });
-  }, [statusFilter, categoryFilter, categories, search]);
+  const filteredMarkers = useMemo<MapMarker[]>(() => [], []);
 
-  const activeCount   = SAMPLE_MARKERS.filter((m) => m.status === 'active').length;
-  const inactiveCount = SAMPLE_MARKERS.filter((m) => m.status === 'inactive').length;
+  const activeCount   = 0;
+  const inactiveCount = 0;
 
   // ── Permission screens ───────────────────────────────────────────────────
   if (geoStatus === 'idle' || geoStatus === 'requesting') {
@@ -224,7 +207,6 @@ export default function MapClient() {
           <h2 className={styles.title}>Network Map</h2>
           <p className={styles.subtitle}>
             {filteredMarkers.length} node{filteredMarkers.length !== 1 ? 's' : ''} visible
-            {SAMPLE_MARKERS.length !== filteredMarkers.length && ` (filtered from ${SAMPLE_MARKERS.length})`}
           </p>
         </div>
         <div className={styles.headerRight}>
