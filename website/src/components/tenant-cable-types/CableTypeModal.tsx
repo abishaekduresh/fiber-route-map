@@ -53,7 +53,7 @@ export default function CableTypeModal({ isOpen, onClose, onSuccess, cableType }
 
   // Auto-generated previews
   const hasValues = form.fiberCoreCount !== '' && form.tubeCount !== '';
-  const autoCode = hasValues ? `${form.fiberCoreCount}F x ${form.tubeCount}T` : '—';
+  const autoCode = hasValues ? `${form.fiberCoreCount}Fx${form.tubeCount}T` : '—';
   const autoName = hasValues ? `${form.fiberCoreCount}F x ${form.tubeCount}T Fiber` : '—';
 
   const handleSubmit = async (e: React.FormEvent) => {

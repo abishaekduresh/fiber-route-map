@@ -17,7 +17,7 @@ export class TenantCableTypeService {
   }
 
   private buildNameCode(fiberCoreCount: number, tubeCount: number) {
-    const code = `${fiberCoreCount}F x ${tubeCount}T`;
+    const code = `${fiberCoreCount}Fx${tubeCount}T`;
     const name = `${fiberCoreCount}F x ${tubeCount}T Fiber`;
     return { name, code };
   }
