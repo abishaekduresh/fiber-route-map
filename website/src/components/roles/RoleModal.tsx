@@ -79,6 +79,17 @@ export default function RoleModal({ isOpen, onClose, onSuccess, role }: RoleModa
     });
   };
 
+  const RESOURCE_LABELS: Record<string, string> = {
+    user: 'User', role: 'Role', country: 'Country', permission: 'Permission',
+    tenant: 'Tenant', tenant_business: 'Tenant Business', lco: 'LCO',
+    tenant_user: 'Tenant User', upstream_provider: 'Upstream Provider',
+    cable_type: 'Cable Type',
+    device_category: 'Device Category',
+    device_type: 'Device Type',
+    support_ticket: 'Support Ticket',
+    audit_log: 'Audit Log', apidoc: 'API Docs',
+  };
+
   const groupedPermissions = useMemo(() => {
     const groups: Record<string, any[]> = {};
     const filteredPerms = permissions.filter(p => {
@@ -233,8 +244,8 @@ export default function RoleModal({ isOpen, onClose, onSuccess, role }: RoleModa
                     {Object.entries(groupedPermissions).map(([resource, perms]) => (
                       <div key={resource} style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                          <h5 style={{ textTransform: 'capitalize', fontWeight: 'bold', fontSize: '0.9rem', color: 'var(--color-accent-blue)' }}>
-                            {resource} Management
+                          <h5 style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'var(--color-accent-blue)' }}>
+                            {(RESOURCE_LABELS[resource] ?? resource.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))} Management
                           </h5>
                           <div style={{ display: 'flex', gap: '0.75rem' }}>
                             <button 
