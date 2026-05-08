@@ -46,6 +46,9 @@ export default function MapClient() {
 
   const [geoStatus, setGeoStatus]       = useState<GeoStatus>('idle');
   const [center, setCenter]             = useState<[number, number]>([0, 0]);
+  const [heading, setHeading]           = useState<number | null>(null);
+  const [accuracy, setAccuracy]         = useState<number>(0);
+  const watchIdRef                      = useRef<number | null>(null);
   const [mapSettings, setMapSettings]   = useState<MapSettings>(DEFAULT_MAP_SETTINGS);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
@@ -82,18 +85,28 @@ export default function MapClient() {
     setFiltersOpen(s.filtersOpenByDefault);
   }, []);
 
-  // ── Geolocation ──────────────────────────────────────────────────────────
+  // ── Geolocation (continuous watch) ───────────────────────────────────────
   const requestLocation = useCallback(() => {
     if (!navigator.geolocation) { setGeoStatus('unsupported'); return; }
     setGeoStatus('requesting');
-    navigator.geolocation.getCurrentPosition(
-      (pos) => { setCenter([pos.coords.latitude, pos.coords.longitude]); setGeoStatus('granted'); },
+    if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        setCenter([pos.coords.latitude, pos.coords.longitude]);
+        setAccuracy(pos.coords.accuracy);
+        const h = pos.coords.heading;
+        setHeading(h != null && !isNaN(h) ? h : null);
+        setGeoStatus('granted');
+      },
       () => setGeoStatus('denied'),
       { enableHighAccuracy: true, timeout: 10000 },
     );
   }, []);
 
-  useEffect(() => { requestLocation(); }, [requestLocation]);
+  useEffect(() => {
+    requestLocation();
+    return () => { if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current); };
+  }, [requestLocation]);
 
   // ── Fullscreen ───────────────────────────────────────────────────────────
   const toggleFullscreen = useCallback(() => {
@@ -124,11 +137,10 @@ export default function MapClient() {
     setIsRefreshing(true);
     try {
       await loadApiData();
-      requestLocation();
     } finally {
       setIsRefreshing(false);
     }
-  }, [isRefreshing, loadApiData, requestLocation]);
+  }, [isRefreshing, loadApiData]);
 
   const filteredDeviceTypes = useMemo(() => {
     if (!categoryFilter) return deviceTypes;
@@ -366,6 +378,7 @@ export default function MapClient() {
             zoom={effectiveZoom}
             showScaleBar={mapSettings.showScaleBar}
             scaleUnit={mapSettings.scaleUnit}
+            userLocation={{ position: center, heading, accuracy }}
           />
           {filteredMarkers.length === 0 && (
             <div className={styles.emptyOverlay}>
