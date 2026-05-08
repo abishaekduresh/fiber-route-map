@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import { getDeviceCategories, getDeviceTypes, getUserSettings, DeviceCategoryData, DeviceTypeData } from '@/lib/api';
+import { useTenantAuth } from '@/components/providers/TenantAuthContext';
 import type { MapMarker } from './LeafletMap';
 import MapSettingsPanel, { MapSettings, DEFAULT_MAP_SETTINGS } from '@/components/tenant-map/MapSettingsPanel';
 import styles from './map.module.css';
@@ -41,6 +43,15 @@ function parseSettings(raw: { key: string; value: string }[]): MapSettings {
 }
 
 export default function MapClient() {
+  const router = useRouter();
+  const { hasPermission } = useTenantAuth();
+
+  useEffect(() => {
+    if (!hasPermission('map.view')) {
+      router.replace('/tenant/dashboard');
+    }
+  }, [hasPermission, router]);
+
   const [geoStatus, setGeoStatus]       = useState<GeoStatus>('idle');
   const [center, setCenter]             = useState<[number, number]>([0, 0]);
   const [mapSettings, setMapSettings]   = useState<MapSettings>(DEFAULT_MAP_SETTINGS);

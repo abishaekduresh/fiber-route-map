@@ -87,6 +87,7 @@ export default function RoleModal({ isOpen, onClose, onSuccess, role }: RoleModa
     device_category: 'Device Category',
     device_type: 'Device Type',
     support_ticket: 'Support Ticket',
+    map: 'Map',
     audit_log: 'Audit Log', apidoc: 'API Docs',
   };
 

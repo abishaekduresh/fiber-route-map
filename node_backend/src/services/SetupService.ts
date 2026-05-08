@@ -79,6 +79,7 @@ export const ROUTE_PERMISSIONS = [
   { resource: 'device_category',   actions: ['view', 'create', 'update', 'delete'] },
   { resource: 'device_type',       actions: ['view', 'create', 'update', 'delete'] },
   { resource: 'support_ticket',    actions: ['view', 'create', 'update', 'delete'] },
+  { resource: 'map',               actions: ['view'] },
   { resource: 'audit_log',         actions: ['view', 'export'] },
   { resource: 'apidoc',            actions: ['view'] },
 ];

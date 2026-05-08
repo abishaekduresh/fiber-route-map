@@ -51,7 +51,7 @@ export default function TenantSidebar({
           <line x1="16" y1="6" x2="16" y2="22" />
         </svg>
       ),
-      show: true,
+      show: hasPermission('map.view'),
     },
     {
       name: 'Support Tickets',
