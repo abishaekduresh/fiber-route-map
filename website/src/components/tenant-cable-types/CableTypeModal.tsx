@@ -13,8 +13,6 @@ interface Props {
 }
 
 interface FormState {
-  name: string;
-  code: string;
   tubeCount: string;
   fiberCoreCount: string;
   cableDiameter: string;
@@ -23,7 +21,7 @@ interface FormState {
 }
 
 const EMPTY: FormState = {
-  name: '', code: '', tubeCount: '1', fiberCoreCount: '', cableDiameter: '', description: '', status: 'active',
+  tubeCount: '1', fiberCoreCount: '', cableDiameter: '', description: '', status: 'active',
 };
 
 export default function CableTypeModal({ isOpen, onClose, onSuccess, cableType }: Props) {
@@ -34,12 +32,9 @@ export default function CableTypeModal({ isOpen, onClose, onSuccess, cableType }
 
   useEffect(() => {
     if (!isOpen) return;
-
     if (cableType) {
       const a = cableType.attributes;
       setForm({
-        name: a.name ?? '',
-        code: a.code ?? '',
         tubeCount: String((a as any).tubeCount ?? 1),
         fiberCoreCount: String(a.fiberCoreCount ?? ''),
         cableDiameter: String(a.cableDiameter ?? ''),
@@ -56,6 +51,11 @@ export default function CableTypeModal({ isOpen, onClose, onSuccess, cableType }
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
   };
 
+  // Auto-generated previews
+  const hasValues = form.fiberCoreCount !== '' && form.tubeCount !== '';
+  const autoCode = hasValues ? `${form.fiberCoreCount}F x ${form.tubeCount}T` : '—';
+  const autoName = hasValues ? `${form.fiberCoreCount}F x ${form.tubeCount}T Fiber` : '—';
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -63,8 +63,6 @@ export default function CableTypeModal({ isOpen, onClose, onSuccess, cableType }
 
     try {
       const payload = {
-        name: form.name,
-        code: form.code,
         tubeCount: Number(form.tubeCount) || 1,
         fiberCoreCount: Number(form.fiberCoreCount),
         cableDiameter: parseFloat(form.cableDiameter),
@@ -115,30 +113,57 @@ export default function CableTypeModal({ isOpen, onClose, onSuccess, cableType }
               </div>
             )}
 
-            <div className={styles.formGrid}>
-              <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
-                <label className={styles.label}>Cable Name *</label>
-                <input type="text" className={styles.input} value={form.name} onChange={set('name')} required placeholder="e.g. 12F Fiber" />
+            {/* Auto-generated preview */}
+            <div style={{
+              display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem',
+              padding: '0.85rem 1rem', marginBottom: '1.25rem',
+              background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.18)',
+              borderRadius: 'var(--radius-md)',
+            }}>
+              <div>
+                <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>
+                  Auto-generated Name
+                </div>
+                <div style={{ fontSize: '0.92rem', fontWeight: 700, color: hasValues ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>
+                  {autoName}
+                </div>
               </div>
+              <div>
+                <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>
+                  Auto-generated Code
+                </div>
+                <div style={{ fontSize: '0.92rem', fontWeight: 700, color: hasValues ? '#3b82f6' : 'var(--color-text-secondary)', fontFamily: 'monospace' }}>
+                  {autoCode}
+                </div>
+              </div>
+            </div>
 
+            <div className={styles.formGrid}>
               <div className={styles.inputGroup}>
-                <label className={styles.label}>Code *</label>
-                <input type="text" className={styles.input} value={form.code} onChange={set('code')} required placeholder="e.g. xF12" />
+                <label className={styles.label}>Fiber Core Count *</label>
+                <input
+                  type="number" className={styles.input}
+                  value={form.fiberCoreCount} onChange={set('fiberCoreCount')}
+                  required min={1} placeholder="e.g. 12"
+                />
               </div>
 
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Tube Count</label>
-                <input type="number" className={styles.input} value={form.tubeCount} onChange={set('tubeCount')} min={1} placeholder="Default: 1" />
-              </div>
-
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>Fiber Core Count *</label>
-                <input type="number" className={styles.input} value={form.fiberCoreCount} onChange={set('fiberCoreCount')} required min={1} placeholder="e.g. 12" />
+                <input
+                  type="number" className={styles.input}
+                  value={form.tubeCount} onChange={set('tubeCount')}
+                  min={1} placeholder="Default: 1"
+                />
               </div>
 
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Cable Diameter (mm) *</label>
-                <input type="number" className={styles.input} value={form.cableDiameter} onChange={set('cableDiameter')} required min={0} step="0.01" placeholder="e.g. 8.50" />
+                <input
+                  type="number" className={styles.input}
+                  value={form.cableDiameter} onChange={set('cableDiameter')}
+                  required min={0} step="0.01" placeholder="e.g. 8.50"
+                />
               </div>
 
               {isEditing && (
@@ -155,11 +180,9 @@ export default function CableTypeModal({ isOpen, onClose, onSuccess, cableType }
                 <label className={styles.label}>Description</label>
                 <textarea
                   className={styles.input}
-                  value={form.description}
-                  onChange={set('description')}
+                  value={form.description} onChange={set('description')}
                   placeholder="Optional description..."
-                  rows={3}
-                  style={{ resize: 'vertical', minHeight: '72px' }}
+                  rows={3} style={{ resize: 'vertical', minHeight: '72px' }}
                 />
               </div>
             </div>

@@ -16,27 +16,38 @@ export class TenantCableTypeService {
     return ct;
   }
 
+  private buildNameCode(fiberCoreCount: number, tubeCount: number) {
+    const code = `${fiberCoreCount}F x ${tubeCount}T`;
+    const name = `${fiberCoreCount}F x ${tubeCount}T Fiber`;
+    return { name, code };
+  }
+
   async create(tenantBusinessId: number, data: CreateCableTypeDTO) {
-    const dup = await this.repo.findByCode(data.code, tenantBusinessId);
+    const tubeCount = data.tubeCount ?? 1;
+    const { name, code } = this.buildNameCode(data.fiberCoreCount, tubeCount);
+    const dup = await this.repo.findByCode(code, tenantBusinessId);
     if (dup) {
-      const e = new Error('A cable type with this code already exists in your business');
+      const e = new Error(`A cable type "${code}" already exists in your business`);
       (e as any).status = 409; throw e;
     }
-    return this.repo.create({ ...data, tenantBusinessId });
+    return this.repo.create({ ...data, name, code, tubeCount, tenantBusinessId });
   }
 
   async update(uuid: string, tenantBusinessId: number, data: UpdateCableTypeDTO) {
     const current = await this.getOne(uuid, tenantBusinessId);
+    const fiberCoreCount = data.fiberCoreCount ?? current.fiberCoreCount;
+    const tubeCount = data.tubeCount ?? current.tubeCount;
+    const { name, code } = this.buildNameCode(fiberCoreCount, tubeCount);
 
-    if (data.code && data.code !== current.code) {
-      const dup = await this.repo.findByCode(data.code, tenantBusinessId);
+    if (code !== current.code) {
+      const dup = await this.repo.findByCode(code, tenantBusinessId);
       if (dup) {
-        const e = new Error('A cable type with this code already exists in your business');
+        const e = new Error(`A cable type "${code}" already exists in your business`);
         (e as any).status = 409; throw e;
       }
     }
 
-    await this.repo.update(uuid, tenantBusinessId, data);
+    await this.repo.update(uuid, tenantBusinessId, { ...data, name, code });
     return this.getOne(uuid, tenantBusinessId);
   }
 

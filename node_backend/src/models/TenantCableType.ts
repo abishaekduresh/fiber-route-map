@@ -17,8 +17,6 @@ export interface TenantCableType {
 }
 
 export interface CreateCableTypeDTO {
-  name: string;
-  code: string;
   tubeCount?: number;
   fiberCoreCount: number;
   cableDiameter: number;
@@ -26,8 +24,6 @@ export interface CreateCableTypeDTO {
 }
 
 export interface UpdateCableTypeDTO {
-  name?: string;
-  code?: string;
   tubeCount?: number;
   fiberCoreCount?: number;
   cableDiameter?: number;
