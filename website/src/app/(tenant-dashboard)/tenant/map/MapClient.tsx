@@ -60,6 +60,7 @@ export default function MapClient() {
   const [filtersOpen, setFiltersOpen]   = useState(DEFAULT_MAP_SETTINGS.filtersOpenByDefault);
   const [settingsPanelOpen, setSettingsPanelOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   // ── Load saved settings from API ─────────────────────────────────────────
@@ -107,10 +108,27 @@ export default function MapClient() {
   }, []);
 
   // ── API data ─────────────────────────────────────────────────────────────
-  useEffect(() => {
-    getDeviceCategories({ limit: -1 }).then((r) => { if (r.success && Array.isArray(r.data)) setCategories(r.data); });
-    getDeviceTypes({ limit: -1 }).then((r) => { if (r.success && Array.isArray(r.data)) setDeviceTypes(r.data); });
+  const loadApiData = useCallback(async () => {
+    const [catRes, dtRes] = await Promise.all([
+      getDeviceCategories({ limit: -1 }),
+      getDeviceTypes({ limit: -1 }),
+    ]);
+    if (catRes.success && Array.isArray(catRes.data)) setCategories(catRes.data);
+    if (dtRes.success && Array.isArray(dtRes.data)) setDeviceTypes(dtRes.data);
   }, []);
+
+  useEffect(() => { loadApiData(); }, [loadApiData]);
+
+  const refreshMap = useCallback(async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await loadApiData();
+      requestLocation();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [isRefreshing, loadApiData, requestLocation]);
 
   const filteredDeviceTypes = useMemo(() => {
     if (!categoryFilter) return deviceTypes;
@@ -218,6 +236,22 @@ export default function MapClient() {
               <span className={styles.statDot} style={{ background: '#ef4444' }} />{inactiveCount} Inactive
             </div>
           </div>
+          {/* Refresh */}
+          <button
+            className={styles.fullscreenBtn}
+            onClick={refreshMap}
+            title="Refresh map"
+            disabled={isRefreshing}
+            style={{ opacity: isRefreshing ? 0.6 : 1 }}
+          >
+            <svg
+              width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              style={{ animation: isRefreshing ? 'spin 0.8s linear infinite' : 'none' }}
+            >
+              <polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" />
+              <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+            </svg>
+          </button>
           {/* Settings */}
           <button
             className={`${styles.fullscreenBtn} ${settingsPanelOpen ? styles.headerBtnActive : ''}`}
