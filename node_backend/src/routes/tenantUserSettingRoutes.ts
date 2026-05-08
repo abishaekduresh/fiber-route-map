@@ -3,13 +3,16 @@ import { TenantUserSettingRepository } from '../repositories/TenantUserSettingRe
 import { TenantUserSettingService } from '../services/TenantUserSettingService.js';
 import { TenantUserSettingController } from '../controllers/TenantUserSettingController.js';
 import { tenantAuth } from '../middleware/tenantAuth.js';
+import { TenantRepository } from '../repositories/TenantRepository.js';
 
 const router = Router();
+const tenantRepo = new TenantRepository();
+const auth = tenantAuth(tenantRepo);
 const controller = new TenantUserSettingController(
   new TenantUserSettingService(new TenantUserSettingRepository())
 );
 
-router.use(tenantAuth);
+router.use(auth);
 
 router.get('/',           controller.index);
 router.put('/',           controller.upsert);
