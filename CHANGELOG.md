@@ -2,6 +2,16 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.53.0] - 2026-05-08
+
+### Changed
+- **Cable Type Auto-generated Name & Code**: Name and code are no longer user-supplied — they are derived automatically from `fiberCoreCount` and `tubeCount`.
+  - **Name** → `{n}F x {t}T Fiber` (e.g. `12F x 2T Fiber`)
+  - **Code** → `{n}Fx{t}T` (e.g. `12Fx2T`)
+  - Backend `buildNameCode()` helper in `TenantCableTypeService` generates both on create and update; duplicate check runs on the computed code.
+  - `CreateCableTypeDTO` / `UpdateCableTypeDTO` no longer include `name` or `code` fields.
+  - **Frontend modal**: Name and Code input fields removed. A live preview panel (blue-tinted) updates as the user types — showing the auto-generated name in primary text and the code in monospace blue. Payload no longer sends `name` or `code`.
+
 ## [1.52.0] - 2026-05-08
 
 ### Added
