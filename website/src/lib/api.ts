@@ -1311,4 +1311,35 @@ export async function adminGetTicketLogs(uuid: string): Promise<ApiResponse<Tick
   return apiFetch(`/api/support-tickets/${uuid}/logs`);
 }
 
+// ─── User Settings ─────────────────────────────────────────────────────────────
+
+export interface UserSettingData {
+  id: string;
+  type: string;
+  attributes: {
+    key: string;
+    name: string;
+    value: string;
+    status: 'active' | 'inactive' | 'deleted';
+  };
+  meta: { createdAt: string; updatedAt: string };
+}
+
+export async function getUserSettings(): Promise<ApiResponse<UserSettingData[]>> {
+  return apiFetch('/api/tenant/user-settings');
+}
+
+export async function saveUserSettings(
+  settings: { key: string; name: string; value: string }[]
+): Promise<ApiResponse<UserSettingData[]>> {
+  return apiFetch('/api/tenant/user-settings', {
+    method: 'PUT',
+    body: JSON.stringify({ settings }),
+  });
+}
+
+export async function deleteUserSetting(key: string): Promise<ApiResponse> {
+  return apiFetch(`/api/tenant/user-settings/${encodeURIComponent(key)}`, { method: 'DELETE' });
+}
+
 export { apiFetch };

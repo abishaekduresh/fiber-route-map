@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { getDeviceCategories, getDeviceTypes, DeviceCategoryData, DeviceTypeData } from '@/lib/api';
+import { getDeviceCategories, getDeviceTypes, getUserSettings, DeviceCategoryData, DeviceTypeData } from '@/lib/api';
 import type { MapMarker } from './LeafletMap';
+import MapSettingsPanel, { MapSettings, DEFAULT_MAP_SETTINGS } from '@/components/tenant-map/MapSettingsPanel';
 import styles from './map.module.css';
 
 const LeafletMap = dynamic(() => import('./LeafletMap'), { ssr: false });
@@ -17,8 +18,6 @@ const LAYER_OPTIONS: { value: LayerKey; label: string }[] = [
   { value: 'dark', label: 'Dark' },
 ];
 
-const DEFAULT_ZOOM = 13;
-
 // Sample markers — replace with real API data once geographic fields exist
 const SAMPLE_MARKERS: MapMarker[] = [
   { id: '1', lat: 28.6139, lng: 77.209,  label: 'Node A — Delhi',     category: 'Active Equipment', status: 'active' },
@@ -28,49 +27,74 @@ const SAMPLE_MARKERS: MapMarker[] = [
   { id: '5', lat: 17.385,  lng: 78.4867, label: 'Node E — Hyderabad', category: 'Active Equipment', status: 'active' },
 ];
 
+function parseSettings(raw: { key: string; value: string }[]): MapSettings {
+  const m: Record<string, string> = {};
+  raw.forEach((r) => { m[r.key] = r.value; });
+  return {
+    defaultLayer: (m['map.defaultLayer'] as LayerKey) ?? DEFAULT_MAP_SETTINGS.defaultLayer,
+    defaultZoom:  Number(m['map.defaultZoom'])  || DEFAULT_MAP_SETTINGS.defaultZoom,
+    showScaleBar: m['map.showScaleBar'] !== undefined ? m['map.showScaleBar'] === 'true' : DEFAULT_MAP_SETTINGS.showScaleBar,
+    scaleUnit:    (m['map.scaleUnit'] as 'metric' | 'imperial') ?? DEFAULT_MAP_SETTINGS.scaleUnit,
+    autoCenterGPS: m['map.autoCenterGPS'] !== undefined ? m['map.autoCenterGPS'] === 'true' : DEFAULT_MAP_SETTINGS.autoCenterGPS,
+    filtersOpenByDefault: m['map.filtersOpenByDefault'] !== undefined ? m['map.filtersOpenByDefault'] === 'true' : DEFAULT_MAP_SETTINGS.filtersOpenByDefault,
+  };
+}
+
 export default function MapClient() {
   const [geoStatus, setGeoStatus]       = useState<GeoStatus>('idle');
   const [center, setCenter]             = useState<[number, number]>([0, 0]);
-  const [layer, setLayer]               = useState<LayerKey>('street');
+  const [mapSettings, setMapSettings]   = useState<MapSettings>(DEFAULT_MAP_SETTINGS);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+
+  // Active layer/zoom can diverge from saved defaults after user interacts
+  const [layer, setLayer]               = useState<LayerKey>(DEFAULT_MAP_SETTINGS.defaultLayer);
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [deviceTypeFilter, setDeviceTypeFilter] = useState('');
   const [search, setSearch]             = useState('');
   const [categories, setCategories]     = useState<DeviceCategoryData[]>([]);
   const [deviceTypes, setDeviceTypes]   = useState<DeviceTypeData[]>([]);
-  const [filtersOpen, setFiltersOpen]   = useState(true);
+  const [filtersOpen, setFiltersOpen]   = useState(DEFAULT_MAP_SETTINGS.filtersOpenByDefault);
+  const [settingsPanelOpen, setSettingsPanelOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
+  // ── Load saved settings from API ─────────────────────────────────────────
+  useEffect(() => {
+    getUserSettings().then((res) => {
+      if (res.success && Array.isArray(res.data)) {
+        const parsed = parseSettings(res.data.map((d) => ({ key: d.attributes.key, value: d.attributes.value })));
+        setMapSettings(parsed);
+        setLayer(parsed.defaultLayer);
+        setFiltersOpen(parsed.filtersOpenByDefault);
+      }
+      setSettingsLoaded(true);
+    }).catch(() => setSettingsLoaded(true));
+  }, []);
+
+  const handleSettingsApply = useCallback((s: MapSettings) => {
+    setMapSettings(s);
+    setLayer(s.defaultLayer);
+    setFiltersOpen(s.filtersOpenByDefault);
+  }, []);
+
   // ── Geolocation ──────────────────────────────────────────────────────────
   const requestLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      setGeoStatus('unsupported');
-      return;
-    }
+    if (!navigator.geolocation) { setGeoStatus('unsupported'); return; }
     setGeoStatus('requesting');
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCenter([pos.coords.latitude, pos.coords.longitude]);
-        setGeoStatus('granted');
-      },
-      () => {
-        setGeoStatus('denied');
-      },
+      (pos) => { setCenter([pos.coords.latitude, pos.coords.longitude]); setGeoStatus('granted'); },
+      () => setGeoStatus('denied'),
       { enableHighAccuracy: true, timeout: 10000 },
     );
   }, []);
 
-  // Request on mount
   useEffect(() => { requestLocation(); }, [requestLocation]);
 
   // ── Fullscreen ───────────────────────────────────────────────────────────
   const toggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      wrapperRef.current?.requestFullscreen();
-    } else {
-      document.exitFullscreen();
-    }
+    if (!document.fullscreenElement) wrapperRef.current?.requestFullscreen();
+    else document.exitFullscreen();
   }, []);
 
   useEffect(() => {
@@ -81,12 +105,8 @@ export default function MapClient() {
 
   // ── API data ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    getDeviceCategories({ limit: -1 }).then((r) => {
-      if (r.success && Array.isArray(r.data)) setCategories(r.data);
-    });
-    getDeviceTypes({ limit: -1 }).then((r) => {
-      if (r.success && Array.isArray(r.data)) setDeviceTypes(r.data);
-    });
+    getDeviceCategories({ limit: -1 }).then((r) => { if (r.success && Array.isArray(r.data)) setCategories(r.data); });
+    getDeviceTypes({ limit: -1 }).then((r) => { if (r.success && Array.isArray(r.data)) setDeviceTypes(r.data); });
   }, []);
 
   const filteredDeviceTypes = useMemo(() => {
@@ -95,8 +115,7 @@ export default function MapClient() {
   }, [deviceTypes, categoryFilter]);
 
   const handleCategoryChange = useCallback((val: string) => {
-    setCategoryFilter(val);
-    setDeviceTypeFilter('');
+    setCategoryFilter(val); setDeviceTypeFilter('');
   }, []);
 
   const filteredMarkers = useMemo(() => {
@@ -120,9 +139,7 @@ export default function MapClient() {
         <div className={styles.geoCard}>
           <div className={styles.geoIconWrap} style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)' }}>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="1.5">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
           </div>
           <h2 className={styles.geoTitle}>Location Access Required</h2>
@@ -148,9 +165,7 @@ export default function MapClient() {
             </svg>
           </div>
           <h2 className={styles.geoTitle}>Location Access Denied</h2>
-          <p className={styles.geoDesc}>
-            Location permission was denied. To use the Network Map you must allow location access.
-          </p>
+          <p className={styles.geoDesc}>Location permission was denied. To use the Network Map you must allow location access.</p>
           <ol className={styles.geoSteps}>
             <li>Click the <strong>lock / info icon</strong> in your browser's address bar.</li>
             <li>Set <strong>Location</strong> to <strong>Allow</strong>.</li>
@@ -180,7 +195,7 @@ export default function MapClient() {
           </div>
           <h2 className={styles.geoTitle}>GPS Not Supported</h2>
           <p className={styles.geoDesc}>
-            Your browser does not support the Geolocation API. Please use a modern browser such as Chrome, Firefox, or Safari to access the Network Map.
+            Your browser does not support the Geolocation API. Please use a modern browser such as Chrome, Firefox, or Safari.
           </p>
         </div>
       </div>
@@ -188,6 +203,8 @@ export default function MapClient() {
   }
 
   // ── Main map UI (geoStatus === 'granted') ────────────────────────────────
+  const effectiveZoom = settingsLoaded ? mapSettings.defaultZoom : DEFAULT_MAP_SETTINGS.defaultZoom;
+
   return (
     <div className={`${styles.wrapper} ${isFullscreen ? styles.wrapperFullscreen : ''}`} ref={wrapperRef}>
       {/* Header */}
@@ -202,19 +219,25 @@ export default function MapClient() {
         <div className={styles.headerRight}>
           <div className={styles.stats}>
             <div className={styles.statBadge} style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', color: '#10b981' }}>
-              <span className={styles.statDot} style={{ background: '#10b981' }} />
-              {activeCount} Active
+              <span className={styles.statDot} style={{ background: '#10b981' }} />{activeCount} Active
             </div>
             <div className={styles.statBadge} style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444' }}>
-              <span className={styles.statDot} style={{ background: '#ef4444' }} />
-              {inactiveCount} Inactive
+              <span className={styles.statDot} style={{ background: '#ef4444' }} />{inactiveCount} Inactive
             </div>
           </div>
+          {/* Settings */}
           <button
-            className={styles.fullscreenBtn}
-            onClick={toggleFullscreen}
-            title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            className={`${styles.fullscreenBtn} ${settingsPanelOpen ? styles.headerBtnActive : ''}`}
+            onClick={() => setSettingsPanelOpen((o) => !o)}
+            title="Map settings"
           >
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" />
+            </svg>
+          </button>
+          {/* Fullscreen */}
+          <button className={styles.fullscreenBtn} onClick={toggleFullscreen} title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}>
             {isFullscreen ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M8 3v3a2 2 0 01-2 2H3m18 0h-3a2 2 0 01-2-2V3m0 18v-3a2 2 0 012-2h3M3 16h3a2 2 0 012 2v3" />
@@ -242,40 +265,27 @@ export default function MapClient() {
 
           {filtersOpen && (
             <div className={styles.filtersBody}>
-              {/* Search */}
               <div className={styles.filterGroup}>
                 <label className={styles.filterLabel}>Search</label>
                 <div className={styles.searchWrapper}>
                   <svg className={styles.searchIcon} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
                   </svg>
-                  <input
-                    type="text"
-                    className={styles.filterInput}
-                    placeholder="Search nodes..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
+                  <input type="text" className={styles.filterInput} placeholder="Search nodes..." value={search} onChange={(e) => setSearch(e.target.value)} />
                 </div>
               </div>
 
-              {/* Map layer */}
               <div className={styles.filterGroup}>
                 <label className={styles.filterLabel}>Map Layer</label>
                 <div className={styles.layerButtons}>
                   {LAYER_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.value}
-                      className={`${styles.layerBtn} ${layer === opt.value ? styles.layerBtnActive : ''}`}
-                      onClick={() => setLayer(opt.value)}
-                    >
+                    <button key={opt.value} className={`${styles.layerBtn} ${layer === opt.value ? styles.layerBtnActive : ''}`} onClick={() => setLayer(opt.value)}>
                       {opt.label}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Status */}
               <div className={styles.filterGroup}>
                 <label className={styles.filterLabel}>Status</label>
                 <select className={styles.filterSelect} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
@@ -285,53 +295,36 @@ export default function MapClient() {
                 </select>
               </div>
 
-              {/* Device Category */}
               <div className={styles.filterGroup}>
                 <label className={styles.filterLabel}>Device Category</label>
                 <select className={styles.filterSelect} value={categoryFilter} onChange={(e) => handleCategoryChange(e.target.value)}>
                   <option value="">All Categories</option>
                   {categories.map((c) => (
-                    <option key={c.id} value={String(c.attributes.numericId)}>
-                      {c.attributes.name}
-                    </option>
+                    <option key={c.id} value={String(c.attributes.numericId)}>{c.attributes.name}</option>
                   ))}
                 </select>
               </div>
 
-              {/* Device Type */}
               <div className={styles.filterGroup}>
                 <label className={styles.filterLabel}>Device Type</label>
                 <select className={styles.filterSelect} value={deviceTypeFilter} onChange={(e) => setDeviceTypeFilter(e.target.value)}>
                   <option value="">All Types</option>
                   {filteredDeviceTypes.map((dt) => (
-                    <option key={dt.id} value={dt.id}>
-                      {dt.attributes.name} ({dt.attributes.code})
-                    </option>
+                    <option key={dt.id} value={dt.id}>{dt.attributes.name} ({dt.attributes.code})</option>
                   ))}
                 </select>
               </div>
 
-              {/* Clear */}
               {(statusFilter !== 'all' || categoryFilter || deviceTypeFilter || search) && (
-                <button
-                  className={styles.clearBtn}
-                  onClick={() => { setStatusFilter('all'); setCategoryFilter(''); setDeviceTypeFilter(''); setSearch(''); }}
-                >
+                <button className={styles.clearBtn} onClick={() => { setStatusFilter('all'); setCategoryFilter(''); setDeviceTypeFilter(''); setSearch(''); }}>
                   Clear all filters
                 </button>
               )}
 
-              {/* Legend */}
               <div className={styles.legend}>
                 <div className={styles.filterLabel} style={{ marginBottom: '0.5rem' }}>Legend</div>
-                <div className={styles.legendItem}>
-                  <span className={styles.legendDot} style={{ background: '#10b981' }} />
-                  <span>Active node</span>
-                </div>
-                <div className={styles.legendItem}>
-                  <span className={styles.legendDot} style={{ background: '#ef4444' }} />
-                  <span>Inactive node</span>
-                </div>
+                <div className={styles.legendItem}><span className={styles.legendDot} style={{ background: '#10b981' }} /><span>Active node</span></div>
+                <div className={styles.legendItem}><span className={styles.legendDot} style={{ background: '#ef4444' }} /><span>Inactive node</span></div>
               </div>
             </div>
           )}
@@ -343,7 +336,9 @@ export default function MapClient() {
             layer={layer}
             markers={filteredMarkers}
             center={center}
-            zoom={DEFAULT_ZOOM}
+            zoom={effectiveZoom}
+            showScaleBar={mapSettings.showScaleBar}
+            scaleUnit={mapSettings.scaleUnit}
           />
           {filteredMarkers.length === 0 && (
             <div className={styles.emptyOverlay}>
@@ -355,6 +350,14 @@ export default function MapClient() {
           )}
         </div>
       </div>
+
+      {/* Settings panel */}
+      <MapSettingsPanel
+        isOpen={settingsPanelOpen}
+        onClose={() => setSettingsPanelOpen(false)}
+        current={mapSettings}
+        onApply={handleSettingsApply}
+      />
     </div>
   );
 }

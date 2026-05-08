@@ -35,6 +35,7 @@ import tenantUpstreamProviderRoutes from './routes/tenantUpstreamProviderRoutes.
 import tenantCableTypeRoutes from './routes/tenantCableTypeRoutes.js';
 import tenantDeviceCategoryRoutes from './routes/tenantDeviceCategoryRoutes.js';
 import tenantDeviceTypeRoutes from './routes/tenantDeviceTypeRoutes.js';
+import tenantUserSettingRoutes from './routes/tenantUserSettingRoutes.js';
 import tenantSupportTicketRoutes from './routes/tenantSupportTicketRoutes.js';
 import adminSupportTicketRoutes from './routes/adminSupportTicketRoutes.js';
 import auditLogRoutes, { auditLogService } from './routes/auditLogRoutes.js';
@@ -94,6 +95,7 @@ app.use('/api/tenant/upstream-providers', tenantUpstreamProviderRoutes);
 app.use('/api/tenant/cable-types', tenantCableTypeRoutes);
 app.use('/api/tenant/device-categories', tenantDeviceCategoryRoutes);
 app.use('/api/tenant/device-types', tenantDeviceTypeRoutes);
+app.use('/api/tenant/user-settings', tenantUserSettingRoutes);
 app.use('/api/tenant/support-tickets', tenantSupportTicketRoutes);
 app.use('/api/support-tickets', auth(authService), adminSupportTicketRoutes);
 app.use('/api/audit-logs', auth(authService), auditLogRoutes);
@@ -437,6 +439,33 @@ const ensureTenantDeviceTypesTable = async () => {
   }
 };
 
+// Ensure tenant_user_settings table exists (auto-migration for v1.51.0)
+const ensureTenantUserSettingsTable = async () => {
+  try {
+    const exists = await db.schema.hasTable('tenant_user_settings');
+    if (!exists) {
+      await db.schema.createTable('tenant_user_settings', (t: any) => {
+        t.bigIncrements('id').primary();
+        t.string('uuid', 36).notNullable().unique();
+        t.bigInteger('tenantBusinessId').unsigned().notNullable();
+        t.bigInteger('tenantUserId').unsigned().notNullable();
+        t.string('name', 100).notNullable();
+        t.string('key', 100).notNullable();
+        t.text('value').notNullable();
+        t.enum('status', ['active', 'inactive', 'deleted']).notNullable().defaultTo('active');
+        t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('deletedAt').nullable();
+        t.index(['tenantBusinessId', 'tenantUserId'], 'idx_user_settings_user');
+        t.unique(['tenantBusinessId', 'tenantUserId', 'key'], 'uq_user_settings_key');
+      });
+      logger.info('Auto-migration: tenant_user_settings table created');
+    }
+  } catch (err: any) {
+    logger.warn('Auto-migration for tenant_user_settings skipped or failed', { error: err.message });
+  }
+};
+
 // Ensure tenant_support_tickets tables exist (auto-migration for v1.47.0)
 const ensureSupportTicketTables = async () => {
   try {
@@ -552,6 +581,9 @@ const startServer = async () => {
 
     // Ensure tenant_device_types table exists (v1.50.0)
     await ensureTenantDeviceTypesTable();
+
+    // Ensure tenant_user_settings table exists (v1.51.0)
+    await ensureTenantUserSettingsTable();
 
     // Ensure support ticket tables exist (v1.47.0)
     await ensureSupportTicketTables();

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, ScaleControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -50,9 +50,11 @@ interface LeafletMapProps {
   markers: MapMarker[];
   center: [number, number];
   zoom: number;
+  showScaleBar?: boolean;
+  scaleUnit?: 'metric' | 'imperial';
 }
 
-export default function LeafletMap({ layer, markers, center, zoom }: LeafletMapProps) {
+export default function LeafletMap({ layer, markers, center, zoom, showScaleBar = true, scaleUnit = 'metric' }: LeafletMapProps) {
   const tile = TILE_LAYERS[layer] ?? TILE_LAYERS.street;
 
   return (
@@ -64,6 +66,13 @@ export default function LeafletMap({ layer, markers, center, zoom }: LeafletMapP
     >
       <TileLayer url={tile.url} attribution={tile.attribution} />
       <RecenterControl center={center} />
+      {showScaleBar && (
+        <ScaleControl
+          position="bottomright"
+          metric={scaleUnit === 'metric' || scaleUnit === undefined}
+          imperial={scaleUnit === 'imperial'}
+        />
+      )}
       {markers.map((m) => (
         <Marker key={m.id} position={[m.lat, m.lng]}>
           <Popup>

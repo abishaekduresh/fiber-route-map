@@ -2,6 +2,28 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.51.0] - 2026-05-08
+
+### Added
+- **Map Settings Panel**: Slide-in settings panel for personalised map configuration, accessed via a gear icon in the map header.
+  - **Scale Bar**: Toggle the ground-distance indicator on/off; choose Metric (m / km) or Imperial (ft / mi) units. Uses Leaflet `ScaleControl` at `bottomright`.
+  - **Default Layer**: Segmented control to choose between Street, Terrain, and Dark base layers.
+  - **Default Zoom**: Range slider (1–18) with human-readable zoom-level labels (World → Neighbourhood → Rooftop).
+  - **Auto-center on GPS**: Toggle to always re-centre the map on the user's current GPS position.
+  - **Filter Panel Open by Default**: Toggle to show or hide the filter sidebar on map load.
+  - **Restore Defaults**: Resets form to built-in defaults without saving.
+  - Settings persist across sessions via the new `tenant_user_settings` key-value store.
+- **`tenant_user_settings` Table**: New per-user key-value settings store.
+  - Columns: `id` (bigint PK), `uuid` (v7, unique), `tenantBusinessId`, `tenantUserId`, `name` (varchar 100), `key` (varchar 100), `value` (text), `status` (active/inactive/deleted), `createdAt`, `updatedAt`, `deletedAt`.
+  - Composite unique index on `(tenantBusinessId, tenantUserId, key)` — upsert-safe.
+  - Auto-migration: table is created on first server start if absent.
+  - DDL added to `db.sql`.
+- **User Settings REST API** (`/api/tenant/user-settings`): Personal settings endpoints, protected by `tenantAuth` (no RBAC — users only access their own settings).
+  - `GET /` — returns all settings for the authenticated user.
+  - `PUT /` — batch upsert (`{ settings: [{ key, name, value }] }`).
+  - `DELETE /:key` — soft-deletes a single setting by key.
+- **GPS Permission Gate**: Map page requires Geolocation permission. Shows distinct screens for: requesting permission, permission denied (with retry), API unsupported, and map view once granted.
+
 ## [1.50.0] - 2026-05-07
 
 ### Added
