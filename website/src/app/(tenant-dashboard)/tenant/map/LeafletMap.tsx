@@ -104,6 +104,63 @@ function UserLocationMarker({ location }: { location: UserLocation }) {
   );
 }
 
+function CompassControl() {
+  const map = useMap();
+
+  useEffect(() => {
+    const Compass = L.Control.extend({
+      options: { position: 'topright' },
+      onAdd() {
+        const div = L.DomUtil.create('div');
+        div.style.cssText = 'margin-top:8px;cursor:default;';
+        div.innerHTML = `
+          <div style="
+            width:76px;height:76px;border-radius:50%;
+            background:rgba(15,23,42,0.88);
+            border:1px solid rgba(255,255,255,0.12);
+            box-shadow:0 4px 20px rgba(0,0,0,0.45);
+            display:flex;align-items:center;justify-content:center;
+            backdrop-filter:blur(8px);
+          ">
+            <svg width="72" height="72" viewBox="-36 -36 72 72" xmlns="http://www.w3.org/2000/svg">
+              <!-- Dial ring -->
+              <circle cx="0" cy="0" r="34" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+              <!-- Diagonal ticks: NE SE SW NW -->
+              <line x1="22.6" y1="-22.6" x2="25.5" y2="-25.5" stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-linecap="round"/>
+              <line x1="22.6" y1="22.6"  x2="25.5" y2="25.5"  stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-linecap="round"/>
+              <line x1="-22.6" y1="22.6" x2="-25.5" y2="25.5" stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-linecap="round"/>
+              <line x1="-22.6" y1="-22.6" x2="-25.5" y2="-25.5" stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-linecap="round"/>
+              <!-- Cardinal ticks -->
+              <line x1="0"   y1="-34" x2="0"   y2="-29" stroke="rgba(239,68,68,0.9)"  stroke-width="1.5" stroke-linecap="round"/>
+              <line x1="34"  y1="0"   x2="29"  y2="0"   stroke="rgba(255,255,255,0.3)" stroke-width="1.2" stroke-linecap="round"/>
+              <line x1="0"   y1="34"  x2="0"   y2="29"  stroke="rgba(255,255,255,0.3)" stroke-width="1.2" stroke-linecap="round"/>
+              <line x1="-34" y1="0"   x2="-29" y2="0"   stroke="rgba(255,255,255,0.3)" stroke-width="1.2" stroke-linecap="round"/>
+              <!-- Needle: north red, south slate -->
+              <polygon points="0,-17 -5,0 0,4.5 5,0"  fill="#ef4444"/>
+              <polygon points="0,17  -5,0 0,-4.5 5,0" fill="#475569"/>
+              <!-- Centre cap -->
+              <circle cx="0" cy="0" r="4" fill="#0f172a" stroke="rgba(255,255,255,0.3)" stroke-width="1.2"/>
+              <!-- Cardinal labels -->
+              <text x="0"   y="-22" text-anchor="middle" dy="0.35em" fill="#ef4444" font-weight="800" font-size="11" font-family="system-ui,sans-serif">N</text>
+              <text x="22"  y="0"   text-anchor="middle" dy="0.35em" fill="#94a3b8" font-weight="700" font-size="9"  font-family="system-ui,sans-serif">E</text>
+              <text x="0"   y="22"  text-anchor="middle" dy="0.35em" fill="#94a3b8" font-weight="700" font-size="9"  font-family="system-ui,sans-serif">S</text>
+              <text x="-22" y="0"   text-anchor="middle" dy="0.35em" fill="#94a3b8" font-weight="700" font-size="9"  font-family="system-ui,sans-serif">W</text>
+            </svg>
+          </div>
+        `;
+        L.DomEvent.disableClickPropagation(div);
+        L.DomEvent.disableScrollPropagation(div);
+        return div;
+      },
+    });
+    const ctrl = new Compass();
+    ctrl.addTo(map);
+    return () => { ctrl.remove(); };
+  }, [map]);
+
+  return null;
+}
+
 function RecenterControl({ center, zoom }: { center: [number, number]; zoom: number }) {
   const map = useMap();
   // Re-center on GPS position changes — preserve current user zoom
@@ -148,6 +205,7 @@ export default function LeafletMap({ layer, markers, center, zoom, showScaleBar 
     >
       <TileLayer url={tile.url} attribution={tile.attribution} />
       <RecenterControl center={center} zoom={zoom} />
+      <CompassControl />
       {userLocation && <UserLocationMarker location={userLocation} />}
       {showScaleBar && (
         <ScaleControl
