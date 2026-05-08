@@ -4,9 +4,13 @@ A futuristic, high-performance web dashboard for managing fiber optic networks.
 Built with **Next.js 16 (Turbopack)** and **TypeScript**, featuring a stunning **Glassmorphism Design System**.
 
 ## Version
-**Current Version:** 1.51.0 (Map Settings & GPS Gate)
+**Current Version:** 1.52.0 (Live Location, Compass Rose, Map RBAC)
 
 ## Features
+- **Live Location Pointer with Direction** (`/tenant/map`): Blue dot with direction cone pointing in the direction of travel, pulsing ring animation, and a GPS accuracy circle. Position and heading update continuously via `watchPosition`; watch is cleared on unmount.
+- **Compass Rose** (`/tenant/map`): N/E/S/W compass rendered as a Leaflet custom control at the top-right of the map — dark glass circle, two-tone needle (red north, slate south), cardinal and diagonal tick marks.
+- **Map Refresh Button** (`/tenant/map`): Header button re-fetches device categories and device types; icon spins while in progress.
+- **Map RBAC** (`map.view`): Map nav item and page are gated by `map.view` permission — synced via Sync Permissions. Users without the permission are redirected to the dashboard.
 - **Map Settings Panel** (`/tenant/map`): Personalised map configuration — default base layer (Street/Terrain/Dark), default zoom (1–18 with zoom-level labels), Scale Bar toggle with Metric/Imperial unit choice, Auto-center on GPS toggle, and Filter Panel open-by-default toggle. Settings are persisted per-user in the `tenant_user_settings` table and loaded on mount.
 - **GPS Permission Gate** (`/tenant/map`): Map view requires Geolocation permission — shows requesting, denied (with retry), unsupported, and granted screens.
 - **Device Types Management** (`/tenant/device-types`): Full CRUD for device types per tenant business — category assignment, user-supplied unique code (e.g. `TDTOLT`), 7 boolean capability flags (Model #, Serial #, MAC Address, IP Address, Port, GPS Location, Monitoring) with toggle switches, emoji icon picker, description, status, and category/status/search filters. Permission-gated via `device_type.*` RBAC.

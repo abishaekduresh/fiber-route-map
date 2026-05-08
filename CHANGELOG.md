@@ -2,6 +2,23 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.52.0] - 2026-05-08
+
+### Added
+- **Compass Rose**: N/E/S/W compass rendered as a Leaflet custom control at the map top-right. Dark glass circle (backdrop blur) with a two-tone needle (red north, slate south), red N label, grey E/S/W labels, cardinal and diagonal tick marks. Click/scroll propagation disabled so the map remains pannable beneath it.
+- **Live Location Pointer with Direction**: User's current GPS position rendered as a custom Leaflet marker — blue dot with a white border ring, a radial-gradient direction cone pointing in the direction of travel (hidden when the device is stationary and heading is unavailable), a pulsing ring animation, and a translucent accuracy circle scaled to the GPS fix radius. Heading and position update continuously via `watchPosition`.
+- **Map Refresh Button**: Refresh icon button in the map header re-fetches device categories and device types from the API. Icon spins while refreshing; button is disabled to prevent double-calls.
+- **`map.view` RBAC Permission**: `map` resource with `view` action added to `ROUTE_PERMISSIONS`. Clicking **Sync Permissions** creates the `map.view` permission. Map nav item in the tenant sidebar is now gated by `hasPermission('map.view')`; direct navigation without permission redirects to `/tenant/dashboard`.
+
+### Fixed
+- **Map Settings zoom not applying**: `MapContainer` treats `zoom` as an initial-only prop — changes after mount were silently ignored. `RecenterControl` now calls `map.setZoom(zoom)` imperatively in a dedicated `useEffect([zoom])`, while the center effect continues to preserve the user's current zoom on GPS updates.
+- **Tenant user settings not saving**: `tenantAuth` is a factory function (`tenantAuth(repo)` returns the middleware) — the route file was passing the factory itself to `router.use()`, so the auth middleware never ran and every request was rejected. Fixed by instantiating `TenantRepository` and calling `tenantAuth(tenantRepo)` to produce the actual middleware.
+- **Role modal permission group labels**: Raw slug keys (e.g. `device_category Management`) were shown as group headers in the role edit modal. Added the same `RESOURCE_LABELS` map used on the permissions page so headers read **Device Category Management**, **Upstream Provider Management**, etc.
+
+### Changed
+- **Sample markers removed**: Hardcoded `SAMPLE_MARKERS` array removed from the map page; map renders with an empty marker set until real geographic data is wired from the API.
+- **Geolocation upgraded to `watchPosition`**: Map now continuously tracks the user's position and heading instead of a one-time `getCurrentPosition` call. Watch is cleared on component unmount. Refresh button no longer re-triggers geolocation (watch is always running).
+
 ## [1.51.0] - 2026-05-08
 
 ### Added
