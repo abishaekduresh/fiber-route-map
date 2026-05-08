@@ -28,11 +28,16 @@ const TILE_LAYERS = {
   },
 };
 
-function RecenterControl({ center }: { center: [number, number] }) {
+function RecenterControl({ center, zoom }: { center: [number, number]; zoom: number }) {
   const map = useMap();
+  // Re-center on GPS position changes — preserve current user zoom
   useEffect(() => {
     map.setView(center, map.getZoom());
   }, [center, map]);
+  // Apply zoom when settings change (MapContainer ignores zoom prop after mount)
+  useEffect(() => {
+    map.setZoom(zoom);
+  }, [zoom, map]);
   return null;
 }
 
@@ -65,7 +70,7 @@ export default function LeafletMap({ layer, markers, center, zoom, showScaleBar 
       zoomControl={true}
     >
       <TileLayer url={tile.url} attribution={tile.attribution} />
-      <RecenterControl center={center} />
+      <RecenterControl center={center} zoom={zoom} />
       {showScaleBar && (
         <ScaleControl
           position="bottomright"
