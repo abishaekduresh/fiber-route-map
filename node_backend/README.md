@@ -4,7 +4,7 @@ The authoritative backend REST API for the Fiber Route Map system, replicated in
 Built using [Express](https://expressjs.com/) and [TypeScript](https://www.typescriptlang.org/), leveraging [Knex.js](https://knexjs.org/) for database interaction.
 
 ## Version
-**Current Version:** 1.53.0 (Cable Type Auto-generated Name & Code)
+**Current Version:** 1.55.0 (APP_ENV variable, debug-mode health response)
 
 ## Interactive Documentation
 The API is fully documented using Swagger/OpenAPI 3.0.
@@ -29,6 +29,8 @@ The recommended way to configure the application is through the **web-based Setu
 2. Ensure you have a `.env` file with your specific Database credentials and API version:
    ```env
    PORT=3001
+   APP_ENV=development
+   DEBUG=true
    API_VERSION=v1
 
    # Database Settings
@@ -74,9 +76,10 @@ The API uses a secure, database-backed session system and a granular Role-Based 
 The API provides a dedicated health check endpoint:
 - **Endpoint**: `GET /api/health`
 - **Response**: Standardized JSON indicating database connectivity and system timestamp.
-- **Status Codes**: 
+- **Status Codes**:
   - `200 OK`: System healthy and database connected.
-  - `503 Service Unavailable`: Database connection failure (returned with `success: false` and `errorType`).
+  - `503 Service Unavailable`: Database connection failure (`success: false`, `errorType: DATABASE_ERROR`).
+- **Debug mode**: When `APP_ENV=development` and `DEBUG=true`, the `503` response includes a `debug` object with the DB host/port/name/user, raw driver error code, and an array of actionable fix suggestions. The `debug` field is never present in production.
 
 ### Universal 200 OK
 The API mostly returns an HTTP 200 OK status code at the protocol level. The actual response status (e.g., 201, 401, 503) is communicated through the `statusCode` field in the JSON body.

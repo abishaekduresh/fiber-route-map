@@ -245,7 +245,7 @@ export class SetupService {
 
     const newValues: Record<string, string> = {
       PORT: String(envConfig.port),
-      NODE_ENV: envConfig.nodeEnv || 'development',
+      APP_ENV: envConfig.nodeEnv || 'development',
       DEBUG: 'true',
       TIMEZONE: envConfig.timezone,
       API_VERSION: envConfig.apiVersion,
@@ -265,7 +265,7 @@ export class SetupService {
     // Add section headers + values
     lines.push('# Application Settings');
     lines.push(`PORT=${newValues.PORT}`);
-    lines.push(`NODE_ENV=${newValues.NODE_ENV}`);
+    lines.push(`APP_ENV=${newValues.APP_ENV}`);
     lines.push(`DEBUG=${newValues.DEBUG}`);
     lines.push(`TIMEZONE=${newValues.TIMEZONE}`);
     lines.push('');

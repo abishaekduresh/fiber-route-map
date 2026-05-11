@@ -2,6 +2,26 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.55.0] - 2026-05-11
+
+### Added
+- **`/unhealthy` — Contextual Error Display**: The system-unavailable page now maps raw error codes to human-readable messages instead of displaying bare codes like `SERVICE_UNAVAILABLE`.
+  - Error code lookup table maps `DATABASE_ERROR`, `SERVICE_UNAVAILABLE`, `SERVER_ERROR`, `NETWORK_ERROR` to a title, plain-English description, and a hint.
+  - Fuzzy fallback handles inline messages containing known codes or keywords (database/connection/fetch).
+  - Icon changes per error type: database cylinder, server rack, wifi-off (amber for network), warning triangle.
+- **`/unhealthy` — Debug Panel (development mode)**: When the backend runs with `APP_ENV=development` and `DEBUG=true`, a collapsible amber **Debug Info** panel appears automatically.
+  - Backend `HealthController` includes a `debug` block in the `503` response containing: `appEnv`, `dbHost`, `dbPort`, `dbName`, `dbUser`, `dbCharset`, raw `errorCode`, `errorMessage`, and a `suggestions` array.
+  - Suggestions are error-code-specific (covers `ECONNREFUSED`, `ETIMEDOUT`, `ENOTFOUND`, `ER_ACCESS_DENIED_ERROR`, `ER_BAD_DB_ERROR`, `ER_NOT_SUPPORTED_AUTH_MODE`, etc.) with actionable SQL/shell commands.
+  - `debug` block is **never present** when `APP_ENV=production` — no internals leak.
+  - Panel is collapsible, open by default, with an `APP_ENV=development · DEBUG=true` badge in the header.
+
+### Changed
+- **`NODE_ENV` → `APP_ENV`**: Renamed the environment variable across the entire codebase to avoid collision with Node.js / toolchain internals.
+  - `node_backend/.env` and `node_backend/.env.example`: `NODE_ENV=development` → `APP_ENV=development`.
+  - `node_backend/src/utils/logger.ts`: `process.env.NODE_ENV` → `process.env.APP_ENV`.
+  - `node_backend/src/middleware/errorHandler.ts`: `process.env.NODE_ENV` → `process.env.APP_ENV`.
+  - `node_backend/src/services/SetupService.ts`: both the `newValues` record key and the `lines.push()` call updated to `APP_ENV`.
+
 ## [1.54.0] - 2026-05-08
 
 ### Changed

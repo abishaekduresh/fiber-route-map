@@ -4,9 +4,10 @@ A futuristic, high-performance web dashboard for managing fiber optic networks.
 Built with **Next.js 16 (Turbopack)** and **TypeScript**, featuring a stunning **Glassmorphism Design System**.
 
 ## Version
-**Current Version:** 1.54.0 (Corporate SaaS UI/UX Redesign)
+**Current Version:** 1.55.0 (Unhealthy page error messages & debug panel)
 
 ## Features
+- **Unhealthy Page — Contextual Error Messages** (`/unhealthy`): Raw error codes (e.g. `SERVICE_UNAVAILABLE`) are mapped to human-readable titles, plain-English descriptions, and actionable hints. Error type determines icon (database, server, wifi-off, warning). When the backend runs in `APP_ENV=development` + `DEBUG=true`, a collapsible amber **Debug Info** panel shows the DB connection details attempted, raw error code, and numbered fix suggestions specific to the error (covers `ECONNREFUSED`, `ER_ACCESS_DENIED_ERROR`, `ER_BAD_DB_ERROR`, etc.).
 - **Corporate SaaS UI/UX**: Clean, structured dashboard aesthetic (sidebar, topbar, cards, tables) inspired by Linear, Vercel, and Stripe — solid surfaces, elevation shadows, solid-blue primary buttons, no animated orbs or backdrop-blur glass effects.
 - **Live Location Pointer with Direction** (`/tenant/map`): Blue dot with direction cone pointing in the direction of travel, pulsing ring animation, and a GPS accuracy circle. Position and heading update continuously via `watchPosition`; watch is cleared on unmount.
 - **Compass Rose** (`/tenant/map`): N/E/S/W compass rendered as a Leaflet custom control at the top-right of the map — dark glass circle, two-tone needle (red north, slate south), cardinal and diagonal tick marks.

@@ -91,6 +91,6 @@ export const errorHandler = (
       timestamp: new Date().toISOString(),
       version: '1.41.0'
     },
-    ...(process.env.NODE_ENV === 'development' && status >= 500 && { stack: err.stack }),
+    ...(process.env.APP_ENV === 'development' && status >= 500 && { stack: err.stack }),
   });
 };
