@@ -26,7 +26,8 @@ export default function TenantSidebar({
     pathname.startsWith('/tenant/upstream-providers') ||
     pathname.startsWith('/tenant/cable-types') ||
     pathname.startsWith('/tenant/device-categories') ||
-    pathname.startsWith('/tenant/device-types')
+    pathname.startsWith('/tenant/device-types') ||
+    pathname.startsWith('/tenant/routes')
   );
 
   const topLinks = [
@@ -130,6 +131,16 @@ export default function TenantSidebar({
         </svg>
       ),
       show: hasPermission('device_type.view'),
+    },
+    {
+      name: 'Routes',
+      href: '/tenant/routes',
+      icon: (
+        <svg className={styles.navIcon} style={{ color: '#10b981' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M3 17l4-8 4 4 4-6 4 3" /><circle cx="3" cy="17" r="1.5" fill="currentColor" stroke="none" /><circle cx="21" cy="14" r="1.5" fill="currentColor" stroke="none" />
+        </svg>
+      ),
+      show: hasPermission('tenant_routes.view'),
     },
   ].filter((l) => l.show);
 

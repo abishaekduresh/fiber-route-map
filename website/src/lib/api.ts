@@ -1392,5 +1392,79 @@ export async function deleteWidget(uuid: string): Promise<ApiResponse> {
   return apiFetch(`/api/widgets/${uuid}`, { method: 'DELETE' });
 }
 
+// ─── Tenant Routes ─────────────────────────────────────────────────────────────
+
+export type TenantRouteType =
+  | 'fiber_route' | 'coaxial_route' | 'backbone_route' | 'distribution_route'
+  | 'drop_route'  | 'underground_duct' | 'pole_to_pole';
+
+export type TenantRouteStatus = 'active' | 'inactive' | 'maintenance' | 'deleted';
+
+export type TenantRoutePointType = 'start' | 'middle' | 'end' | 'junction' | 'pole' | 'device';
+
+export interface TenantRoutePoint {
+  id: string;
+  sequenceNumber: number;
+  latitude: number;
+  longitude: number;
+  altitude: number | null;
+  pointType: TenantRoutePointType;
+  poleNumber: string | null;
+  remarks: string | null;
+}
+
+export interface TenantRouteData {
+  id: string;
+  type: string;
+  attributes: {
+    code: string;
+    name: string;
+    type: TenantRouteType;
+    routeColor: string | null;
+    lineThickness: number | null;
+    parentRouteUuid: string | null;
+    parentRouteName: string | null;
+    description: string | null;
+    status: TenantRouteStatus;
+    pointsCount: number;
+    points?: TenantRoutePoint[];
+  };
+  meta: { createdAt: string; updatedAt: string };
+}
+
+export async function getTenantRoutes(params?: {
+  page?: number; limit?: number; filter?: Record<string, string>;
+}): Promise<ApiResponse<TenantRouteData[]>> {
+  const q = new URLSearchParams();
+  if (params?.page)  q.set('page',  String(params.page));
+  if (params?.limit) q.set('limit', String(params.limit));
+  if (params?.filter) {
+    for (const [k, v] of Object.entries(params.filter)) {
+      if (v) q.set(`filter[${k}]`, v);
+    }
+  }
+  return apiFetch(`/api/tenant/routes${q.toString() ? `?${q}` : ''}`);
+}
+
+export async function getTenantRoute(uuid: string): Promise<ApiResponse<TenantRouteData>> {
+  return apiFetch(`/api/tenant/routes/${uuid}`);
+}
+
+export async function createTenantRoute(data: Record<string, any>): Promise<ApiResponse<TenantRouteData>> {
+  return apiFetch('/api/tenant/routes', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function updateTenantRoute(uuid: string, data: Record<string, any>): Promise<ApiResponse<TenantRouteData>> {
+  return apiFetch(`/api/tenant/routes/${uuid}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export async function deleteTenantRoute(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/tenant/routes/${uuid}`, { method: 'DELETE' });
+}
+
+export async function getTenantRouteHistory(uuid: string): Promise<ApiResponse<any[]>> {
+  return apiFetch(`/api/tenant/routes/${uuid}/history`);
+}
+
 
 export { apiFetch };

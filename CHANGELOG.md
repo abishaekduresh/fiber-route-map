@@ -2,6 +2,43 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.57.0] - 2026-05-12
+
+### Added
+- **Tenant Routes Management System** (`/tenant/routes`): Full CRUD for fiber/coaxial/backbone route management with 3 new auto-migrated tables.
+  - **Tables**: `tenant_routes` (route metadata — name, type, color, thickness, parent, description, status), `tenant_route_points` (ordered lat/lng waypoints with point type and pole number), `tenant_route_histories` (audit log of every create/update/delete/point change).
+  - **Auto-generated codes**: Codes are assigned sequentially in `TRTxxxx` format (e.g. `TRT0001`, `TRT0002`) — never user-supplied. `getLastCode()` in the repository uses `CAST(SUBSTRING(code, 4) AS UNSIGNED) DESC` for safe numeric ordering; `generateCode()` in the service pads to 4 digits.
+  - **Route types**: `fiber_route`, `coaxial_route`, `backbone_route`, `distribution_route`, `drop_route`, `underground_duct`, `pole_to_pole`.
+  - **Parent route**: Self-referential relationship — a route can have an optional parent route; API exposes/accepts `parentRouteUuid`, service resolves UUID→internal ID; self-referential guard (422) prevents a route being set as its own parent.
+  - **Points management**: Each route stores an ordered array of waypoints; `upsertPoints()` uses delete-all + bulk re-insert for atomic replacement.
+  - **History logging**: Best-effort (wrapped in `try/catch`) — logs `created`, `updated`, `deleted`, `point_updated` action types with old/new data snapshots, IP address, and user agent; never fails the main operation.
+  - **Endpoints**: `GET /api/tenant/routes`, `GET /api/tenant/routes/:uuid`, `GET /api/tenant/routes/:uuid/history`, `POST /api/tenant/routes`, `PUT /api/tenant/routes/:uuid`, `DELETE /api/tenant/routes/:uuid`.
+  - **Filtering & pagination**: List supports `page`, `limit` (`-1` for all), `search` (name or code), `type`, and `status` filters.
+  - **RBAC**: `tenant_routes.view`, `tenant_routes.create`, `tenant_routes.update`, `tenant_routes.delete` — seeded automatically via `ensureTenantRouteTables()` on first boot; synced via Sync Permissions thereafter.
+- **Routes Management UI** (`/tenant/routes`): Table view for managing fiber routes.
+  - Table shows: Code badge (amber), Name, Type label, Color swatch, Points count, Parent route name, Status badge, Created date, Edit/Delete actions.
+  - Filters: search (name/code), route type dropdown, status dropdown.
+  - Server-side pagination with ellipsis logic.
+  - RBAC-gated: Add button (`tenant_routes.create`), Edit (`tenant_routes.update`), Delete (`tenant_routes.delete`).
+  - "Routes" link added to tenant sidebar under the Manage dropdown, gated on `tenant_routes.view`.
+- **Route Create/Edit Modal** (tabbed): Two-tab modal for route management.
+  - **Route Info tab**: Name, Route Type select (7 types), Parent Route dropdown (all routes, self excluded), Color picker + hex input, Line thickness (px), Description textarea, Status (edit-only).
+  - **Points tab**: Dynamic list of waypoints — Add Point button, per-point remove; each point has Lat/Lng/Altitude inputs, Point Type select (`start`/`middle`/`end`/`junction`/`pole`/`device`), Pole Number, Sequence Number. First/last points auto-assigned `start`/`end` types.
+- **Map Route Drawing** (`/tenant/map`): Click-to-draw route waypoints directly on the map and save as a new route.
+  - **"Draw Route" button** in the map header, gated by `tenant_routes.create` permission — amber when idle, switches to red "Cancel Draw" while drawing.
+  - **Crosshair cursor** on the map during draw mode (Leaflet `getContainer().style.cursor`).
+  - **In-progress polyline**: Dashed amber polyline connects placed points in real-time; green circle = start, amber = middle, red = last.
+  - **Floating save panel** (top-right of map, glassmorphism): Route name input, Route Type select, Color picker, live point counter, Undo last point button, Save Route button.
+  - **Save flow**: Points are submitted with auto-assigned `start`/`middle`/`end` `pointType` values via `createTenantRoute()`. On success, the map refreshes and the saved route appears immediately as a polyline.
+  - **Existing routes on map**: All active routes with points are loaded on mount/refresh and rendered as colored `Polyline` components with their configured color and line thickness; clicking a polyline shows a popup with the route name.
+
+### Changed
+- **`SetupService.ts`**: Added `{ resource: 'tenant_routes', actions: ['view', 'create', 'update', 'delete'] }` to `ROUTE_PERMISSIONS`.
+- **`index.ts`**: Imports and mounts `tenantRouteRoutes` at `/api/tenant/routes`; added `ensureTenantRouteTables()` in `startServer()` with idempotent `hasTable()`/`hasColumn()` checks and a patch migration for the `description` column.
+- **`TenantSidebar.tsx`**: "Routes" link added under the Manage dropdown, gated on `tenant_routes.view`; `manageOpen` auto-expands on `/tenant/routes`.
+- **`LeafletMap.tsx`**: Added `RoutePolyline` interface, `DrawLayer`, `DrawOverlay` components; renders existing routes as `Polyline`; new props `drawMode`, `drawPoints`, `onMapClick`, `routes`.
+- **`api.ts`**: Added `TenantRoute*` types and `getTenantRoutes`, `getTenantRoute`, `createTenantRoute`, `updateTenantRoute`, `deleteTenantRoute`, `getTenantRouteHistory` functions.
+
 ## [1.56.0] - 2026-05-11
 
 ### Added

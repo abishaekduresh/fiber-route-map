@@ -39,6 +39,7 @@ import tenantUserSettingRoutes from './routes/tenantUserSettingRoutes.js';
 import tenantSupportTicketRoutes from './routes/tenantSupportTicketRoutes.js';
 import adminSupportTicketRoutes from './routes/adminSupportTicketRoutes.js';
 import widgetRoutes from './routes/widgetRoutes.js';
+import tenantRouteRoutes from './routes/tenantRouteRoutes.js';
 import auditLogRoutes, { auditLogService } from './routes/auditLogRoutes.js';
 import { auditLog } from './middleware/auditLog.js';
 import logger from './utils/logger.js';
@@ -101,6 +102,7 @@ app.use('/api/tenant/support-tickets', tenantSupportTicketRoutes);
 app.use('/api/support-tickets', auth(authService), adminSupportTicketRoutes);
 app.use('/api/audit-logs', auth(authService), auditLogRoutes);
 app.use('/api/widgets', auth(authService), widgetRoutes);
+app.use('/api/tenant/routes', tenantRouteRoutes);
 app.use('/api/health', healthRoutes);
 app.get('/api/docs/spec', (_req: express.Request, res: express.Response) => res.json(swaggerSpec));
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
@@ -583,6 +585,124 @@ const ensureWidgetsTable = async () => {
   }
 };
 
+// Ensure tenant_routes, tenant_route_points, tenant_route_histories tables exist (v1.57.0)
+const ensureTenantRouteTables = async () => {
+  try {
+    const routesExists = await db.schema.hasTable('tenant_routes');
+    if (!routesExists) {
+      await db.schema.createTable('tenant_routes', (t: any) => {
+        t.bigIncrements('id').primary();
+        t.string('uuid', 36).notNullable().unique();
+        t.bigInteger('tenantBusinessId').unsigned().notNullable();
+        t.string('name', 150).notNullable();
+        t.string('code', 50).notNullable();
+        t.enum('type', ['fiber_route', 'coaxial_route', 'backbone_route', 'distribution_route', 'drop_route', 'underground_duct', 'pole_to_pole']).notNullable();
+        t.string('routeColor', 20).nullable();
+        t.integer('lineThickness').nullable();
+        t.bigInteger('parentRouteId').unsigned().nullable();
+        t.text('description').nullable();
+        t.enum('status', ['active', 'inactive', 'maintenance', 'deleted']).notNullable().defaultTo('active');
+        t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('deletedAt').nullable();
+        t.unique(['tenantBusinessId', 'code'], 'uq_tenant_routes_business_code');
+        t.index(['tenantBusinessId'], 'idx_tenant_routes_business_id');
+        t.index(['type'],             'idx_tenant_routes_type');
+        t.index(['status'],           'idx_tenant_routes_status');
+        t.index(['parentRouteId'],    'idx_tenant_routes_parent_id');
+      });
+      logger.info('Auto-migration: tenant_routes table created');
+    } else {
+      // Patch existing table — add columns added after initial release
+      const hasDescription = await db.schema.hasColumn('tenant_routes', 'description');
+      if (!hasDescription) {
+        await db.schema.alterTable('tenant_routes', (t: any) => {
+          t.text('description').nullable().after('parentRouteId');
+        });
+        logger.info('Auto-migration: added description column to tenant_routes');
+      }
+    }
+
+    const pointsExists = await db.schema.hasTable('tenant_route_points');
+    if (!pointsExists) {
+      await db.schema.createTable('tenant_route_points', (t: any) => {
+        t.bigIncrements('id').primary();
+        t.string('uuid', 36).notNullable().unique();
+        t.bigInteger('tenantRouteId').unsigned().notNullable();
+        t.integer('sequenceNumber').notNullable().defaultTo(0);
+        t.decimal('latitude',  10, 8).notNullable();
+        t.decimal('longitude', 11, 8).notNullable();
+        t.decimal('altitude',  10, 2).nullable();
+        t.enum('pointType', ['start', 'middle', 'end', 'junction', 'pole', 'device']).notNullable().defaultTo('middle');
+        t.string('poleNumber', 100).nullable();
+        t.text('remarks').nullable();
+        t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
+        t.index(['tenantRouteId'],  'idx_route_points_route_id');
+        t.index(['sequenceNumber'], 'idx_route_points_seq');
+      });
+      logger.info('Auto-migration: tenant_route_points table created');
+    }
+
+    const histExists = await db.schema.hasTable('tenant_route_histories');
+    if (!histExists) {
+      await db.schema.createTable('tenant_route_histories', (t: any) => {
+        t.bigIncrements('id').primary();
+        t.string('uuid', 36).notNullable().unique();
+        t.bigInteger('tenantRouteId').unsigned().notNullable();
+        t.enum('actionType', ['created', 'updated', 'deleted', 'restored', 'point_added', 'point_updated', 'point_deleted', 'split', 'merged']).notNullable();
+        t.bigInteger('changedByUserId').unsigned().nullable();
+        t.json('oldData').nullable();
+        t.json('newData').nullable();
+        t.string('ipAddress', 45).nullable();
+        t.text('userAgent').nullable();
+        t.text('remarks').nullable();
+        t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
+        t.index(['tenantRouteId'], 'idx_route_hist_route_id');
+        t.index(['actionType'],    'idx_route_hist_action');
+        t.index(['createdAt'],     'idx_route_hist_created');
+      });
+      logger.info('Auto-migration: tenant_route_histories table created');
+    }
+
+    // Seed permissions
+    const hasPermissions = await db.schema.hasTable('permissions');
+    if (hasPermissions && routesExists === false) {
+      const { generateUuidV7 } = await import('./utils/uuid.js');
+      const { nowDb } = await import('./utils/time.js');
+      const now = nowDb();
+      for (const action of ['view', 'create', 'update', 'delete']) {
+        const slug = `tenant_routes.${action}`;
+        const existing = await db('permissions').where('slug', slug).first();
+        if (!existing) {
+          await db('permissions').insert({
+            uuid: generateUuidV7(),
+            name: `${action.charAt(0).toUpperCase() + action.slice(1)} Tenant Routes`,
+            slug,
+            resource: 'tenant_routes',
+            description: `Can ${action} tenant routes`,
+            createdAt: now,
+            updatedAt: now,
+          });
+          logger.info(`Auto-migration: seeded permission '${slug}'`);
+        }
+      }
+      const superAdminRole = await db('roles').where('slug', 'super-admin').select('id').first();
+      if (superAdminRole) {
+        const newPerms = await db('permissions')
+          .whereIn('slug', ['tenant_routes.view', 'tenant_routes.create', 'tenant_routes.update', 'tenant_routes.delete'])
+          .select('id');
+        for (const perm of newPerms) {
+          await db.raw('INSERT IGNORE INTO role_permissions (roleId, permissionId) VALUES (?, ?)', [superAdminRole.id, perm.id]);
+        }
+        logger.info('Auto-migration: tenant_routes permissions assigned to Super Admin role');
+      }
+    }
+  } catch (err: any) {
+    logger.warn('Auto-migration for tenant_route tables skipped or failed', { error: err.message });
+  }
+};
+
 // Start server
 const startServer = async () => {
   try {
@@ -622,6 +742,9 @@ const startServer = async () => {
 
     // Ensure widgets table exists (v1.56.0)
     await ensureWidgetsTable();
+
+    // Ensure tenant_route tables exist (v1.57.0)
+    await ensureTenantRouteTables();
   } catch (error: any) {
     logger.error('Initial database connection failed. Server is starting but database-dependent routes will return connectivity errors.', {
       error: error.message,

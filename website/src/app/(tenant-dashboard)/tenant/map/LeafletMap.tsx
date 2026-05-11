@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap, ScaleControl } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, CircleMarker, Polyline, useMap, useMapEvents, ScaleControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -183,6 +183,50 @@ export interface MapMarker {
   status?: string;
 }
 
+export interface RoutePolyline {
+  id: string;
+  points: [number, number][];
+  color: string;
+  label: string;
+  thickness: number;
+}
+
+function DrawLayer({ onMapClick }: { onMapClick: (lat: number, lng: number) => void }) {
+  const map = useMap();
+  useEffect(() => {
+    map.getContainer().style.cursor = 'crosshair';
+    return () => { map.getContainer().style.cursor = ''; };
+  }, [map]);
+  useMapEvents({
+    click(e) { onMapClick(e.latlng.lat, e.latlng.lng); },
+  });
+  return null;
+}
+
+function DrawOverlay({ points }: { points: [number, number][] }) {
+  if (points.length === 0) return null;
+  return (
+    <>
+      {points.length > 1 && (
+        <Polyline positions={points} pathOptions={{ color: '#f59e0b', weight: 3, dashArray: '6 4', opacity: 0.9 }} />
+      )}
+      {points.map((pt, i) => (
+        <CircleMarker
+          key={i}
+          center={pt}
+          radius={i === 0 ? 7 : i === points.length - 1 ? 7 : 5}
+          pathOptions={{
+            color: i === 0 ? '#10b981' : i === points.length - 1 ? '#ef4444' : '#f59e0b',
+            fillColor: i === 0 ? '#10b981' : i === points.length - 1 ? '#ef4444' : '#f59e0b',
+            fillOpacity: 0.9,
+            weight: 2,
+          }}
+        />
+      ))}
+    </>
+  );
+}
+
 interface LeafletMapProps {
   layer: keyof typeof TILE_LAYERS;
   markers: MapMarker[];
@@ -191,9 +235,13 @@ interface LeafletMapProps {
   showScaleBar?: boolean;
   scaleUnit?: 'metric' | 'imperial';
   userLocation?: UserLocation;
+  drawMode?: boolean;
+  drawPoints?: [number, number][];
+  onMapClick?: (lat: number, lng: number) => void;
+  routes?: RoutePolyline[];
 }
 
-export default function LeafletMap({ layer, markers, center, zoom, showScaleBar = true, scaleUnit = 'metric', userLocation }: LeafletMapProps) {
+export default function LeafletMap({ layer, markers, center, zoom, showScaleBar = true, scaleUnit = 'metric', userLocation, drawMode, drawPoints = [], onMapClick, routes = [] }: LeafletMapProps) {
   const tile = TILE_LAYERS[layer] ?? TILE_LAYERS.street;
 
   return (
@@ -214,6 +262,21 @@ export default function LeafletMap({ layer, markers, center, zoom, showScaleBar 
           imperial={scaleUnit === 'imperial'}
         />
       )}
+      {/* Existing routes */}
+      {routes.filter((r) => r.points.length > 1).map((r) => (
+        <Polyline
+          key={r.id}
+          positions={r.points}
+          pathOptions={{ color: r.color || '#3b82f6', weight: r.thickness || 3, opacity: 0.85 }}
+        >
+          <Popup>
+            <strong>{r.label}</strong>
+          </Popup>
+        </Polyline>
+      ))}
+      {/* Draw mode */}
+      {drawMode && onMapClick && <DrawLayer onMapClick={onMapClick} />}
+      {drawMode && <DrawOverlay points={drawPoints} />}
       {markers.map((m) => (
         <Marker key={m.id} position={[m.lat, m.lng]}>
           <Popup>

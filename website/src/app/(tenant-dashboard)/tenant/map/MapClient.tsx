@@ -3,9 +3,9 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { getDeviceCategories, getDeviceTypes, getUserSettings, DeviceCategoryData, DeviceTypeData } from '@/lib/api';
+import { getDeviceCategories, getDeviceTypes, getUserSettings, getTenantRoutes, getTenantRoute, createTenantRoute, DeviceCategoryData, DeviceTypeData } from '@/lib/api';
 import { useTenantAuth } from '@/components/providers/TenantAuthContext';
-import type { MapMarker } from './LeafletMap';
+import type { MapMarker, RoutePolyline } from './LeafletMap';
 import MapSettingsPanel, { MapSettings, DEFAULT_MAP_SETTINGS } from '@/components/tenant-map/MapSettingsPanel';
 import styles from './map.module.css';
 
@@ -43,6 +43,16 @@ export default function MapClient() {
       router.replace('/tenant/dashboard');
     }
   }, [hasPermission, router]);
+
+  // ── Draw mode ────────────────────────────────────────────────────────────
+  const [drawMode, setDrawMode]           = useState(false);
+  const [drawPoints, setDrawPoints]       = useState<[number, number][]>([]);
+  const [routes, setRoutes]               = useState<RoutePolyline[]>([]);
+  const [drawName, setDrawName]           = useState('');
+  const [drawType, setDrawType]           = useState('fiber_route');
+  const [drawColor, setDrawColor]         = useState('#3b82f6');
+  const [isSaving, setIsSaving]           = useState(false);
+  const [saveError, setSaveError]         = useState('');
 
   const [geoStatus, setGeoStatus]       = useState<GeoStatus>('idle');
   const [center, setCenter]             = useState<[number, number]>([0, 0]);
@@ -122,12 +132,32 @@ export default function MapClient() {
 
   // ── API data ─────────────────────────────────────────────────────────────
   const loadApiData = useCallback(async () => {
-    const [catRes, dtRes] = await Promise.all([
+    const [catRes, dtRes, routeRes] = await Promise.all([
       getDeviceCategories({ limit: -1 }),
       getDeviceTypes({ limit: -1 }),
+      getTenantRoutes({ limit: -1, filter: { status: 'active' } }),
     ]);
     if (catRes.success && Array.isArray(catRes.data)) setCategories(catRes.data);
     if (dtRes.success && Array.isArray(dtRes.data)) setDeviceTypes(dtRes.data);
+    if (routeRes.success && Array.isArray(routeRes.data)) {
+      // Fetch full details (with points) for each route that has at least one point
+      const withPoints = routeRes.data.filter((r: any) => (r.attributes?.pointsCount ?? 0) > 0);
+      const detailResults = await Promise.all(withPoints.map((r: any) => getTenantRoute(r.id)));
+      const polylines: RoutePolyline[] = detailResults
+        .filter((res) => res.success && res.data)
+        .map((res): RoutePolyline => {
+          const r = res.data as any;
+          return {
+            id:        r.id,
+            label:     r.attributes.name,
+            color:     r.attributes.routeColor || '#3b82f6',
+            thickness: r.attributes.lineThickness || 3,
+            points:    (r.attributes.points ?? []).map((p: any) => [p.latitude, p.longitude] as [number, number]),
+          };
+        })
+        .filter((pl) => pl.points.length > 1);
+      setRoutes(polylines);
+    }
   }, []);
 
   useEffect(() => { loadApiData(); }, [loadApiData]);
@@ -155,6 +185,53 @@ export default function MapClient() {
 
   const activeCount   = 0;
   const inactiveCount = 0;
+
+  const handleMapClick = useCallback((lat: number, lng: number) => {
+    setDrawPoints((prev) => [...prev, [lat, lng]]);
+  }, []);
+
+  const startDraw = useCallback(() => {
+    setDrawMode(true);
+    setDrawPoints([]);
+    setDrawName('');
+    setDrawType('fiber_route');
+    setDrawColor('#3b82f6');
+    setSaveError('');
+  }, []);
+
+  const cancelDraw = useCallback(() => {
+    setDrawMode(false);
+    setDrawPoints([]);
+    setSaveError('');
+  }, []);
+
+  const undoLastPoint = useCallback(() => {
+    setDrawPoints((prev) => prev.slice(0, -1));
+  }, []);
+
+  const saveRoute = useCallback(async () => {
+    if (!drawName.trim()) { setSaveError('Route name is required.'); return; }
+    if (drawPoints.length < 2)  { setSaveError('Add at least 2 points.'); return; }
+    setIsSaving(true);
+    setSaveError('');
+    try {
+      const points = drawPoints.map((pt, i) => ({
+        sequenceNumber: i + 1,
+        latitude:       pt[0],
+        longitude:      pt[1],
+        pointType:      i === 0 ? 'start' : i === drawPoints.length - 1 ? 'end' : 'middle',
+      }));
+      const res = await createTenantRoute({ name: drawName.trim(), type: drawType, routeColor: drawColor, points });
+      if (!res.success) { setSaveError((res as any).error || 'Failed to save route.'); return; }
+      setDrawMode(false);
+      setDrawPoints([]);
+      await loadApiData();
+    } catch {
+      setSaveError('Failed to save route.');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [drawName, drawType, drawColor, drawPoints, loadApiData]);
 
   // ── Permission screens ───────────────────────────────────────────────────
   if (geoStatus === 'idle' || geoStatus === 'requesting') {
@@ -248,6 +325,24 @@ export default function MapClient() {
               <span className={styles.statDot} style={{ background: '#ef4444' }} />{inactiveCount} Inactive
             </div>
           </div>
+          {/* Draw Route */}
+          {hasPermission('tenant_routes.create') && (
+            drawMode ? (
+              <button className={styles.drawActiveBtn} onClick={cancelDraw} title="Cancel drawing">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+                Cancel Draw
+              </button>
+            ) : (
+              <button className={styles.drawBtn} onClick={startDraw} title="Draw a new route on the map">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 17L21 17M3 7l6 4 6-4 6 4" />
+                </svg>
+                Draw Route
+              </button>
+            )
+          )}
           {/* Refresh */}
           <button
             className={styles.fullscreenBtn}
@@ -379,13 +474,68 @@ export default function MapClient() {
             showScaleBar={mapSettings.showScaleBar}
             scaleUnit={mapSettings.scaleUnit}
             userLocation={{ position: center, heading, accuracy }}
+            drawMode={drawMode}
+            drawPoints={drawPoints}
+            onMapClick={handleMapClick}
+            routes={routes}
           />
-          {filteredMarkers.length === 0 && (
+          {filteredMarkers.length === 0 && !drawMode && (
             <div className={styles.emptyOverlay}>
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.4, marginBottom: '0.75rem' }}>
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
               </svg>
               <p>No nodes match the current filters.</p>
+            </div>
+          )}
+          {/* Draw mode save panel */}
+          {drawMode && (
+            <div className={styles.drawPanel}>
+              <div className={styles.drawPanelHeader}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 17L21 17M3 7l6 4 6-4 6 4" />
+                </svg>
+                <span>Drawing Route</span>
+                <span className={styles.drawPointCount}>{drawPoints.length} pts</span>
+              </div>
+              <p className={styles.drawHint}>Click on the map to place route points.</p>
+              <div className={styles.drawField}>
+                <label>Route Name *</label>
+                <input
+                  type="text"
+                  className={styles.drawInput}
+                  placeholder="e.g. Main Backbone"
+                  value={drawName}
+                  onChange={(e) => setDrawName(e.target.value)}
+                />
+              </div>
+              <div className={styles.drawField}>
+                <label>Type</label>
+                <select className={styles.drawSelect} value={drawType} onChange={(e) => setDrawType(e.target.value)}>
+                  <option value="fiber_route">Fiber Route</option>
+                  <option value="coaxial_route">Coaxial Route</option>
+                  <option value="backbone_route">Backbone Route</option>
+                  <option value="distribution_route">Distribution Route</option>
+                  <option value="drop_route">Drop Route</option>
+                  <option value="underground_duct">Underground Duct</option>
+                  <option value="pole_to_pole">Pole to Pole</option>
+                </select>
+              </div>
+              <div className={styles.drawField}>
+                <label>Color</label>
+                <div className={styles.drawColorRow}>
+                  <input type="color" className={styles.drawColorPicker} value={drawColor} onChange={(e) => setDrawColor(e.target.value)} />
+                  <span className={styles.drawColorHex}>{drawColor}</span>
+                </div>
+              </div>
+              {saveError && <p className={styles.drawError}>{saveError}</p>}
+              <div className={styles.drawActions}>
+                <button className={styles.drawUndoBtn} onClick={undoLastPoint} disabled={drawPoints.length === 0}>
+                  Undo
+                </button>
+                <button className={styles.drawSaveBtn} onClick={saveRoute} disabled={isSaving || drawPoints.length < 2}>
+                  {isSaving ? 'Saving…' : 'Save Route'}
+                </button>
+              </div>
             </div>
           )}
         </div>
