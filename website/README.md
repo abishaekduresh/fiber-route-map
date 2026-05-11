@@ -4,9 +4,10 @@ A futuristic, high-performance web dashboard for managing fiber optic networks.
 Built with **Next.js 16 (Turbopack)** and **TypeScript**, featuring a stunning **Glassmorphism Design System**.
 
 ## Version
-**Current Version:** 1.55.0 (Unhealthy page error messages & debug panel)
+**Current Version:** 1.56.0 (Widgets management — auto WID-XXXX codes, live SVG preview, RBAC)
 
 ## Features
+- **Widgets Management** (`/manage/widgets`): Admin CRUD interface for reusable map icon/symbol assets (SVG, PNG, WebP). Codes are auto-generated in `WID-XXXX` format (never user-supplied). Table view shows inline icon preview, type label, size, and status. Create/edit modal includes a live SVG preview that auto-fits any SVG (including those with hardcoded dimensions) via `fitSvg()` — strips `width`/`height` from the `<svg>` root so the asset scales via its `viewBox`. All actions gated by `widget.*` RBAC permissions. "Widgets" link added under the admin Manage sidebar dropdown.
 - **Unhealthy Page — Contextual Error Messages** (`/unhealthy`): Raw error codes (e.g. `SERVICE_UNAVAILABLE`) are mapped to human-readable titles, plain-English descriptions, and actionable hints. Error type determines icon (database, server, wifi-off, warning). When the backend runs in `APP_ENV=development` + `DEBUG=true`, a collapsible amber **Debug Info** panel shows the DB connection details attempted, raw error code, and numbered fix suggestions specific to the error (covers `ECONNREFUSED`, `ER_ACCESS_DENIED_ERROR`, `ER_BAD_DB_ERROR`, etc.).
 - **Corporate SaaS UI/UX**: Clean, structured dashboard aesthetic (sidebar, topbar, cards, tables) inspired by Linear, Vercel, and Stripe — solid surfaces, elevation shadows, solid-blue primary buttons, no animated orbs or backdrop-blur glass effects.
 - **Live Location Pointer with Direction** (`/tenant/map`): Blue dot with direction cone pointing in the direction of travel, pulsing ring animation, and a GPS accuracy circle. Position and heading update continuously via `watchPosition`; watch is cleared on unmount.

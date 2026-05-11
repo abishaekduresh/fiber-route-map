@@ -57,7 +57,7 @@ export class TenantCableTypeRepository {
       .first() ?? null;
   }
 
-  async create(data: CreateCableTypeDTO & { tenantBusinessId: number }): Promise<TenantCableType> {
+  async create(data: CreateCableTypeDTO & { tenantBusinessId: number; name: string; code: string }): Promise<TenantCableType> {
     const uuid = uuidv4();
     const now = nowDb();
     await db(this.table).insert({
@@ -70,7 +70,7 @@ export class TenantCableTypeRepository {
     return this.findByUuid(uuid, data.tenantBusinessId) as Promise<TenantCableType>;
   }
 
-  async update(uuid: string, tenantBusinessId: number, data: UpdateCableTypeDTO): Promise<boolean> {
+  async update(uuid: string, tenantBusinessId: number, data: UpdateCableTypeDTO & { name?: string; code?: string }): Promise<boolean> {
     const result = await db(this.table)
       .where({ uuid, tenantBusinessId })
       .update({ ...data, updatedAt: nowDb() });

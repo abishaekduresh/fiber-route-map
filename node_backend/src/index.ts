@@ -38,6 +38,7 @@ import tenantDeviceTypeRoutes from './routes/tenantDeviceTypeRoutes.js';
 import tenantUserSettingRoutes from './routes/tenantUserSettingRoutes.js';
 import tenantSupportTicketRoutes from './routes/tenantSupportTicketRoutes.js';
 import adminSupportTicketRoutes from './routes/adminSupportTicketRoutes.js';
+import widgetRoutes from './routes/widgetRoutes.js';
 import auditLogRoutes, { auditLogService } from './routes/auditLogRoutes.js';
 import { auditLog } from './middleware/auditLog.js';
 import logger from './utils/logger.js';
@@ -99,12 +100,13 @@ app.use('/api/tenant/user-settings', tenantUserSettingRoutes);
 app.use('/api/tenant/support-tickets', tenantSupportTicketRoutes);
 app.use('/api/support-tickets', auth(authService), adminSupportTicketRoutes);
 app.use('/api/audit-logs', auth(authService), auditLogRoutes);
+app.use('/api/widgets', auth(authService), widgetRoutes);
 app.use('/api/health', healthRoutes);
 app.get('/api/docs/spec', (_req: express.Request, res: express.Response) => res.json(swaggerSpec));
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Root route
-app.get('/', (req: express.Request, res: express.Response) => {
+app.get('/', (_req: express.Request, res: express.Response) => {
   res.json({ message: 'Fiber Route Map Node.js API' });
 });
 
@@ -551,6 +553,36 @@ const ensureSupportTicketTables = async () => {
   }
 };
 
+// Ensure widgets table exists (auto-migration for v1.56.0)
+const ensureWidgetsTable = async () => {
+  try {
+    const exists = await db.schema.hasTable('widgets');
+    if (!exists) {
+      await db.schema.createTable('widgets', (t: any) => {
+        t.increments('id').primary();
+        t.string('uuid', 36).notNullable().unique();
+        t.string('code', 100).notNullable().unique();
+        t.string('name', 255).notNullable();
+        t.enum('type', ['active_device', 'passive_device', 'power_device', 'junction', 'fiber_terminal', 'splitter', 'coupler']).notNullable();
+        t.enum('iconType', ['svg', 'png', 'webp']).notNullable().defaultTo('svg');
+        t.specificType('svgTemplate', 'LONGTEXT').nullable();
+        t.string('iconUrl', 512).nullable();
+        t.integer('width').unsigned().notNullable().defaultTo(48);
+        t.integer('height').unsigned().notNullable().defaultTo(48);
+        t.enum('status', ['active', 'inactive', 'deleted']).notNullable().defaultTo('active');
+        t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('deletedAt').nullable();
+        t.index(['type'],   'idx_widgets_type');
+        t.index(['status'], 'idx_widgets_status');
+      });
+      logger.info('Auto-migration: widgets table created');
+    }
+  } catch (err: any) {
+    logger.warn('Auto-migration for widgets table skipped or failed', { error: err.message });
+  }
+};
+
 // Start server
 const startServer = async () => {
   try {
@@ -587,6 +619,9 @@ const startServer = async () => {
 
     // Ensure support ticket tables exist (v1.47.0)
     await ensureSupportTicketTables();
+
+    // Ensure widgets table exists (v1.56.0)
+    await ensureWidgetsTable();
   } catch (error: any) {
     logger.error('Initial database connection failed. Server is starting but database-dependent routes will return connectivity errors.', {
       error: error.message,

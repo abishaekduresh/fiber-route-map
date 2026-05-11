@@ -82,6 +82,7 @@ export const ROUTE_PERMISSIONS = [
   { resource: 'map',               actions: ['view'] },
   { resource: 'audit_log',         actions: ['view', 'export'] },
   { resource: 'apidoc',            actions: ['view'] },
+  { resource: 'widget',            actions: ['view', 'create', 'update', 'delete'] },
 ];
 
 // ─── Helper ───────────────────────────────────────────────────────────────────

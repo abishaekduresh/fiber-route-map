@@ -1342,4 +1342,55 @@ export async function deleteUserSetting(key: string): Promise<ApiResponse> {
   return apiFetch(`/api/tenant/user-settings/${encodeURIComponent(key)}`, { method: 'DELETE' });
 }
 
+// ─── Widgets ──────────────────────────────────────────────────────────────────
+
+export type WidgetType = 'active_device' | 'passive_device' | 'power_device' | 'junction' | 'fiber_terminal' | 'splitter' | 'coupler';
+export type WidgetIconType = 'svg' | 'png' | 'webp';
+export type WidgetStatus = 'active' | 'inactive' | 'deleted';
+
+export interface WidgetData {
+  id: string;
+  type: string;
+  attributes: {
+    code: string;
+    name: string;
+    type: WidgetType;
+    iconType: WidgetIconType;
+    svgTemplate: string | null;
+    iconUrl: string | null;
+    width: number;
+    height: number;
+    status: WidgetStatus;
+  };
+  meta: { createdAt: string; updatedAt: string };
+}
+
+export async function getWidgets(params?: { page?: number; limit?: number; search?: string; status?: string; type?: string }): Promise<ApiResponse<WidgetData[]>> {
+  const q = new URLSearchParams();
+  if (params?.page)   q.set('page',   String(params.page));
+  if (params?.limit)  q.set('limit',  String(params.limit));
+  if (params?.search) q.set('search', params.search);
+  if (params?.status) q.set('filter[status]', params.status);
+  if (params?.type)   q.set('filter[type]',   params.type);
+  const qs = q.toString();
+  return apiFetch(`/api/widgets${qs ? `?${qs}` : ''}`);
+}
+
+export async function getWidget(uuid: string): Promise<ApiResponse<WidgetData>> {
+  return apiFetch(`/api/widgets/${uuid}`);
+}
+
+export async function createWidget(data: Omit<WidgetData['attributes'], 'status'>): Promise<ApiResponse<WidgetData>> {
+  return apiFetch('/api/widgets', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function updateWidget(uuid: string, data: Partial<WidgetData['attributes']>): Promise<ApiResponse<WidgetData>> {
+  return apiFetch(`/api/widgets/${uuid}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export async function deleteWidget(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/widgets/${uuid}`, { method: 'DELETE' });
+}
+
+
 export { apiFetch };

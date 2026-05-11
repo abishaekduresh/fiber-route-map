@@ -2,6 +2,34 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.56.0] - 2026-05-11
+
+### Added
+- **Widgets Module — Full CRUD**: New `widgets` table and complete backend API for managing reusable map icon/symbol assets used by GIS features.
+  - **Table**: `id`, `uuid` (v4), `code` (auto-generated, globally unique), `name`, `type` (enum: `active_device` / `passive_device` / `power_device` / `junction` / `fiber_terminal` / `splitter` / `coupler`), `iconType` (enum: `svg` / `png` / `webp`), `svgTemplate` (LONGTEXT), `iconUrl` (VARCHAR 512), `width` (INT), `height` (INT), `status` (active / inactive / deleted), `createdAt`, `updatedAt`, `deletedAt`.
+  - **Auto-migration**: `ensureWidgetsTable()` creates the table on first server start.
+  - **Auto-generated codes**: Codes are assigned sequentially in `WID-XXXX` format (e.g. `WID-0001`, `WID-0002`) — `getLastCode()` in the repository + `generateCode()` in the service; code is never user-supplied.
+  - **Endpoints**: `GET /api/widgets`, `GET /api/widgets/:uuid`, `POST /api/widgets`, `PUT /api/widgets/:uuid`, `DELETE /api/widgets/:uuid`.
+  - **Filtering & pagination**: List endpoint supports `page`, `limit` (`-1` for all), `search` (name or code), `status`, and `type` filters.
+  - **JSON:API response shape**: `{ id: uuid, type: "widget", attributes: { … }, meta: { createdAt, updatedAt }, links: { self } }`.
+  - **Swagger docs**: Full `widget` tag with request/response schemas in `docs/paths/widgets.doc.ts`.
+- **Widget RBAC Permissions**: `widget.view`, `widget.create`, `widget.update`, `widget.delete` added to `ROUTE_PERMISSIONS` in `SetupService.ts` — synced automatically via the **Sync Permissions** action.
+- **Widgets Management UI** (`/manage/widgets`): Admin page for managing all widgets.
+  - **Table view**: Code badge, Name, Type label, inline SVG/image icon preview (32 × 32), Size (W × H), Status badge, Created date, Edit/Delete action buttons.
+  - **Filters**: Search by name or code, Type dropdown (all types), Status dropdown (Active / Inactive).
+  - **Paginated**: Server-side pagination with page-number buttons.
+  - **RBAC-gated**: Add button gated on `widget.create`; Edit button on `widget.update`; Delete button on `widget.delete`.
+  - **Sidebar link**: "Widgets" added under the **Manage** dropdown, gated on `widget.view`.
+- **Widget Create/Edit Modal**:
+  - Fields: Name, Route Type, Icon Type (SVG / PNG / WebP), Width (px), Height (px), SVG Template (textarea with monospace font), Icon URL (for PNG/WebP).
+  - **Live SVG preview**: Renders the SVG template at the configured dimensions. `fitSvg()` helper strips `width`/`height` attributes from the `<svg>` root and injects `style="width:100%;height:100%"` so any SVG (including those with hardcoded 800 × 800 dimensions) auto-fits the preview container via its `viewBox`.
+  - **Status selector**: Shown on edit only (active / inactive).
+  - **Code field absent**: Code is never shown or sent by the client — the backend generates it automatically.
+
+### Changed
+- **`SetupService.ts` — ROUTE_PERMISSIONS**: Added `{ resource: 'widget', actions: ['view', 'create', 'update', 'delete'] }` so the Sync Permissions action creates all four widget permissions.
+- **`index.ts`**: Imported and mounted `widgetRoutes` at `/api/widgets` (behind `auth` middleware); added `ensureWidgetsTable()` call in `startServer()`.
+
 ## [1.55.0] - 2026-05-11
 
 ### Added

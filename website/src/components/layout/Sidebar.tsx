@@ -66,6 +66,7 @@ export default function Sidebar({
         { name: 'Roles', href: '/manage/roles', permission: 'role.view' },
         { name: 'Permissions', href: '/manage/permissions', permission: 'permission.view' },
         { name: 'Countries', href: '/manage/countries' },
+        { name: 'Widgets',   href: '/manage/widgets',    permission: 'widget.view' },
         { name: 'Audit Logs', href: '/manage/audit-logs', permission: 'audit_log.view' },
       ]
     },
