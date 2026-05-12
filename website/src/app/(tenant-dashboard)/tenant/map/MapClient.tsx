@@ -184,9 +184,15 @@ export default function MapClient() {
       getTenantWidgets(),
     ]);
     if (catRes.success && Array.isArray(catRes.data)) setCategories(catRes.data);
-    if (dtRes.success && Array.isArray(dtRes.data)) setDeviceTypes(dtRes.data);
 
-    // Build a uuid→widget lookup for icon resolution
+    // Build uuid→deviceType lookup for icon fallback
+    const deviceTypeMap = new Map<string, DeviceTypeData>();
+    if (dtRes.success && Array.isArray(dtRes.data)) {
+      dtRes.data.forEach((dt: DeviceTypeData) => deviceTypeMap.set(dt.id, dt));
+      setDeviceTypes(dtRes.data);
+    }
+
+    // Build uuid→widget lookup for icon resolution
     const widgetMap = new Map<string, WidgetData>();
     if (widgetRes.success && Array.isArray(widgetRes.data)) {
       widgetRes.data.forEach((w: WidgetData) => widgetMap.set(w.id, w));
@@ -216,18 +222,21 @@ export default function MapClient() {
             updatedAt:       r.meta.updatedAt,
             points:          pts.map((p) => [p.latitude, p.longitude] as [number, number]),
             routePoints: pts.map((p): RoutePointWidget => {
-              const widget = p.pointIcon ? widgetMap.get(p.pointIcon) : undefined;
+              const widget  = p.pointIcon      ? widgetMap.get(p.pointIcon)           : undefined;
+              const devType = p.deviceTypeUuid ? deviceTypeMap.get(p.deviceTypeUuid)  : undefined;
+              const dtAttrs = devType?.attributes;
               return {
                 lat:            p.latitude,
                 lng:            p.longitude,
                 pointType:      p.pointType,
                 sequenceNumber: p.sequenceNumber,
-                widgetIconType: widget?.attributes.iconType ?? null,
-                widgetSvg:      widget?.attributes.svgTemplate ?? null,
-                widgetIconUrl:  widget?.attributes.iconUrl ?? null,
+                widgetIconType: widget?.attributes.iconType ?? (dtAttrs?.widgetIconType ?? null),
+                widgetSvg:      widget?.attributes.svgTemplate ?? (dtAttrs?.widgetSvgTemplate ?? null),
+                widgetIconUrl:  widget?.attributes.iconUrl ?? (dtAttrs?.widgetIconUrl ?? null),
                 widgetWidth:    widget?.attributes.width ?? null,
                 widgetHeight:   widget?.attributes.height ?? null,
                 widgetName:     widget?.attributes.name ?? null,
+                deviceTypeName: dtAttrs?.name ?? null,
               };
             }),
           };

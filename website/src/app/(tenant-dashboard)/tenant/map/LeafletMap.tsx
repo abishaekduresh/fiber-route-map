@@ -194,6 +194,7 @@ export interface RoutePointWidget {
   widgetWidth?: number | null;
   widgetHeight?: number | null;
   widgetName?: string | null;
+  deviceTypeName?: string | null;
 }
 
 export interface RoutePolyline {
@@ -338,8 +339,11 @@ function RouteWidgetMarkers({ routePoints }: { routePoints: RoutePointWidget[] }
         return (
           <Marker key={`wpw-${i}`} position={[p.lat, p.lng]} icon={icon} zIndexOffset={600}>
             <Popup>
-              <div style={{ minWidth: 110 }}>
-                <strong style={{ fontSize: '0.82rem' }}>{p.widgetName || 'Widget'}</strong>
+              <div style={{ minWidth: 120 }}>
+                <strong style={{ fontSize: '0.82rem' }}>{p.widgetName || p.deviceTypeName || 'Point'}</strong>
+                {p.deviceTypeName && (
+                  <div style={{ fontSize: '0.7rem', color: '#3b82f6', marginTop: 2 }}>{p.deviceTypeName}</div>
+                )}
                 <div style={{ fontSize: '0.72rem', color: '#666', marginTop: 3, textTransform: 'capitalize' }}>
                   {p.pointType} · pt {p.sequenceNumber}
                 </div>
