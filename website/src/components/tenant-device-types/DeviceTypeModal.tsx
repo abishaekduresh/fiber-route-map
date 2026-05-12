@@ -2,8 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { createDeviceType, updateDeviceType, DeviceTypeData, DeviceCategoryData, getDeviceCategories } from '@/lib/api';
+import { createDeviceType, updateDeviceType, DeviceTypeData, DeviceCategoryData, getDeviceCategories, getTenantWidgets, WidgetData } from '@/lib/api';
 import styles from '@/app/(dashboard)/dashboard/dashboard.module.css';
+
+function fitSvg(svg: string): string {
+  return svg.replace(/<svg([^>]*)>/i, (_, attrs) =>
+    `<svg${attrs.replace(/\s+(width|height)="[^"]*"/gi, '')} style="width:100%;height:100%">`
+  );
+}
 
 interface Props {
   isOpen: boolean;
@@ -25,6 +31,7 @@ type BoolKey = typeof BOOL_FIELDS[number]['key'];
 interface FormState {
   tenantDeviceCategoryId: string;
   name: string;
+  widgetUuid: string;
   isModelNumberRequired: boolean;
   isSerialNumberRequired: boolean;
   isMacAddressRequired: boolean;
@@ -37,6 +44,7 @@ interface FormState {
 const EMPTY: FormState = {
   tenantDeviceCategoryId: '',
   name: '',
+  widgetUuid: '',
   isModelNumberRequired: false,
   isSerialNumberRequired: false,
   isMacAddressRequired: false,
@@ -50,6 +58,7 @@ export default function DeviceTypeModal({ isOpen, onClose, onSuccess, deviceType
   const isEditing = Boolean(deviceType);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [categories, setCategories] = useState<DeviceCategoryData[]>([]);
+  const [widgets, setWidgets] = useState<WidgetData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,12 +67,16 @@ export default function DeviceTypeModal({ isOpen, onClose, onSuccess, deviceType
     getDeviceCategories({ limit: -1 }).then((res) => {
       if (res.success && Array.isArray(res.data)) setCategories(res.data);
     });
+    getTenantWidgets().then((res) => {
+      if (res.success && Array.isArray(res.data)) setWidgets(res.data);
+    });
 
     if (deviceType) {
       const a = deviceType.attributes;
       setForm({
         tenantDeviceCategoryId: String(a.tenantDeviceCategoryId ?? ''),
         name: a.name ?? '',
+        widgetUuid: a.widgetUuid ?? '',
         isModelNumberRequired: Boolean(a.isModelNumberRequired),
         isSerialNumberRequired: Boolean(a.isSerialNumberRequired),
         isMacAddressRequired: Boolean(a.isMacAddressRequired),
@@ -100,6 +113,7 @@ export default function DeviceTypeModal({ isOpen, onClose, onSuccess, deviceType
       const payload: any = {
         tenantDeviceCategoryId: Number(form.tenantDeviceCategoryId),
         name: form.name,
+        widgetUuid: form.widgetUuid || null,
         isModelNumberRequired: form.isModelNumberRequired,
         isSerialNumberRequired: form.isSerialNumberRequired,
         isMacAddressRequired: form.isMacAddressRequired,
@@ -179,6 +193,37 @@ export default function DeviceTypeModal({ isOpen, onClose, onSuccess, deviceType
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Name *</label>
                 <input type="text" className={styles.input} value={form.name} onChange={set('name')} required placeholder="e.g. OLT" />
+              </div>
+
+              {/* Widget */}
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>Map Widget</label>
+                <select className={styles.select} value={form.widgetUuid} onChange={set('widgetUuid')}>
+                  <option value="">— No widget —</option>
+                  {widgets.map((w) => (
+                    <option key={w.id} value={w.id}>
+                      [{w.attributes.code}] {w.attributes.name}
+                    </option>
+                  ))}
+                </select>
+                {form.widgetUuid && (() => {
+                  const w = widgets.find((x) => x.id === form.widgetUuid);
+                  if (!w) return null;
+                  return (
+                    <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.6rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)' }}>
+                      <div style={{ width: 28, height: 28, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                        {w.attributes.iconType === 'svg'
+                          ? <span dangerouslySetInnerHTML={{ __html: fitSvg(w.attributes.svgTemplate || '') }} style={{ display: 'flex', width: 28, height: 28 }} />
+                          : <img src={w.attributes.iconUrl || ''} alt={w.attributes.name} style={{ width: 28, height: 28, objectFit: 'contain' }} />
+                        }
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.8125rem', fontWeight: 600 }}>{w.attributes.name}</div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', fontFamily: 'monospace' }}>{w.attributes.code}</div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Status (edit only) */}

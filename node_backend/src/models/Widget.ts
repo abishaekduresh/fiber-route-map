@@ -5,7 +5,8 @@ export type WidgetType =
   | 'junction'
   | 'fiber_terminal'
   | 'splitter'
-  | 'coupler';
+  | 'coupler'
+  | 'route_point';
 
 export type WidgetIconType = 'svg' | 'png' | 'webp';
 

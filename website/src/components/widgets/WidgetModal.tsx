@@ -13,6 +13,7 @@ const WIDGET_TYPES: { value: WidgetType; label: string }[] = [
   { value: 'fiber_terminal', label: 'Fiber Terminal' },
   { value: 'splitter',       label: 'Splitter' },
   { value: 'coupler',        label: 'Coupler' },
+  { value: 'route_point',   label: 'Route Point' },
 ];
 
 interface FormState {

@@ -69,7 +69,8 @@ export default function MapClient() {
   // ── Draw mode ────────────────────────────────────────────────────────────
   const [drawMode, setDrawMode]             = useState(false);
   const [drawPoints, setDrawPoints]         = useState<[number, number][]>([]);
-  const [drawPointWidgets, setDrawPointWidgets] = useState<string[]>([]);   // widgetUuid per point ('' = none)
+  const [drawPointWidgets, setDrawPointWidgets] = useState<string[]>([]);        // pointIcon per point ('' = none)
+  const [drawPointDeviceTypes, setDrawPointDeviceTypes] = useState<string[]>([]); // deviceTypeUuid per point
   const [routes, setRoutes]                 = useState<RoutePolyline[]>([]);
   const [availableWidgets, setAvailableWidgets] = useState<WidgetData[]>([]);
   const [drawName, setDrawName]             = useState('');
@@ -86,6 +87,7 @@ export default function MapClient() {
   const [editRouteId, setEditRouteId]         = useState('');
   const [editPoints, setEditPoints]           = useState<[number, number][]>([]);
   const [editPointWidgets, setEditPointWidgets] = useState<string[]>([]);
+  const [editPointDeviceTypes, setEditPointDeviceTypes] = useState<string[]>([]);
   const [editName, setEditName]               = useState('');
   const [editType, setEditType]               = useState('fiber_route');
   const [editColor, setEditColor]             = useState('#3b82f6');
@@ -214,7 +216,7 @@ export default function MapClient() {
             updatedAt:       r.meta.updatedAt,
             points:          pts.map((p) => [p.latitude, p.longitude] as [number, number]),
             routePoints: pts.map((p): RoutePointWidget => {
-              const widget = p.widgetUuid ? widgetMap.get(p.widgetUuid) : undefined;
+              const widget = p.pointIcon ? widgetMap.get(p.pointIcon) : undefined;
               return {
                 lat:            p.latitude,
                 lng:            p.longitude,
@@ -286,9 +288,17 @@ export default function MapClient() {
     ...routes.map((r) => ({ value: r.id, label: `[${r.code}] ${r.label}` })),
   ], [routes]);
 
+  const deviceTypeOptions = useMemo<DSOption[]>(() => [
+    { value: '', label: 'No device type (optional)' },
+    ...deviceTypes.map((dt) => ({
+      value: dt.id,
+      label: `[${dt.attributes.code}] ${dt.attributes.name}`,
+    })),
+  ], [deviceTypes]);
+
   const widgetOptions = useMemo<DSOption[]>(() => [
     { value: '', label: 'No widget' },
-    ...availableWidgets.map((w) => ({
+    ...availableWidgets.filter((w) => w.attributes.type === 'route_point').map((w) => ({
       value: w.id,
       label: `[${w.attributes.code}] ${w.attributes.name}`,
       renderOption: () => (
@@ -315,7 +325,8 @@ export default function MapClient() {
     const pts: any[] = r.attributes.points ?? [];
     setEditRouteId(routeId);
     setEditPoints(pts.map((p: any) => [Number(p.latitude), Number(p.longitude)] as [number, number]));
-    setEditPointWidgets(pts.map((p: any) => p.widgetUuid || ''));
+    setEditPointWidgets(pts.map((p: any) => p.pointIcon || ''));
+    setEditPointDeviceTypes(pts.map((p: any) => p.deviceTypeUuid || ''));
     setEditName(r.attributes.name);
     setEditType(r.attributes.type);
     setEditColor(r.attributes.routeColor || '#3b82f6');
@@ -333,12 +344,14 @@ export default function MapClient() {
     setEditRouteId('');
     setEditPoints([]);
     setEditPointWidgets([]);
+    setEditPointDeviceTypes([]);
     setSaveEditError('');
   }, []);
 
   const onEditMapClick = useCallback((lat: number, lng: number) => {
     setEditPoints((prev) => [...prev, [lat, lng]]);
     setEditPointWidgets((prev) => [...prev, '']);
+    setEditPointDeviceTypes((prev) => [...prev, '']);
   }, []);
 
   const onEditPointMove = useCallback((idx: number, lat: number, lng: number) => {
@@ -348,10 +361,15 @@ export default function MapClient() {
   const deleteEditPoint = useCallback((idx: number) => {
     setEditPoints((prev) => prev.filter((_, i) => i !== idx));
     setEditPointWidgets((prev) => prev.filter((_, i) => i !== idx));
+    setEditPointDeviceTypes((prev) => prev.filter((_, i) => i !== idx));
   }, []);
 
-  const setEditPointWidget = useCallback((idx: number, widgetUuid: string) => {
-    setEditPointWidgets((prev) => prev.map((w, i) => i === idx ? widgetUuid : w));
+  const setEditPointWidget = useCallback((idx: number, val: string) => {
+    setEditPointWidgets((prev) => prev.map((w, i) => i === idx ? val : w));
+  }, []);
+
+  const setEditPointDeviceType = useCallback((idx: number, val: string) => {
+    setEditPointDeviceTypes((prev) => prev.map((v, i) => i === idx ? val : v));
   }, []);
 
   const saveEdit = useCallback(async () => {
@@ -365,7 +383,8 @@ export default function MapClient() {
         latitude:       pt[0],
         longitude:      pt[1],
         pointType:      getPointType(i, editPoints.length),
-        widgetUuid:     editPointWidgets[i] || null,
+        pointIcon:      editPointWidgets[i] || null,
+        deviceTypeUuid: editPointDeviceTypes[i] || null,
       }));
       const payload: Record<string, any> = {
         name:            editName.trim(),
@@ -383,17 +402,19 @@ export default function MapClient() {
       setEditRouteId('');
       setEditPoints([]);
       setEditPointWidgets([]);
+      setEditPointDeviceTypes([]);
       await loadApiData();
     } catch {
       setSaveEditError('Failed to save.');
     } finally {
       setIsSavingEdit(false);
     }
-  }, [editName, editType, editColor, editThickness, editStatus, editParentUuid, editDescription, editPoints, editPointWidgets, editRouteId, loadApiData]);
+  }, [editName, editType, editColor, editThickness, editStatus, editParentUuid, editDescription, editPoints, editPointWidgets, editPointDeviceTypes, editRouteId, loadApiData]);
 
   const handleMapClick = useCallback((lat: number, lng: number) => {
     setDrawPoints((prev) => [...prev, [lat, lng]]);
     setDrawPointWidgets((prev) => [...prev, '']);
+    setDrawPointDeviceTypes((prev) => [...prev, '']);
   }, []);
 
   const startDraw = useCallback(() => {
@@ -401,9 +422,11 @@ export default function MapClient() {
     setEditRouteId('');
     setEditPoints([]);
     setEditPointWidgets([]);
+    setEditPointDeviceTypes([]);
     setDrawMode(true);
     setDrawPoints([]);
     setDrawPointWidgets([]);
+    setDrawPointDeviceTypes([]);
     setDrawName('');
     setDrawType('fiber_route');
     setDrawColor('#3b82f6');
@@ -417,16 +440,22 @@ export default function MapClient() {
     setDrawMode(false);
     setDrawPoints([]);
     setDrawPointWidgets([]);
+    setDrawPointDeviceTypes([]);
     setSaveError('');
   }, []);
 
   const undoLastPoint = useCallback(() => {
     setDrawPoints((prev) => prev.slice(0, -1));
     setDrawPointWidgets((prev) => prev.slice(0, -1));
+    setDrawPointDeviceTypes((prev) => prev.slice(0, -1));
   }, []);
 
-  const setPointWidget = useCallback((idx: number, widgetUuid: string) => {
-    setDrawPointWidgets((prev) => prev.map((w, i) => i === idx ? widgetUuid : w));
+  const setPointWidget = useCallback((idx: number, val: string) => {
+    setDrawPointWidgets((prev) => prev.map((w, i) => i === idx ? val : w));
+  }, []);
+
+  const setPointDeviceType = useCallback((idx: number, val: string) => {
+    setDrawPointDeviceTypes((prev) => prev.map((v, i) => i === idx ? val : v));
   }, []);
 
   const getPointType = (i: number, total: number) =>
@@ -444,7 +473,8 @@ export default function MapClient() {
         latitude:       pt[0],
         longitude:      pt[1],
         pointType:      getPointType(i, drawPoints.length),
-        widgetUuid:     drawPointWidgets[i] || null,
+        pointIcon:      drawPointWidgets[i] || null,
+        deviceTypeUuid: drawPointDeviceTypes[i] || null,
       }));
       const payload: Record<string, any> = {
         name:          drawName.trim(),
@@ -461,13 +491,14 @@ export default function MapClient() {
       setDrawMode(false);
       setDrawPoints([]);
       setDrawPointWidgets([]);
+      setDrawPointDeviceTypes([]);
       await loadApiData();
     } catch {
       setSaveError('Failed to save route.');
     } finally {
       setIsSaving(false);
     }
-  }, [drawName, drawType, drawColor, drawThickness, drawParentUuid, drawDescription, drawPoints, drawPointWidgets, loadApiData]);
+  }, [drawName, drawType, drawColor, drawThickness, drawParentUuid, drawDescription, drawPoints, drawPointWidgets, drawPointDeviceTypes, loadApiData]);
 
   // ── Permission screens ───────────────────────────────────────────────────
   if (geoStatus === 'idle' || geoStatus === 'requesting') {
@@ -751,14 +782,6 @@ export default function MapClient() {
             onEditMapClick={onEditMapClick}
             onEditPointMove={onEditPointMove}
           />
-          {filteredMarkers.length === 0 && !drawMode && !editMode && (
-            <div className={styles.emptyOverlay}>
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.4, marginBottom: '0.75rem' }}>
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
-              </svg>
-              <p>No nodes match the current filters.</p>
-            </div>
-          )}
           {/* Edit mode panel */}
           {editMode && (
             <div className={styles.drawPanel}>
@@ -839,6 +862,13 @@ export default function MapClient() {
                           onChange={(val) => setEditPointWidget(i, val)}
                           placeholder="No widget (optional)"
                           searchPlaceholder="Search widgets…"
+                        />
+                        <DrawSearchableSelect
+                          options={deviceTypeOptions}
+                          value={editPointDeviceTypes[i] ?? ''}
+                          onChange={(val) => setEditPointDeviceType(i, val)}
+                          placeholder="No device type (optional)"
+                          searchPlaceholder="Search device types…"
                         />
                       </div>
                     ))}
@@ -960,6 +990,13 @@ export default function MapClient() {
                           onChange={(val) => setPointWidget(i, val)}
                           placeholder="No widget (optional)"
                           searchPlaceholder="Search widgets…"
+                        />
+                        <DrawSearchableSelect
+                          options={deviceTypeOptions}
+                          value={drawPointDeviceTypes[i] ?? ''}
+                          onChange={(val) => setPointDeviceType(i, val)}
+                          placeholder="No device type (optional)"
+                          searchPlaceholder="Search device types…"
                         />
                       </div>
                     ))}

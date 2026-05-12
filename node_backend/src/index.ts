@@ -636,7 +636,8 @@ const ensureTenantRouteTables = async () => {
         t.decimal('longitude', 11, 8).notNullable();
         t.decimal('altitude',  10, 2).nullable();
         t.enum('pointType', ['start', 'middle', 'end', 'junction', 'pole', 'device']).notNullable().defaultTo('middle');
-        t.string('widgetUuid', 36).nullable();
+        t.string('pointIcon', 36).nullable();
+        t.string('deviceTypeUuid', 36).nullable();
         t.text('remarks').nullable();
         t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
         t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
@@ -645,13 +646,33 @@ const ensureTenantRouteTables = async () => {
       });
       logger.info('Auto-migration: tenant_route_points table created');
     } else {
-      // Patch: add widgetUuid column (replaces poleNumber)
+      // Patch: drop poleNumber if it still exists
+      const hasPoleNumber = await db.schema.hasColumn('tenant_route_points', 'poleNumber');
+      if (hasPoleNumber) {
+        await db.schema.alterTable('tenant_route_points', (t: any) => { t.dropColumn('poleNumber'); });
+        logger.info('Auto-migration: dropped poleNumber column from tenant_route_points');
+      }
+
+      // Patch: rename widgetUuid → pointIcon, or add pointIcon if neither exists
       const hasWidgetUuid = await db.schema.hasColumn('tenant_route_points', 'widgetUuid');
-      if (!hasWidgetUuid) {
+      const hasPointIcon  = await db.schema.hasColumn('tenant_route_points', 'pointIcon');
+      if (hasWidgetUuid && !hasPointIcon) {
+        await db.raw('ALTER TABLE `tenant_route_points` CHANGE COLUMN `widgetUuid` `pointIcon` VARCHAR(36) NULL');
+        logger.info('Auto-migration: renamed widgetUuid → pointIcon in tenant_route_points');
+      } else if (!hasWidgetUuid && !hasPointIcon) {
         await db.schema.alterTable('tenant_route_points', (t: any) => {
-          t.string('widgetUuid', 36).nullable().after('pointType');
+          t.string('pointIcon', 36).nullable().after('pointType');
         });
-        logger.info('Auto-migration: added widgetUuid column to tenant_route_points');
+        logger.info('Auto-migration: added pointIcon column to tenant_route_points');
+      }
+
+      // Patch: add deviceTypeUuid column
+      const hasDeviceTypeUuid = await db.schema.hasColumn('tenant_route_points', 'deviceTypeUuid');
+      if (!hasDeviceTypeUuid) {
+        await db.schema.alterTable('tenant_route_points', (t: any) => {
+          t.string('deviceTypeUuid', 36).nullable().after('pointIcon');
+        });
+        logger.info('Auto-migration: added deviceTypeUuid column to tenant_route_points');
       }
     }
 
@@ -756,6 +777,33 @@ const startServer = async () => {
 
     // Ensure tenant_route tables exist (v1.57.0)
     await ensureTenantRouteTables();
+
+    // Patch: add route_point to widgets.type enum (v1.59.0)
+    try {
+      await db.raw(`
+        ALTER TABLE widgets
+        MODIFY COLUMN type ENUM(
+          'active_device','passive_device','power_device',
+          'junction','fiber_terminal','splitter','coupler','route_point'
+        ) NOT NULL
+      `);
+      logger.info('Auto-migration: widgets.type enum updated with route_point');
+    } catch (err: any) {
+      logger.warn('Auto-migration for widgets.type enum skipped or failed', { error: err.message });
+    }
+
+    // Patch: add widgetUuid column to tenant_device_types (v1.59.0)
+    try {
+      const hasWidgetUuid = await db.schema.hasColumn('tenant_device_types', 'widgetUuid');
+      if (!hasWidgetUuid) {
+        await db.schema.alterTable('tenant_device_types', (t: any) => {
+          t.string('widgetUuid', 36).nullable().after('isGpsLocationRequired');
+        });
+        logger.info('Auto-migration: added widgetUuid column to tenant_device_types');
+      }
+    } catch (err: any) {
+      logger.warn('Auto-migration for tenant_device_types.widgetUuid skipped or failed', { error: err.message });
+    }
   } catch (error: any) {
     logger.error('Initial database connection failed. Server is starting but database-dependent routes will return connectivity errors.', {
       error: error.message,

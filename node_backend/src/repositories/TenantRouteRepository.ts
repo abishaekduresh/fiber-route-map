@@ -154,17 +154,18 @@ export class TenantRouteRepository {
 
     const now = nowDb();
     const rows = points.map(p => ({
-      uuid:          generateUuidV7(),
-      tenantRouteId: routeId,
+      uuid:           generateUuidV7(),
+      tenantRouteId:  routeId,
       sequenceNumber: p.sequenceNumber,
-      latitude:      p.latitude,
-      longitude:     p.longitude,
-      altitude:      p.altitude    ?? null,
-      pointType:     p.pointType,
-      widgetUuid:    p.widgetUuid  ?? null,
-      remarks:       p.remarks     ?? null,
-      createdAt:     now,
-      updatedAt:     now,
+      latitude:       p.latitude,
+      longitude:      p.longitude,
+      altitude:       p.altitude       ?? null,
+      pointType:      p.pointType,
+      pointIcon:      p.pointIcon      ?? null,
+      deviceTypeUuid: p.deviceTypeUuid ?? null,
+      remarks:        p.remarks        ?? null,
+      createdAt:      now,
+      updatedAt:      now,
     }));
     await db(this.pointsTable).insert(rows);
   }

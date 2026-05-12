@@ -5,6 +5,12 @@ import { DeviceTypeData } from '@/lib/api';
 import ViewModal from '@/components/ui/ViewModal';
 import styles from '@/components/users/UserCard.module.css';
 
+function fitSvg(svg: string): string {
+  return svg.replace(/<svg([^>]*)>/i, (_, attrs) =>
+    `<svg${attrs.replace(/\s+(width|height)="[^"]*"/gi, '')} style="width:100%;height:100%">`
+  );
+}
+
 interface Props {
   deviceType: DeviceTypeData;
   onEdit?: () => void;
@@ -19,6 +25,24 @@ const BOOL_FLAGS = [
   { key: 'isGpsLocationRequired',  label: 'GPS' },
 ] as const;
 
+function WidgetAvatar({ a }: { a: DeviceTypeData['attributes'] }) {
+  if (a.widgetIconType === 'svg' && a.widgetSvgTemplate) {
+    return (
+      <div className={styles.avatar} style={{ background: 'rgba(255,255,255,0.05)', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span dangerouslySetInnerHTML={{ __html: fitSvg(a.widgetSvgTemplate) }} style={{ display: 'flex', width: 36, height: 36 }} />
+      </div>
+    );
+  }
+  if ((a.widgetIconType === 'png' || a.widgetIconType === 'webp') && a.widgetIconUrl) {
+    return (
+      <div className={styles.avatar} style={{ background: 'rgba(255,255,255,0.05)', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <img src={a.widgetIconUrl} alt={a.widgetName || ''} style={{ width: 36, height: 36, objectFit: 'contain' }} />
+      </div>
+    );
+  }
+  return <div className={styles.avatar}>{a.name?.[0]?.toUpperCase() || 'D'}</div>;
+}
+
 export default function DeviceTypeCard({ deviceType, onEdit, onDelete }: Props) {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const a = deviceType.attributes;
@@ -30,9 +54,7 @@ export default function DeviceTypeCard({ deviceType, onEdit, onDelete }: Props) 
   return (
     <div className={styles.card}>
       <div className={styles.cardHeader}>
-        <div className={styles.avatar}>
-          {a.name?.[0]?.toUpperCase() || 'D'}
-        </div>
+        <WidgetAvatar a={a} />
         <div className={styles.userInfo}>
           <h3 className={styles.userName} title={a.name}>{a.name}</h3>
           <div className={styles.roleBadge}>{a.code}</div>
@@ -57,6 +79,20 @@ export default function DeviceTypeCard({ deviceType, onEdit, onDelete }: Props) 
             {meta?.createdAt ? new Date(meta.createdAt).toLocaleDateString() : 'N/A'}
           </span>
         </div>
+        {a.widgetName && (
+          <div className={styles.detailItem} style={{ gridColumn: '1 / -1' }}>
+            <span className={styles.detailLabel}>Map Widget</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.25rem' }}>
+              {a.widgetIconType === 'svg' && a.widgetSvgTemplate ? (
+                <span dangerouslySetInnerHTML={{ __html: fitSvg(a.widgetSvgTemplate) }} style={{ display: 'flex', width: 20, height: 20, flexShrink: 0 }} />
+              ) : a.widgetIconUrl ? (
+                <img src={a.widgetIconUrl} alt={a.widgetName} style={{ width: 20, height: 20, objectFit: 'contain', flexShrink: 0 }} />
+              ) : null}
+              <span className={styles.detailValue}>{a.widgetName}</span>
+              {a.widgetCode && <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>({a.widgetCode})</span>}
+            </div>
+          </div>
+        )}
         {activeFlags.length > 0 && (
           <div className={styles.detailItem} style={{ gridColumn: '1 / -1' }}>
             <span className={styles.detailLabel}>Required Fields</span>
@@ -121,6 +157,7 @@ export default function DeviceTypeCard({ deviceType, onEdit, onDelete }: Props) 
                 { label: 'Code', value: a.code },
                 { label: 'Category', value: a.categoryName ?? null },
                 { label: 'Status', value: a.status },
+                { label: 'Map Widget', value: a.widgetName ? `${a.widgetName} (${a.widgetCode})` : null },
                 { label: 'Description', value: a.description ?? null, fullWidth: true },
               ],
             },

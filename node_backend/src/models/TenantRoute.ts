@@ -73,7 +73,8 @@ export interface TenantRoutePoint {
   longitude: number;
   altitude: number | null;
   pointType: RoutePointType;
-  widgetUuid: string | null;
+  pointIcon: string | null;
+  deviceTypeUuid: string | null;
   remarks: string | null;
   createdAt: string;
   updatedAt: string;
@@ -86,7 +87,8 @@ export interface CreateRoutePointDTO {
   longitude: number;
   altitude?: number | null;
   pointType: RoutePointType;
-  widgetUuid?: string | null;
+  pointIcon?: string | null;
+  deviceTypeUuid?: string | null;
   remarks?: string | null;
 }
 

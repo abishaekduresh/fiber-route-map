@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import db from '../config/database.js';
 import { TenantRouteService } from '../services/TenantRouteService.js';
 
-const VERSION = '1.57.0';
+const VERSION = '1.59.0';
 
 export class TenantRouteController {
   constructor(private service: TenantRouteService) {}
@@ -34,7 +34,8 @@ export class TenantRouteController {
     longitude:      p.longitude,
     altitude:       p.altitude,
     pointType:      p.pointType,
-    widgetUuid:     p.widgetUuid ?? null,
+    pointIcon:      p.pointIcon      ?? null,
+    deviceTypeUuid: p.deviceTypeUuid ?? null,
     remarks:        p.remarks,
   });
 

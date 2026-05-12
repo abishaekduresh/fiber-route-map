@@ -2,6 +2,25 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.59.0] - 2026-05-12
+
+### Added
+- **Route Point Device Type mapping** (`/tenant/map`): Each route point (in both draw and edit panels) now includes an optional **Device Type** searchable dropdown in addition to the widget selector.
+  - Selected device type stored as `deviceTypeUuid` FK in `tenant_route_points`.
+  - Auto-migration adds `deviceTypeUuid VARCHAR(36) NULL` to `tenant_route_points` on server start.
+- **Mobile-responsive draw/edit panel** (`/tenant/map`): The floating draw/edit panel is now fully responsive.
+  - Width adapts to `min(320px, 100vw - 1.5rem)` so it fits on any screen without overflow.
+  - Max height limits the panel with `overflow-y: auto` so all fields remain accessible via scrolling.
+  - On screens ≤ 640 px the panel slides to the **bottom** of the map area (full width, 58 vh max) for easy thumb access.
+
+### Changed
+- **`tenant_route_points.widgetUuid` renamed → `pointIcon`**: Column stores the route_point widget UUID (FK) for the map icon.
+  - Auto-migration: `CHANGE COLUMN widgetUuid → pointIcon` if `widgetUuid` exists; or adds `pointIcon` if neither exists.
+  - Auto-migration also drops legacy `poleNumber` column if still present.
+- **`TenantRoute` model / DTO**, **`TenantRouteRepository`**, **`TenantRouteController`**: All `widgetUuid` references updated to `pointIcon` and `deviceTypeUuid` added.
+- **`TenantRoutePoint` interface** (`api.ts`): `widgetUuid` → `pointIcon`, added `deviceTypeUuid`.
+- **`MapClient.tsx`**: All point widget state/payload keys updated to `pointIcon`; added `drawPointDeviceTypes` / `editPointDeviceTypes` state arrays and `setPointDeviceType` / `setEditPointDeviceType` callbacks.
+
 ## [1.58.0] - 2026-05-12
 
 ### Added

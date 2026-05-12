@@ -31,6 +31,7 @@ export class TenantDeviceTypeRepository {
     const base = () => {
       let q = db(this.table)
         .leftJoin(`${this.catTable}`, `${this.table}.tenantDeviceCategoryId`, `${this.catTable}.id`)
+        .leftJoin('widgets', `${this.table}.widgetUuid`, 'widgets.uuid')
         .where(`${this.table}.tenantBusinessId`, tenantBusinessId)
         .whereNot(`${this.table}.status`, 'deleted');
 
@@ -56,6 +57,11 @@ export class TenantDeviceTypeRepository {
         `${this.table}.*`,
         `${this.catTable}.name as categoryName`,
         `${this.catTable}.uuid as categoryUuid`,
+        'widgets.name as widgetName',
+        'widgets.code as widgetCode',
+        'widgets.iconType as widgetIconType',
+        'widgets.svgTemplate as widgetSvgTemplate',
+        'widgets.iconUrl as widgetIconUrl',
       )
       .orderBy(`${this.table}.createdAt`, 'desc');
 
@@ -68,6 +74,7 @@ export class TenantDeviceTypeRepository {
   async findByUuid(uuid: string, tenantBusinessId: number): Promise<TenantDeviceType | null> {
     return db(this.table)
       .leftJoin(`${this.catTable}`, `${this.table}.tenantDeviceCategoryId`, `${this.catTable}.id`)
+      .leftJoin('widgets', `${this.table}.widgetUuid`, 'widgets.uuid')
       .where(`${this.table}.uuid`, uuid)
       .where(`${this.table}.tenantBusinessId`, tenantBusinessId)
       .whereNot(`${this.table}.status`, 'deleted')
@@ -75,6 +82,11 @@ export class TenantDeviceTypeRepository {
         `${this.table}.*`,
         `${this.catTable}.name as categoryName`,
         `${this.catTable}.uuid as categoryUuid`,
+        'widgets.name as widgetName',
+        'widgets.code as widgetCode',
+        'widgets.iconType as widgetIconType',
+        'widgets.svgTemplate as widgetSvgTemplate',
+        'widgets.iconUrl as widgetIconUrl',
       )
       .first() ?? null;
   }
@@ -102,6 +114,7 @@ export class TenantDeviceTypeRepository {
       isMacAddressRequired: data.isMacAddressRequired ? 1 : 0,
       isIPAddressRequired: data.isIPAddressRequired ? 1 : 0,
       isGpsLocationRequired: data.isGpsLocationRequired ? 1 : 0,
+      widgetUuid: data.widgetUuid ?? null,
       description: data.description ?? null,
       status: 'active',
       createdAt: now,

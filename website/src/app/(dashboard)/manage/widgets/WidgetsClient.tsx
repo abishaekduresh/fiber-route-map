@@ -19,6 +19,7 @@ const WIDGET_TYPE_LABELS: Record<WidgetType, string> = {
   fiber_terminal: 'Fiber Terminal',
   splitter:       'Splitter',
   coupler:        'Coupler',
+  route_point:    'Route Point',
 };
 
 const PER_PAGE = 10;

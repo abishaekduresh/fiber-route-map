@@ -1145,6 +1145,12 @@ export interface DeviceTypeData {
     isMacAddressRequired: boolean;
     isIPAddressRequired: boolean;
     isGpsLocationRequired: boolean;
+    widgetUuid: string | null;
+    widgetName: string | null;
+    widgetCode: string | null;
+    widgetIconType: 'svg' | 'png' | 'webp' | null;
+    widgetSvgTemplate: string | null;
+    widgetIconUrl: string | null;
     description: string | null;
     status: 'active' | 'inactive' | 'deleted';
   };
@@ -1344,7 +1350,7 @@ export async function deleteUserSetting(key: string): Promise<ApiResponse> {
 
 // ─── Widgets ──────────────────────────────────────────────────────────────────
 
-export type WidgetType = 'active_device' | 'passive_device' | 'power_device' | 'junction' | 'fiber_terminal' | 'splitter' | 'coupler';
+export type WidgetType = 'active_device' | 'passive_device' | 'power_device' | 'junction' | 'fiber_terminal' | 'splitter' | 'coupler' | 'route_point';
 export type WidgetIconType = 'svg' | 'png' | 'webp';
 export type WidgetStatus = 'active' | 'inactive' | 'deleted';
 
@@ -1409,7 +1415,8 @@ export interface TenantRoutePoint {
   longitude: number;
   altitude: number | null;
   pointType: TenantRoutePointType;
-  widgetUuid: string | null;
+  pointIcon: string | null;
+  deviceTypeUuid: string | null;
   remarks: string | null;
 }
 
