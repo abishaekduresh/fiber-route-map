@@ -161,16 +161,26 @@ function CompassControl() {
   return null;
 }
 
-function RecenterControl({ center, zoom }: { center: [number, number]; zoom: number }) {
+function RecenterControl({ center, zoom, disabled = false }: { center: [number, number]; zoom: number; disabled?: boolean }) {
   const map = useMap();
-  // Re-center on GPS position changes — preserve current user zoom
+  // Re-center on GPS position changes — suppressed when a specific route is focused
   useEffect(() => {
+    if (disabled) return;
     map.setView(center, map.getZoom());
-  }, [center, map]);
+  }, [center, map, disabled]);
   // Apply zoom when settings change (MapContainer ignores zoom prop after mount)
   useEffect(() => {
     map.setZoom(zoom);
   }, [zoom, map]);
+  return null;
+}
+
+function FocusRoute({ points }: { points: [number, number][] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (points.length < 2) return;
+    map.flyToBounds(L.latLngBounds(points), { padding: [50, 50], maxZoom: 17, duration: 0.8 });
+  }, [points, map]);
   return null;
 }
 
@@ -522,9 +532,10 @@ interface LeafletMapProps {
   onEditMapClick?: (lat: number, lng: number) => void;
   onEditPointMove?: (idx: number, lat: number, lng: number) => void;
   onInsertEditPoint?: (afterIdx: number, lat: number, lng: number) => void;
+  focusPoints?: [number, number][] | null;
 }
 
-export default function LeafletMap({ layer, markers, center, zoom, showScaleBar = true, scaleUnit = 'metric', userLocation, drawMode, drawPoints = [], onMapClick, routes = [], onEditRoute, canEditRoutes, editMode, editRouteId, editPoints = [], editRouteColor = '#3b82f6', editRouteThickness = 2, onEditMapClick, onEditPointMove, onInsertEditPoint }: LeafletMapProps) {
+export default function LeafletMap({ layer, markers, center, zoom, showScaleBar = true, scaleUnit = 'metric', userLocation, drawMode, drawPoints = [], onMapClick, routes = [], onEditRoute, canEditRoutes, editMode, editRouteId, editPoints = [], editRouteColor = '#3b82f6', editRouteThickness = 2, onEditMapClick, onEditPointMove, onInsertEditPoint, focusPoints }: LeafletMapProps) {
   const tile = TILE_LAYERS[layer] ?? TILE_LAYERS.street;
 
   return (
@@ -535,7 +546,8 @@ export default function LeafletMap({ layer, markers, center, zoom, showScaleBar 
       zoomControl={true}
     >
       <TileLayer url={tile.url} attribution={tile.attribution} />
-      <RecenterControl center={center} zoom={zoom} />
+      <RecenterControl center={center} zoom={zoom} disabled={!!focusPoints} />
+      {focusPoints && focusPoints.length >= 2 && <FocusRoute points={focusPoints} />}
       <CompassControl />
       {userLocation && <UserLocationMarker location={userLocation} />}
       {showScaleBar && (

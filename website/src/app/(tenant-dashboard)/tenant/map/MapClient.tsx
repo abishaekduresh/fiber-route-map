@@ -286,6 +286,11 @@ export default function MapClient() {
     return result;
   }, [routes, statusFilter, selectedRouteId]);
 
+  const focusRoutePoints = useMemo<[number, number][] | null>(() => {
+    if (!selectedRouteId) return null;
+    return routes.find((r) => r.id === selectedRouteId)?.points ?? null;
+  }, [selectedRouteId, routes]);
+
   const routeFilterOptions = useMemo<DSOption[]>(() => [
     { value: '', label: 'All routes' },
     ...routes
@@ -851,6 +856,7 @@ export default function MapClient() {
             onEditMapClick={onEditMapClick}
             onEditPointMove={onEditPointMove}
             onInsertEditPoint={onInsertEditPoint}
+            focusPoints={focusRoutePoints}
           />
           {/* Edit mode panel */}
           {editMode && (
