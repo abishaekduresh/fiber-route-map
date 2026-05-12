@@ -563,6 +563,9 @@ export default function LeafletMap({ layer, markers, center, zoom, showScaleBar 
           <Polyline
             positions={r.points}
             pathOptions={{ color: r.color || '#3b82f6', weight: r.thickness || 3, opacity: 0.85 }}
+            eventHandlers={{
+              mouseover(e) { e.target.openPopup(e.latlng); },
+            }}
           >
             <Popup minWidth={244}>
               <RoutePopup r={r} onEdit={canEditRoutes && onEditRoute ? () => onEditRoute(r.id) : undefined} />
