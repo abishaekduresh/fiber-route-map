@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, CircleMarker, Polyline, useMap, useMapEvents, ScaleControl } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, Circle, CircleMarker, Polyline, useMap, useMapEvents, ScaleControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -195,6 +195,8 @@ export interface RoutePointWidget {
   widgetHeight?: number | null;
   widgetName?: string | null;
   deviceTypeName?: string | null;
+  pointName?: string | null;
+  pointDescription?: string | null;
 }
 
 export interface RoutePolyline {
@@ -319,36 +321,59 @@ function fitSvgForMap(svg: string): string {
   );
 }
 
+function PointTooltipContent({ p }: { p: RoutePointWidget }) {
+  const title = p.pointName || p.widgetName || p.deviceTypeName || null;
+  return (
+    <div style={{ minWidth: 120, maxWidth: 220, fontFamily: 'system-ui,sans-serif' }}>
+      {title && <div style={{ fontWeight: 700, fontSize: '0.82rem', marginBottom: 2 }}>{title}</div>}
+      {p.deviceTypeName && p.deviceTypeName !== title && (
+        <div style={{ fontSize: '0.7rem', color: '#3b82f6', marginBottom: 2 }}>{p.deviceTypeName}</div>
+      )}
+      {p.pointDescription && (
+        <div style={{ fontSize: '0.75rem', color: '#475569', marginBottom: 3, lineHeight: 1.4 }}>{p.pointDescription}</div>
+      )}
+      <div style={{ fontSize: '0.68rem', color: '#94a3b8', textTransform: 'capitalize' }}>
+        {p.pointType} · pt {p.sequenceNumber}
+      </div>
+    </div>
+  );
+}
+
 function RouteWidgetMarkers({ routePoints }: { routePoints: RoutePointWidget[] }) {
-  const withWidget = routePoints.filter((p) => p.widgetIconType);
-  if (withWidget.length === 0) return null;
+  const visible = routePoints.filter(
+    (p) => p.widgetIconType || p.pointName || p.pointDescription || p.deviceTypeName,
+  );
+  if (visible.length === 0) return null;
   return (
     <>
-      {withWidget.map((p, i) => {
-        const size = Math.min(Math.max(p.widgetWidth || 32, 16), 48);
-        const html =
-          p.widgetIconType === 'svg'
-            ? `<div style="width:${size}px;height:${size}px;overflow:hidden;display:flex;align-items:center;justify-content:center;">${fitSvgForMap(p.widgetSvg || '')}</div>`
-            : `<img src="${p.widgetIconUrl}" style="width:${size}px;height:${size}px;object-fit:contain;" alt="" />`;
-        const icon = L.divIcon({
+      {visible.map((p, i) => {
+        if (p.widgetIconType) {
+          const size = Math.min(Math.max(p.widgetWidth || 32, 16), 48);
+          const html =
+            p.widgetIconType === 'svg'
+              ? `<div style="width:${size}px;height:${size}px;overflow:hidden;display:flex;align-items:center;justify-content:center;">${fitSvgForMap(p.widgetSvg || '')}</div>`
+              : `<img src="${p.widgetIconUrl}" style="width:${size}px;height:${size}px;object-fit:contain;" alt="" />`;
+          const icon = L.divIcon({ className: '', html, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
+          return (
+            <Marker key={`rp-${i}`} position={[p.lat, p.lng]} icon={icon} zIndexOffset={600}>
+              <Tooltip direction="top" offset={[0, -(size / 2 + 4)]} opacity={1}>
+                <PointTooltipContent p={p} />
+              </Tooltip>
+            </Marker>
+          );
+        }
+        // No icon — render a small dot marker so hover tooltip still works
+        const dotIcon = L.divIcon({
           className: '',
-          html,
-          iconSize:   [size, size],
-          iconAnchor: [size / 2, size / 2],
+          html: `<div style="width:8px;height:8px;border-radius:50%;background:rgba(100,116,139,0.6);border:1.5px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div>`,
+          iconSize:   [8, 8],
+          iconAnchor: [4, 4],
         });
         return (
-          <Marker key={`wpw-${i}`} position={[p.lat, p.lng]} icon={icon} zIndexOffset={600}>
-            <Popup>
-              <div style={{ minWidth: 120 }}>
-                <strong style={{ fontSize: '0.82rem' }}>{p.widgetName || p.deviceTypeName || 'Point'}</strong>
-                {p.deviceTypeName && (
-                  <div style={{ fontSize: '0.7rem', color: '#3b82f6', marginTop: 2 }}>{p.deviceTypeName}</div>
-                )}
-                <div style={{ fontSize: '0.72rem', color: '#666', marginTop: 3, textTransform: 'capitalize' }}>
-                  {p.pointType} · pt {p.sequenceNumber}
-                </div>
-              </div>
-            </Popup>
+          <Marker key={`rp-${i}`} position={[p.lat, p.lng]} icon={dotIcon} zIndexOffset={400}>
+            <Tooltip direction="top" offset={[0, -8]} opacity={1}>
+              <PointTooltipContent p={p} />
+            </Tooltip>
           </Marker>
         );
       })}
@@ -357,13 +382,14 @@ function RouteWidgetMarkers({ routePoints }: { routePoints: RoutePointWidget[] }
 }
 
 function EditLayer({
-  points, color, thickness, onMapClick, onPointMove,
+  points, color, thickness, onMapClick, onPointMove, onInsertPoint,
 }: {
   points: [number, number][];
   color: string;
   thickness: number;
   onMapClick: (lat: number, lng: number) => void;
   onPointMove: (idx: number, lat: number, lng: number) => void;
+  onInsertPoint: (afterIdx: number, lat: number, lng: number) => void;
 }) {
   const map = useMap();
   useEffect(() => {
@@ -377,6 +403,38 @@ function EditLayer({
       {points.length > 1 && (
         <Polyline positions={points} pathOptions={{ color, weight: thickness, opacity: 0.85 }} />
       )}
+      {/* Midpoint handles — click or drag to insert a new point between two existing ones */}
+      {points.slice(0, -1).map((pt, i) => {
+        const next   = points[i + 1];
+        const midLat = (pt[0] + next[0]) / 2;
+        const midLng = (pt[1] + next[1]) / 2;
+        const midIcon = L.divIcon({
+          className: '',
+          html: `<div style="width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid ${color};opacity:0.75;cursor:copy;box-shadow:0 1px 4px rgba(0,0,0,0.35);"></div>`,
+          iconSize:   [10, 10],
+          iconAnchor: [5, 5],
+        });
+        return (
+          <Marker
+            key={`mid-${i}`}
+            position={[midLat, midLng]}
+            icon={midIcon}
+            draggable
+            zIndexOffset={-50}
+            eventHandlers={{
+              click(e) {
+                (e as any).originalEvent?.stopPropagation();
+                onInsertPoint(i, midLat, midLng);
+              },
+              dragend(e) {
+                const { lat, lng } = (e.target as L.Marker).getLatLng();
+                onInsertPoint(i, lat, lng);
+              },
+            }}
+          />
+        );
+      })}
+      {/* Point handles */}
       {points.map((pt, i) => {
         const isFirst = i === 0;
         const isLast  = i === points.length - 1;
@@ -463,9 +521,10 @@ interface LeafletMapProps {
   editRouteThickness?: number;
   onEditMapClick?: (lat: number, lng: number) => void;
   onEditPointMove?: (idx: number, lat: number, lng: number) => void;
+  onInsertEditPoint?: (afterIdx: number, lat: number, lng: number) => void;
 }
 
-export default function LeafletMap({ layer, markers, center, zoom, showScaleBar = true, scaleUnit = 'metric', userLocation, drawMode, drawPoints = [], onMapClick, routes = [], onEditRoute, canEditRoutes, editMode, editRouteId, editPoints = [], editRouteColor = '#3b82f6', editRouteThickness = 2, onEditMapClick, onEditPointMove }: LeafletMapProps) {
+export default function LeafletMap({ layer, markers, center, zoom, showScaleBar = true, scaleUnit = 'metric', userLocation, drawMode, drawPoints = [], onMapClick, routes = [], onEditRoute, canEditRoutes, editMode, editRouteId, editPoints = [], editRouteColor = '#3b82f6', editRouteThickness = 2, onEditMapClick, onEditPointMove, onInsertEditPoint }: LeafletMapProps) {
   const tile = TILE_LAYERS[layer] ?? TILE_LAYERS.street;
 
   return (
@@ -501,13 +560,14 @@ export default function LeafletMap({ layer, markers, center, zoom, showScaleBar 
         </React.Fragment>
       ))}
       {/* Edit mode */}
-      {editMode && onEditMapClick && onEditPointMove && (
+      {editMode && onEditMapClick && onEditPointMove && onInsertEditPoint && (
         <EditLayer
           points={editPoints}
           color={editRouteColor}
           thickness={editRouteThickness}
           onMapClick={onEditMapClick}
           onPointMove={onEditPointMove}
+          onInsertPoint={onInsertEditPoint}
         />
       )}
       {/* Draw mode */}

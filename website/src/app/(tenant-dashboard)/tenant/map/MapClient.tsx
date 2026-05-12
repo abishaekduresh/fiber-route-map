@@ -69,8 +69,10 @@ export default function MapClient() {
   // ── Draw mode ────────────────────────────────────────────────────────────
   const [drawMode, setDrawMode]             = useState(false);
   const [drawPoints, setDrawPoints]         = useState<[number, number][]>([]);
-  const [drawPointWidgets, setDrawPointWidgets] = useState<string[]>([]);        // pointIcon per point ('' = none)
-  const [drawPointDeviceTypes, setDrawPointDeviceTypes] = useState<string[]>([]); // deviceTypeUuid per point
+  const [drawPointWidgets, setDrawPointWidgets]           = useState<string[]>([]);
+  const [drawPointDeviceTypes, setDrawPointDeviceTypes]   = useState<string[]>([]);
+  const [drawPointNames, setDrawPointNames]               = useState<string[]>([]);
+  const [drawPointDescriptions, setDrawPointDescriptions] = useState<string[]>([]);
   const [routes, setRoutes]                 = useState<RoutePolyline[]>([]);
   const [availableWidgets, setAvailableWidgets] = useState<WidgetData[]>([]);
   const [drawName, setDrawName]             = useState('');
@@ -86,8 +88,10 @@ export default function MapClient() {
   const [editMode, setEditMode]               = useState(false);
   const [editRouteId, setEditRouteId]         = useState('');
   const [editPoints, setEditPoints]           = useState<[number, number][]>([]);
-  const [editPointWidgets, setEditPointWidgets] = useState<string[]>([]);
-  const [editPointDeviceTypes, setEditPointDeviceTypes] = useState<string[]>([]);
+  const [editPointWidgets, setEditPointWidgets]           = useState<string[]>([]);
+  const [editPointDeviceTypes, setEditPointDeviceTypes]   = useState<string[]>([]);
+  const [editPointNames, setEditPointNames]               = useState<string[]>([]);
+  const [editPointDescriptions, setEditPointDescriptions] = useState<string[]>([]);
   const [editName, setEditName]               = useState('');
   const [editType, setEditType]               = useState('fiber_route');
   const [editColor, setEditColor]             = useState('#3b82f6');
@@ -233,10 +237,12 @@ export default function MapClient() {
                 widgetIconType: widget?.attributes.iconType ?? (dtAttrs?.widgetIconType ?? null),
                 widgetSvg:      widget?.attributes.svgTemplate ?? (dtAttrs?.widgetSvgTemplate ?? null),
                 widgetIconUrl:  widget?.attributes.iconUrl ?? (dtAttrs?.widgetIconUrl ?? null),
-                widgetWidth:    widget?.attributes.width ?? null,
-                widgetHeight:   widget?.attributes.height ?? null,
-                widgetName:     widget?.attributes.name ?? null,
-                deviceTypeName: dtAttrs?.name ?? null,
+                widgetWidth:      widget?.attributes.width ?? null,
+                widgetHeight:     widget?.attributes.height ?? null,
+                widgetName:       widget?.attributes.name ?? null,
+                deviceTypeName:   dtAttrs?.name ?? null,
+                pointName:        p.pointName        ?? null,
+                pointDescription: p.pointDescription ?? null,
               };
             }),
           };
@@ -336,6 +342,8 @@ export default function MapClient() {
     setEditPoints(pts.map((p: any) => [Number(p.latitude), Number(p.longitude)] as [number, number]));
     setEditPointWidgets(pts.map((p: any) => p.pointIcon || ''));
     setEditPointDeviceTypes(pts.map((p: any) => p.deviceTypeUuid || ''));
+    setEditPointNames(pts.map((p: any) => p.pointName || ''));
+    setEditPointDescriptions(pts.map((p: any) => p.pointDescription || ''));
     setEditName(r.attributes.name);
     setEditType(r.attributes.type);
     setEditColor(r.attributes.routeColor || '#3b82f6');
@@ -354,6 +362,8 @@ export default function MapClient() {
     setEditPoints([]);
     setEditPointWidgets([]);
     setEditPointDeviceTypes([]);
+    setEditPointNames([]);
+    setEditPointDescriptions([]);
     setSaveEditError('');
   }, []);
 
@@ -361,16 +371,32 @@ export default function MapClient() {
     setEditPoints((prev) => [...prev, [lat, lng]]);
     setEditPointWidgets((prev) => [...prev, '']);
     setEditPointDeviceTypes((prev) => [...prev, '']);
+    setEditPointNames((prev) => [...prev, '']);
+    setEditPointDescriptions((prev) => [...prev, '']);
   }, []);
 
   const onEditPointMove = useCallback((idx: number, lat: number, lng: number) => {
     setEditPoints((prev) => prev.map((pt, i) => i === idx ? [lat, lng] as [number, number] : pt));
   }, []);
 
+  const onInsertEditPoint = useCallback((afterIdx: number, lat: number, lng: number) => {
+    setEditPoints((prev) => [
+      ...prev.slice(0, afterIdx + 1),
+      [lat, lng] as [number, number],
+      ...prev.slice(afterIdx + 1),
+    ]);
+    setEditPointWidgets((prev) => [...prev.slice(0, afterIdx + 1), '', ...prev.slice(afterIdx + 1)]);
+    setEditPointDeviceTypes((prev) => [...prev.slice(0, afterIdx + 1), '', ...prev.slice(afterIdx + 1)]);
+    setEditPointNames((prev) => [...prev.slice(0, afterIdx + 1), '', ...prev.slice(afterIdx + 1)]);
+    setEditPointDescriptions((prev) => [...prev.slice(0, afterIdx + 1), '', ...prev.slice(afterIdx + 1)]);
+  }, []);
+
   const deleteEditPoint = useCallback((idx: number) => {
     setEditPoints((prev) => prev.filter((_, i) => i !== idx));
     setEditPointWidgets((prev) => prev.filter((_, i) => i !== idx));
     setEditPointDeviceTypes((prev) => prev.filter((_, i) => i !== idx));
+    setEditPointNames((prev) => prev.filter((_, i) => i !== idx));
+    setEditPointDescriptions((prev) => prev.filter((_, i) => i !== idx));
   }, []);
 
   const setEditPointWidget = useCallback((idx: number, val: string) => {
@@ -381,6 +407,14 @@ export default function MapClient() {
     setEditPointDeviceTypes((prev) => prev.map((v, i) => i === idx ? val : v));
   }, []);
 
+  const setEditPointName = useCallback((idx: number, val: string) => {
+    setEditPointNames((prev) => prev.map((v, i) => i === idx ? val : v));
+  }, []);
+
+  const setEditPointDescription = useCallback((idx: number, val: string) => {
+    setEditPointDescriptions((prev) => prev.map((v, i) => i === idx ? val : v));
+  }, []);
+
   const saveEdit = useCallback(async () => {
     if (!editName.trim()) { setSaveEditError('Route name is required.'); return; }
     if (editPoints.length < 2) { setSaveEditError('At least 2 points required.'); return; }
@@ -388,12 +422,14 @@ export default function MapClient() {
     setSaveEditError('');
     try {
       const points = editPoints.map((pt, i) => ({
-        sequenceNumber: i + 1,
-        latitude:       pt[0],
-        longitude:      pt[1],
-        pointType:      getPointType(i, editPoints.length),
-        pointIcon:      editPointWidgets[i] || null,
-        deviceTypeUuid: editPointDeviceTypes[i] || null,
+        sequenceNumber:   i + 1,
+        latitude:         pt[0],
+        longitude:        pt[1],
+        pointType:        getPointType(i, editPoints.length),
+        pointIcon:        editPointWidgets[i]      || null,
+        deviceTypeUuid:   editPointDeviceTypes[i]  || null,
+        pointName:        editPointNames[i]        || null,
+        pointDescription: editPointDescriptions[i] || null,
       }));
       const payload: Record<string, any> = {
         name:            editName.trim(),
@@ -412,18 +448,22 @@ export default function MapClient() {
       setEditPoints([]);
       setEditPointWidgets([]);
       setEditPointDeviceTypes([]);
+      setEditPointNames([]);
+      setEditPointDescriptions([]);
       await loadApiData();
     } catch {
       setSaveEditError('Failed to save.');
     } finally {
       setIsSavingEdit(false);
     }
-  }, [editName, editType, editColor, editThickness, editStatus, editParentUuid, editDescription, editPoints, editPointWidgets, editPointDeviceTypes, editRouteId, loadApiData]);
+  }, [editName, editType, editColor, editThickness, editStatus, editParentUuid, editDescription, editPoints, editPointWidgets, editPointDeviceTypes, editPointNames, editPointDescriptions, editRouteId, loadApiData]);
 
   const handleMapClick = useCallback((lat: number, lng: number) => {
     setDrawPoints((prev) => [...prev, [lat, lng]]);
     setDrawPointWidgets((prev) => [...prev, '']);
     setDrawPointDeviceTypes((prev) => [...prev, '']);
+    setDrawPointNames((prev) => [...prev, '']);
+    setDrawPointDescriptions((prev) => [...prev, '']);
   }, []);
 
   const startDraw = useCallback(() => {
@@ -432,10 +472,14 @@ export default function MapClient() {
     setEditPoints([]);
     setEditPointWidgets([]);
     setEditPointDeviceTypes([]);
+    setEditPointNames([]);
+    setEditPointDescriptions([]);
     setDrawMode(true);
     setDrawPoints([]);
     setDrawPointWidgets([]);
     setDrawPointDeviceTypes([]);
+    setDrawPointNames([]);
+    setDrawPointDescriptions([]);
     setDrawName('');
     setDrawType('fiber_route');
     setDrawColor('#3b82f6');
@@ -450,6 +494,8 @@ export default function MapClient() {
     setDrawPoints([]);
     setDrawPointWidgets([]);
     setDrawPointDeviceTypes([]);
+    setDrawPointNames([]);
+    setDrawPointDescriptions([]);
     setSaveError('');
   }, []);
 
@@ -457,6 +503,8 @@ export default function MapClient() {
     setDrawPoints((prev) => prev.slice(0, -1));
     setDrawPointWidgets((prev) => prev.slice(0, -1));
     setDrawPointDeviceTypes((prev) => prev.slice(0, -1));
+    setDrawPointNames((prev) => prev.slice(0, -1));
+    setDrawPointDescriptions((prev) => prev.slice(0, -1));
   }, []);
 
   const setPointWidget = useCallback((idx: number, val: string) => {
@@ -465,6 +513,14 @@ export default function MapClient() {
 
   const setPointDeviceType = useCallback((idx: number, val: string) => {
     setDrawPointDeviceTypes((prev) => prev.map((v, i) => i === idx ? val : v));
+  }, []);
+
+  const setPointName = useCallback((idx: number, val: string) => {
+    setDrawPointNames((prev) => prev.map((v, i) => i === idx ? val : v));
+  }, []);
+
+  const setPointDescription = useCallback((idx: number, val: string) => {
+    setDrawPointDescriptions((prev) => prev.map((v, i) => i === idx ? val : v));
   }, []);
 
   const getPointType = (i: number, total: number) =>
@@ -478,12 +534,14 @@ export default function MapClient() {
     setSaveError('');
     try {
       const points = drawPoints.map((pt, i) => ({
-        sequenceNumber: i + 1,
-        latitude:       pt[0],
-        longitude:      pt[1],
-        pointType:      getPointType(i, drawPoints.length),
-        pointIcon:      drawPointWidgets[i] || null,
-        deviceTypeUuid: drawPointDeviceTypes[i] || null,
+        sequenceNumber:   i + 1,
+        latitude:         pt[0],
+        longitude:        pt[1],
+        pointType:        getPointType(i, drawPoints.length),
+        pointIcon:        drawPointWidgets[i]      || null,
+        deviceTypeUuid:   drawPointDeviceTypes[i]  || null,
+        pointName:        drawPointNames[i]        || null,
+        pointDescription: drawPointDescriptions[i] || null,
       }));
       const payload: Record<string, any> = {
         name:          drawName.trim(),
@@ -501,13 +559,15 @@ export default function MapClient() {
       setDrawPoints([]);
       setDrawPointWidgets([]);
       setDrawPointDeviceTypes([]);
+      setDrawPointNames([]);
+      setDrawPointDescriptions([]);
       await loadApiData();
     } catch {
       setSaveError('Failed to save route.');
     } finally {
       setIsSaving(false);
     }
-  }, [drawName, drawType, drawColor, drawThickness, drawParentUuid, drawDescription, drawPoints, drawPointWidgets, drawPointDeviceTypes, loadApiData]);
+  }, [drawName, drawType, drawColor, drawThickness, drawParentUuid, drawDescription, drawPoints, drawPointWidgets, drawPointDeviceTypes, drawPointNames, drawPointDescriptions, loadApiData]);
 
   // ── Permission screens ───────────────────────────────────────────────────
   if (geoStatus === 'idle' || geoStatus === 'requesting') {
@@ -790,6 +850,7 @@ export default function MapClient() {
             editRouteThickness={editThickness}
             onEditMapClick={onEditMapClick}
             onEditPointMove={onEditPointMove}
+            onInsertEditPoint={onInsertEditPoint}
           />
           {/* Edit mode panel */}
           {editMode && (
@@ -801,8 +862,17 @@ export default function MapClient() {
                 </svg>
                 <span>Edit Route</span>
                 <span className={styles.drawPointCount}>{editPoints.length} pts</span>
+                <button
+                  onClick={cancelEdit}
+                  title="Close"
+                  style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: '0 2px', fontSize: '1.1rem', lineHeight: 1, display: 'flex', alignItems: 'center' }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
-              <p className={styles.drawHint}>Drag points to move. Click map to add.</p>
+              <p className={styles.drawHint}>Drag points to move · Click/drag midpoint handle to insert · Click map to add at end.</p>
 
               <div className={styles.drawField}>
                 <label>Route Name <span className={styles.req}>*</span></label>
@@ -879,6 +949,22 @@ export default function MapClient() {
                           placeholder="No device type (optional)"
                           searchPlaceholder="Search device types…"
                         />
+                        <input
+                          type="text"
+                          className={styles.drawInput}
+                          placeholder="Point name (optional)"
+                          value={editPointNames[i] ?? ''}
+                          onChange={(e) => setEditPointName(i, e.target.value)}
+                        />
+                        {(editPointNames[i] || editPointDescriptions[i]) && (
+                          <input
+                            type="text"
+                            className={styles.drawInput}
+                            placeholder="Description (optional)"
+                            value={editPointDescriptions[i] ?? ''}
+                            onChange={(e) => setEditPointDescription(i, e.target.value)}
+                          />
+                        )}
                       </div>
                     ))}
                   </div>
@@ -1007,6 +1093,22 @@ export default function MapClient() {
                           placeholder="No device type (optional)"
                           searchPlaceholder="Search device types…"
                         />
+                        <input
+                          type="text"
+                          className={styles.drawInput}
+                          placeholder="Point name (optional)"
+                          value={drawPointNames[i] ?? ''}
+                          onChange={(e) => setPointName(i, e.target.value)}
+                        />
+                        {(drawPointNames[i] || drawPointDescriptions[i]) && (
+                          <input
+                            type="text"
+                            className={styles.drawInput}
+                            placeholder="Description (optional)"
+                            value={drawPointDescriptions[i] ?? ''}
+                            onChange={(e) => setPointDescription(i, e.target.value)}
+                          />
+                        )}
                       </div>
                     ))}
                   </div>

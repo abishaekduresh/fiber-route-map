@@ -1417,6 +1417,8 @@ export interface TenantRoutePoint {
   pointType: TenantRoutePointType;
   pointIcon: string | null;
   deviceTypeUuid: string | null;
+  pointName: string | null;
+  pointDescription: string | null;
   remarks: string | null;
 }
 

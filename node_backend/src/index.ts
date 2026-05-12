@@ -638,6 +638,8 @@ const ensureTenantRouteTables = async () => {
         t.enum('pointType', ['start', 'middle', 'end', 'junction', 'pole', 'device']).notNullable().defaultTo('middle');
         t.string('pointIcon', 36).nullable();
         t.string('deviceTypeUuid', 36).nullable();
+        t.string('pointName', 100).nullable();
+        t.text('pointDescription').nullable();
         t.text('remarks').nullable();
         t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
         t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
@@ -673,6 +675,16 @@ const ensureTenantRouteTables = async () => {
           t.string('deviceTypeUuid', 36).nullable().after('pointIcon');
         });
         logger.info('Auto-migration: added deviceTypeUuid column to tenant_route_points');
+      }
+
+      // Patch: add pointName and pointDescription columns
+      const hasPointName = await db.schema.hasColumn('tenant_route_points', 'pointName');
+      if (!hasPointName) {
+        await db.schema.alterTable('tenant_route_points', (t: any) => {
+          t.string('pointName', 100).nullable().after('deviceTypeUuid');
+          t.text('pointDescription').nullable().after('pointName');
+        });
+        logger.info('Auto-migration: added pointName and pointDescription columns to tenant_route_points');
       }
     }
 

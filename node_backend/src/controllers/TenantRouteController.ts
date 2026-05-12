@@ -28,15 +28,17 @@ export class TenantRouteController {
   });
 
   private transformPoint = (p: any) => ({
-    id:             p.uuid,
-    sequenceNumber: p.sequenceNumber,
-    latitude:       p.latitude,
-    longitude:      p.longitude,
-    altitude:       p.altitude,
-    pointType:      p.pointType,
-    pointIcon:      p.pointIcon      ?? null,
-    deviceTypeUuid: p.deviceTypeUuid ?? null,
-    remarks:        p.remarks,
+    id:               p.uuid,
+    sequenceNumber:   p.sequenceNumber,
+    latitude:         p.latitude,
+    longitude:        p.longitude,
+    altitude:         p.altitude,
+    pointType:        p.pointType,
+    pointIcon:        p.pointIcon        ?? null,
+    deviceTypeUuid:   p.deviceTypeUuid   ?? null,
+    pointName:        p.pointName        ?? null,
+    pointDescription: p.pointDescription ?? null,
+    remarks:          p.remarks,
   });
 
   private getMeta = (req: Request, extra: any = {}) => ({
