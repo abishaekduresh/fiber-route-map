@@ -6,7 +6,7 @@ import {
   getTenantRoutes,
   createTenantRoute, updateTenantRoute,
   TenantRouteData, TenantRouteType,
-  TenantRoutePointType, TenantRoutePoint,
+  TenantRoutePointType,
 } from '@/lib/api';
 import styles from '@/app/(dashboard)/dashboard/dashboard.module.css';
 
@@ -36,7 +36,6 @@ interface PointForm {
   longitude:      string;
   altitude:       string;
   pointType:      TenantRoutePointType;
-  poleNumber:     string;
   remarks:        string;
 }
 
@@ -63,7 +62,6 @@ const newPoint = (seq: number): PointForm => ({
   longitude:      '',
   altitude:       '',
   pointType:      seq === 1 ? 'start' : 'middle',
-  poleNumber:     '',
   remarks:        '',
 });
 
@@ -112,8 +110,7 @@ export default function RouteModal({ route, onClose, onSuccess }: Props) {
           longitude:      String(p.longitude),
           altitude:       p.altitude != null ? String(p.altitude) : '',
           pointType:      p.pointType,
-          poleNumber:     p.poleNumber ?? '',
-          remarks:        p.remarks    ?? '',
+          remarks:        p.remarks ?? '',
         }))
       );
     } else {
@@ -163,8 +160,7 @@ export default function RouteModal({ route, onClose, onSuccess }: Props) {
         longitude:      parseFloat(p.longitude),
         altitude:       p.altitude !== '' ? parseFloat(p.altitude) : null,
         pointType:      p.pointType,
-        poleNumber:     p.poleNumber.trim() || null,
-        remarks:        p.remarks.trim()    || null,
+        remarks:        p.remarks.trim() || null,
       }));
 
       const payload: Record<string, any> = {
@@ -352,11 +348,6 @@ export default function RouteModal({ route, onClose, onSuccess }: Props) {
                             <select className={styles.select} value={pt.pointType} onChange={e => setPoint(pt._key, 'pointType', e.target.value)}>
                               {POINT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                             </select>
-                          </div>
-                          <div className={styles.inputGroup} style={{ margin: 0 }}>
-                            <label className={styles.label}>Pole Number</label>
-                            <input className={styles.input} placeholder="e.g. P-042"
-                              value={pt.poleNumber} onChange={e => setPoint(pt._key, 'poleNumber', e.target.value)} />
                           </div>
                           <div className={styles.inputGroup} style={{ margin: 0 }}>
                             <label className={styles.label}>Seq #</label>

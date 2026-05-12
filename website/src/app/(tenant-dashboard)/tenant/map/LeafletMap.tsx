@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, CircleMarker, Polyline, useMap, useMapEvents, ScaleControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -183,12 +183,223 @@ export interface MapMarker {
   status?: string;
 }
 
+export interface RoutePointWidget {
+  lat: number;
+  lng: number;
+  pointType: string;
+  sequenceNumber: number;
+  widgetIconType?: 'svg' | 'png' | 'webp' | null;
+  widgetSvg?: string | null;
+  widgetIconUrl?: string | null;
+  widgetWidth?: number | null;
+  widgetHeight?: number | null;
+  widgetName?: string | null;
+}
+
 export interface RoutePolyline {
   id: string;
   points: [number, number][];
   color: string;
   label: string;
   thickness: number;
+  routePoints: RoutePointWidget[];
+  // 360 detail fields
+  code: string;
+  type: string;
+  description: string | null;
+  status: string;
+  parentRouteName: string | null;
+  pointsCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const ROUTE_TYPE_LABELS: Record<string, string> = {
+  fiber_route:       'Fiber Route',
+  coaxial_route:     'Coaxial Route',
+  backbone_route:    'Backbone Route',
+  distribution_route:'Distribution Route',
+  drop_route:        'Drop Route',
+  underground_duct:  'Underground Duct',
+  pole_to_pole:      'Pole to Pole',
+};
+
+const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
+  active:      { bg: 'rgba(16,185,129,0.12)',  text: '#10b981' },
+  inactive:    { bg: 'rgba(100,116,139,0.12)', text: '#64748b' },
+  maintenance: { bg: 'rgba(245,158,11,0.12)',  text: '#f59e0b' },
+};
+
+function fmtDate(iso: string) {
+  try {
+    return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch { return iso; }
+}
+
+function RoutePopup({ r, onEdit }: { r: RoutePolyline; onEdit?: () => void }) {
+  const statusStyle = STATUS_COLORS[r.status] ?? STATUS_COLORS.inactive;
+  return (
+    <div style={{ minWidth: 240, maxWidth: 300, fontFamily: 'system-ui,sans-serif', fontSize: '0.8rem', lineHeight: 1.5 }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
+        <span style={{ width: 10, height: 10, borderRadius: '50%', background: r.color, flexShrink: 0, display: 'inline-block', boxShadow: `0 0 0 2px ${r.color}33` }} />
+        <code style={{ fontSize: '0.72rem', fontWeight: 700, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', padding: '1px 6px', borderRadius: 4, letterSpacing: '0.03em' }}>
+          {r.code}
+        </code>
+        <span style={{ marginLeft: 'auto', fontSize: '0.68rem', fontWeight: 700, padding: '1px 7px', borderRadius: 99, background: statusStyle.bg, color: statusStyle.text, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          {r.status}
+        </span>
+      </div>
+      <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#0f172a', marginBottom: '0.5rem', lineHeight: 1.3 }}>
+        {r.label}
+      </div>
+
+      {/* Divider */}
+      <div style={{ borderTop: '1px solid #e2e8f0', marginBottom: '0.5rem' }} />
+
+      {/* Key-value rows */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.76rem' }}>
+        <tbody>
+          <tr>
+            <td style={{ color: '#64748b', paddingBottom: '0.2rem', paddingRight: '0.75rem', whiteSpace: 'nowrap' }}>Type</td>
+            <td style={{ fontWeight: 600, paddingBottom: '0.2rem' }}>{ROUTE_TYPE_LABELS[r.type] ?? r.type}</td>
+          </tr>
+          <tr>
+            <td style={{ color: '#64748b', paddingBottom: '0.2rem', paddingRight: '0.75rem' }}>Thickness</td>
+            <td style={{ fontWeight: 600, paddingBottom: '0.2rem' }}>{r.thickness ?? 2}px</td>
+          </tr>
+          <tr>
+            <td style={{ color: '#64748b', paddingBottom: '0.2rem', paddingRight: '0.75rem' }}>Points</td>
+            <td style={{ fontWeight: 600, paddingBottom: '0.2rem' }}>{r.pointsCount}</td>
+          </tr>
+          {r.parentRouteName && (
+            <tr>
+              <td style={{ color: '#64748b', paddingBottom: '0.2rem', paddingRight: '0.75rem' }}>Parent</td>
+              <td style={{ fontWeight: 600, paddingBottom: '0.2rem' }}>{r.parentRouteName}</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+
+      {/* Description */}
+      {r.description && (
+        <>
+          <div style={{ borderTop: '1px solid #e2e8f0', margin: '0.5rem 0' }} />
+          <p style={{ margin: 0, color: '#475569', fontSize: '0.75rem', lineHeight: 1.55 }}>{r.description}</p>
+        </>
+      )}
+
+      {/* Footer */}
+      <div style={{ borderTop: '1px solid #e2e8f0', marginTop: '0.5rem', paddingTop: '0.4rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.68rem', color: '#94a3b8' }}>
+        <div>
+          <div>Created {fmtDate(r.createdAt)}</div>
+          <div>Updated {fmtDate(r.updatedAt)}</div>
+        </div>
+        {onEdit && (
+          <button
+            onClick={onEdit}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.3rem 0.65rem', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 6, color: '#3b82f6', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+            Edit
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function fitSvgForMap(svg: string): string {
+  return svg.replace(/<svg([^>]*)>/i, (_, attrs) =>
+    `<svg${attrs.replace(/\s+(width|height)="[^"]*"/gi, '')} style="width:100%;height:100%">`
+  );
+}
+
+function RouteWidgetMarkers({ routePoints }: { routePoints: RoutePointWidget[] }) {
+  const withWidget = routePoints.filter((p) => p.widgetIconType);
+  if (withWidget.length === 0) return null;
+  return (
+    <>
+      {withWidget.map((p, i) => {
+        const size = Math.min(Math.max(p.widgetWidth || 32, 16), 48);
+        const html =
+          p.widgetIconType === 'svg'
+            ? `<div style="width:${size}px;height:${size}px;overflow:hidden;display:flex;align-items:center;justify-content:center;">${fitSvgForMap(p.widgetSvg || '')}</div>`
+            : `<img src="${p.widgetIconUrl}" style="width:${size}px;height:${size}px;object-fit:contain;" alt="" />`;
+        const icon = L.divIcon({
+          className: '',
+          html,
+          iconSize:   [size, size],
+          iconAnchor: [size / 2, size / 2],
+        });
+        return (
+          <Marker key={`wpw-${i}`} position={[p.lat, p.lng]} icon={icon} zIndexOffset={600}>
+            <Popup>
+              <div style={{ minWidth: 110 }}>
+                <strong style={{ fontSize: '0.82rem' }}>{p.widgetName || 'Widget'}</strong>
+                <div style={{ fontSize: '0.72rem', color: '#666', marginTop: 3, textTransform: 'capitalize' }}>
+                  {p.pointType} · pt {p.sequenceNumber}
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        );
+      })}
+    </>
+  );
+}
+
+function EditLayer({
+  points, color, thickness, onMapClick, onPointMove,
+}: {
+  points: [number, number][];
+  color: string;
+  thickness: number;
+  onMapClick: (lat: number, lng: number) => void;
+  onPointMove: (idx: number, lat: number, lng: number) => void;
+}) {
+  const map = useMap();
+  useEffect(() => {
+    map.getContainer().style.cursor = 'crosshair';
+    return () => { map.getContainer().style.cursor = ''; };
+  }, [map]);
+  useMapEvents({ click(e) { onMapClick(e.latlng.lat, e.latlng.lng); } });
+
+  return (
+    <>
+      {points.length > 1 && (
+        <Polyline positions={points} pathOptions={{ color, weight: thickness, opacity: 0.85 }} />
+      )}
+      {points.map((pt, i) => {
+        const isFirst = i === 0;
+        const isLast  = i === points.length - 1;
+        const dot     = isFirst ? '#10b981' : isLast ? '#ef4444' : color;
+        const icon = L.divIcon({
+          className: '',
+          html: `<div style="width:14px;height:14px;border-radius:50%;background:${dot};border:2.5px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,0.45);cursor:grab;"></div>`,
+          iconSize:   [14, 14],
+          iconAnchor: [7, 7],
+        });
+        return (
+          <Marker
+            key={i}
+            position={pt}
+            icon={icon}
+            draggable
+            eventHandlers={{
+              dragend(e) {
+                const { lat, lng } = (e.target as L.Marker).getLatLng();
+                onPointMove(i, lat, lng);
+              },
+            }}
+          />
+        );
+      })}
+    </>
+  );
 }
 
 function DrawLayer({ onMapClick }: { onMapClick: (lat: number, lng: number) => void }) {
@@ -239,9 +450,18 @@ interface LeafletMapProps {
   drawPoints?: [number, number][];
   onMapClick?: (lat: number, lng: number) => void;
   routes?: RoutePolyline[];
+  onEditRoute?: (routeId: string) => void;
+  canEditRoutes?: boolean;
+  editMode?: boolean;
+  editRouteId?: string;
+  editPoints?: [number, number][];
+  editRouteColor?: string;
+  editRouteThickness?: number;
+  onEditMapClick?: (lat: number, lng: number) => void;
+  onEditPointMove?: (idx: number, lat: number, lng: number) => void;
 }
 
-export default function LeafletMap({ layer, markers, center, zoom, showScaleBar = true, scaleUnit = 'metric', userLocation, drawMode, drawPoints = [], onMapClick, routes = [] }: LeafletMapProps) {
+export default function LeafletMap({ layer, markers, center, zoom, showScaleBar = true, scaleUnit = 'metric', userLocation, drawMode, drawPoints = [], onMapClick, routes = [], onEditRoute, canEditRoutes, editMode, editRouteId, editPoints = [], editRouteColor = '#3b82f6', editRouteThickness = 2, onEditMapClick, onEditPointMove }: LeafletMapProps) {
   const tile = TILE_LAYERS[layer] ?? TILE_LAYERS.street;
 
   return (
@@ -262,18 +482,30 @@ export default function LeafletMap({ layer, markers, center, zoom, showScaleBar 
           imperial={scaleUnit === 'imperial'}
         />
       )}
-      {/* Existing routes */}
-      {routes.filter((r) => r.points.length > 1).map((r) => (
-        <Polyline
-          key={r.id}
-          positions={r.points}
-          pathOptions={{ color: r.color || '#3b82f6', weight: r.thickness || 3, opacity: 0.85 }}
-        >
-          <Popup>
-            <strong>{r.label}</strong>
-          </Popup>
-        </Polyline>
+      {/* Existing routes — polylines + widget icons at points (skip the one being edited) */}
+      {routes.filter((r) => r.points.length > 1 && r.id !== editRouteId).map((r) => (
+        <React.Fragment key={r.id}>
+          <Polyline
+            positions={r.points}
+            pathOptions={{ color: r.color || '#3b82f6', weight: r.thickness || 3, opacity: 0.85 }}
+          >
+            <Popup minWidth={244}>
+              <RoutePopup r={r} onEdit={canEditRoutes && onEditRoute ? () => onEditRoute(r.id) : undefined} />
+            </Popup>
+          </Polyline>
+          <RouteWidgetMarkers routePoints={r.routePoints} />
+        </React.Fragment>
       ))}
+      {/* Edit mode */}
+      {editMode && onEditMapClick && onEditPointMove && (
+        <EditLayer
+          points={editPoints}
+          color={editRouteColor}
+          thickness={editRouteThickness}
+          onMapClick={onEditMapClick}
+          onPointMove={onEditPointMove}
+        />
+      )}
       {/* Draw mode */}
       {drawMode && onMapClick && <DrawLayer onMapClick={onMapClick} />}
       {drawMode && <DrawOverlay points={drawPoints} />}

@@ -2,6 +2,36 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.58.0] - 2026-05-12
+
+### Added
+- **Map In-Map Route Editing** (`/tenant/map`): Edit existing routes directly on the map without a form modal.
+  - Clicking **Edit** in a route popup (gated by `tenant_routes.update`) fetches full route data and enters edit mode.
+  - The edited route's polyline is replaced with interactive draggable circle markers — green = start, route color = middle, red = end.
+  - **Drag** any marker to reposition it; **click the map** to append a new point at the end; **× button** in the points list removes a point.
+  - Floating **Edit Panel** (same style as draw panel): Name, Type, Status, Parent Route, Color, Thickness, Description, per-point widget selector.
+  - **Save Changes** calls `PUT /api/tenant/routes/:uuid` and reloads the map; **Cancel** exits edit mode without saving.
+  - Starting "Draw Route" cancels any active edit and vice versa; the route being edited is hidden from the normal polyline layer.
+- **Route Filter Dropdown** (`/tenant/map`): The Routes section in the Filters panel now uses a searchable dropdown to select a specific route instead of a free-text search input.
+  - Selecting a route shows only that route on the map; selecting "All routes" shows everything matching the status filter.
+  - Dropdown options automatically narrow to routes matching the active Status filter.
+  - Match counter `n / total routes visible` updates in real time.
+- **Status-Aware Route Display** (`/tenant/map`): Routes are loaded without a hard-coded `active` filter — all non-deleted routes are fetched from the API.
+  - The **Status** filter (All / Active / Inactive / Maintenance) gates which routes appear on the map dynamically.
+  - Added **Maintenance** option to the status filter dropdown.
+- **`GET /api/tenant/widgets`** (backend): New tenant-accessible endpoint returning active widgets (`uuid`, `code`, `name`, `type`, `iconType`, `svgTemplate`, `iconUrl`, `width`, `height`) for use in route point widget selectors on the map.
+
+### Changed
+- **`tenant_route_points` schema**: Replaced `poleNumber VARCHAR(100)` with `widgetUuid VARCHAR(36) NULL` — auto-migration adds the column on server start if missing.
+- **`TenantRouteController`**, **`TenantRouteRepository`**, **`TenantRoute` model**: All `poleNumber` references updated to `widgetUuid` throughout the backend pipeline.
+- **`RouteModal.tsx`**: Removed stale `poleNumber` field from `PointForm`, point loading, and save payload. Removed unused `TenantRoutePoint` import.
+- **`/tenant/routes` page removed**: Standalone Routes management page and `RoutesClient.tsx` deleted — all route CRUD is now handled on the map page.
+- **`TenantSidebar.tsx`**: "Routes" nav link and `pathname.startsWith('/tenant/routes')` trigger removed.
+- **Nodes search field removed** (`/tenant/map`): Unused "Search nodes" text input removed from the filter panel.
+
+### Fixed
+- **`pt[0].toFixed is not a function`** in edit mode: API coordinates returned as strings are now cast to `Number()` when populating `editPoints` state.
+
 ## [1.57.0] - 2026-05-12
 
 ### Added

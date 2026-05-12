@@ -1,0 +1,205 @@
+/* ── Root ─────────────────────────────────────────────────────── */
+.root {
+  position: relative;
+  width: 100%;
+}
+
+/* ── Trigger button ───────────────────────────────────────────── */
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: 0.8rem;
+  text-align: left;
+  cursor: pointer;
+  box-sizing: border-box;
+  gap: 0.4rem;
+  transition: border-color 0.15s;
+}
+
+.triggerOpen {
+  border-color: #f59e0b;
+}
+
+.trigger:hover {
+  border-color: #f59e0b;
+}
+
+.triggerValue {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.triggerPlaceholder {
+  flex: 1;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+  transition: transform 0.15s;
+}
+
+.chevronUp {
+  transform: rotate(180deg);
+}
+
+/* ── Dropdown ─────────────────────────────────────────────────── */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 1200;
+  background: var(--color-bg-secondary, #1d1d28);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+/* ── Search ───────────────────────────────────────────────────── */
+.searchWrap {
+  position: relative;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.55rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-secondary);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.45rem 0.6rem 0.45rem 1.75rem;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--color-text-primary);
+  font-size: 0.78rem;
+  box-sizing: border-box;
+}
+
+.searchInput::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.7;
+}
+
+/* ── Option list ──────────────────────────────────────────────── */
+.optionList {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.optionList::-webkit-scrollbar {
+  width: 4px;
+}
+
+.optionList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.optionList::-webkit-scrollbar-thumb {
+  background: rgba(245, 158, 11, 0.3);
+  border-radius: 2px;
+}
+
+/* ── Option button ────────────────────────────────────────────── */
+.option {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.45rem 0.65rem;
+  background: transparent;
+  border: none;
+  color: var(--color-text-primary);
+  font-size: 0.78rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s;
+  gap: 0.5rem;
+}
+
+.option:hover {
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.optionActive {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.optionActive:hover {
+  background: rgba(245, 158, 11, 0.2);
+}
+
+/* ── Empty state ──────────────────────────────────────────────── */
+.empty {
+  padding: 0.6rem 0.65rem;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+/* ── Widget icon preview ──────────────────────────────────────── */
+.widgetIcon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.widgetIcon img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.widgetIcon svg,
+.widgetIcon :global(svg) {
+  width: 22px;
+  height: 22px;
+}
+
+.widgetMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  overflow: hidden;
+}
+
+.widgetName {
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.widgetCode {
+  font-size: 0.64rem;
+  font-family: monospace;
+  color: var(--color-text-secondary);
+}

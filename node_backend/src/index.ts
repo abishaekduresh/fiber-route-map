@@ -40,6 +40,7 @@ import tenantSupportTicketRoutes from './routes/tenantSupportTicketRoutes.js';
 import adminSupportTicketRoutes from './routes/adminSupportTicketRoutes.js';
 import widgetRoutes from './routes/widgetRoutes.js';
 import tenantRouteRoutes from './routes/tenantRouteRoutes.js';
+import tenantWidgetRoutes from './routes/tenantWidgetRoutes.js';
 import auditLogRoutes, { auditLogService } from './routes/auditLogRoutes.js';
 import { auditLog } from './middleware/auditLog.js';
 import logger from './utils/logger.js';
@@ -103,6 +104,7 @@ app.use('/api/support-tickets', auth(authService), adminSupportTicketRoutes);
 app.use('/api/audit-logs', auth(authService), auditLogRoutes);
 app.use('/api/widgets', auth(authService), widgetRoutes);
 app.use('/api/tenant/routes', tenantRouteRoutes);
+app.use('/api/tenant/widgets', tenantWidgetRoutes);
 app.use('/api/health', healthRoutes);
 app.get('/api/docs/spec', (_req: express.Request, res: express.Response) => res.json(swaggerSpec));
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
@@ -634,7 +636,7 @@ const ensureTenantRouteTables = async () => {
         t.decimal('longitude', 11, 8).notNullable();
         t.decimal('altitude',  10, 2).nullable();
         t.enum('pointType', ['start', 'middle', 'end', 'junction', 'pole', 'device']).notNullable().defaultTo('middle');
-        t.string('poleNumber', 100).nullable();
+        t.string('widgetUuid', 36).nullable();
         t.text('remarks').nullable();
         t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
         t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
@@ -642,6 +644,15 @@ const ensureTenantRouteTables = async () => {
         t.index(['sequenceNumber'], 'idx_route_points_seq');
       });
       logger.info('Auto-migration: tenant_route_points table created');
+    } else {
+      // Patch: add widgetUuid column (replaces poleNumber)
+      const hasWidgetUuid = await db.schema.hasColumn('tenant_route_points', 'widgetUuid');
+      if (!hasWidgetUuid) {
+        await db.schema.alterTable('tenant_route_points', (t: any) => {
+          t.string('widgetUuid', 36).nullable().after('pointType');
+        });
+        logger.info('Auto-migration: added widgetUuid column to tenant_route_points');
+      }
     }
 
     const histExists = await db.schema.hasTable('tenant_route_histories');

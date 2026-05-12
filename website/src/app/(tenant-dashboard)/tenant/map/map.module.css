@@ -309,6 +309,83 @@
   border-color: #10b981;
 }
 
+/* ── Routes filter toggle ────────────────────────────────────── */
+.filterLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.routeToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 99px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.routeToggle:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.routeToggleOn {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #10b981;
+}
+
+.routeToggleOn:hover {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.routeToggleDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.searchClear {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.1rem;
+  display: flex;
+  align-items: center;
+}
+
+.searchClear:hover {
+  color: #ef4444;
+}
+
+.routeMatchCount {
+  font-size: 0.68rem;
+  color: #f59e0b;
+  font-weight: 600;
+  margin-top: 0.15rem;
+}
+
 .filterSelect {
   width: 100%;
   padding: 0.45rem 0.6rem;
@@ -553,23 +630,6 @@
   border-color: #f59e0b;
 }
 
-.drawSelect {
-  width: 100%;
-  padding: 0.4rem 0.6rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-primary);
-  font-size: 0.8rem;
-  outline: none;
-  cursor: pointer;
-  box-sizing: border-box;
-  transition: border-color 0.15s;
-}
-
-.drawSelect:focus {
-  border-color: #f59e0b;
-}
 
 .drawColorRow {
   display: flex;
@@ -598,6 +658,147 @@
   color: #ef4444;
   margin: 0;
 }
+
+/* Required / optional labels */
+.req {
+  color: #ef4444;
+  font-weight: 700;
+  margin-left: 1px;
+}
+
+.opt {
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.65rem;
+}
+
+/* Side-by-side draw fields */
+.drawFieldRow {
+  display: flex;
+  gap: 0.6rem;
+}
+
+/* Thickness range slider */
+.drawRange {
+  width: 100%;
+  accent-color: #f59e0b;
+  cursor: pointer;
+  margin-top: 0.25rem;
+}
+
+.drawThickVal {
+  float: right;
+  font-weight: 700;
+  color: #f59e0b;
+  font-size: 0.7rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Description textarea */
+.drawTextarea {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: 0.78rem;
+  outline: none;
+  resize: vertical;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.drawTextarea:focus {
+  border-color: #f59e0b;
+}
+
+/* Captured points list */
+.drawPointsList {
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.drawPointsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.6rem;
+  background: rgba(245, 158, 11, 0.08);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #f59e0b;
+}
+
+.drawPointsScroll {
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.drawPointRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.drawPointRow:last-child {
+  border-bottom: none;
+}
+
+.drawPointMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.drawSeq {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.drawPtType {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.ptType_start  { background: rgba(16,185,129,0.15); color: #10b981; }
+.ptType_middle { background: rgba(245,158,11,0.12); color: #f59e0b; }
+.ptType_end    { background: rgba(239,68,68,0.12);  color: #ef4444; }
+
+.drawCoords {
+  font-size: 0.65rem;
+  font-family: monospace;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 
 .drawActions {
   display: flex;

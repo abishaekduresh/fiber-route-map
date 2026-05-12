@@ -3,11 +3,31 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { getDeviceCategories, getDeviceTypes, getUserSettings, getTenantRoutes, getTenantRoute, createTenantRoute, DeviceCategoryData, DeviceTypeData } from '@/lib/api';
+import { getDeviceCategories, getDeviceTypes, getUserSettings, getTenantRoutes, getTenantRoute, createTenantRoute, updateTenantRoute, getTenantWidgets, WidgetData, DeviceCategoryData, DeviceTypeData } from '@/lib/api';
 import { useTenantAuth } from '@/components/providers/TenantAuthContext';
-import type { MapMarker, RoutePolyline } from './LeafletMap';
+import type { MapMarker, RoutePolyline, RoutePointWidget } from './LeafletMap';
 import MapSettingsPanel, { MapSettings, DEFAULT_MAP_SETTINGS } from '@/components/tenant-map/MapSettingsPanel';
+import DrawSearchableSelect, { DSOption } from './DrawSearchableSelect';
 import styles from './map.module.css';
+import dsStyles from './drawSelect.module.css';
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function fitSvgInline(svg: string): string {
+  return svg.replace(/<svg([^>]*)>/i, (_, attrs) =>
+    `<svg${attrs.replace(/\s+(width|height)="[^"]*"/gi, '')} style="width:100%;height:100%">`
+  );
+}
+
+const ROUTE_TYPE_OPTIONS: DSOption[] = [
+  { value: 'fiber_route',       label: 'Fiber Route' },
+  { value: 'coaxial_route',     label: 'Coaxial Route' },
+  { value: 'backbone_route',    label: 'Backbone Route' },
+  { value: 'distribution_route',label: 'Distribution Route' },
+  { value: 'drop_route',        label: 'Drop Route' },
+  { value: 'underground_duct',  label: 'Underground Duct' },
+  { value: 'pole_to_pole',      label: 'Pole to Pole' },
+];
 
 const LeafletMap = dynamic(() => import('./LeafletMap'), { ssr: false });
 
@@ -38,6 +58,8 @@ export default function MapClient() {
   const router = useRouter();
   const { hasPermission } = useTenantAuth();
 
+  const canUpdateRoutes = hasPermission('tenant_routes.update');
+
   useEffect(() => {
     if (!hasPermission('map.view')) {
       router.replace('/tenant/dashboard');
@@ -45,14 +67,34 @@ export default function MapClient() {
   }, [hasPermission, router]);
 
   // ── Draw mode ────────────────────────────────────────────────────────────
-  const [drawMode, setDrawMode]           = useState(false);
-  const [drawPoints, setDrawPoints]       = useState<[number, number][]>([]);
-  const [routes, setRoutes]               = useState<RoutePolyline[]>([]);
-  const [drawName, setDrawName]           = useState('');
-  const [drawType, setDrawType]           = useState('fiber_route');
-  const [drawColor, setDrawColor]         = useState('#3b82f6');
-  const [isSaving, setIsSaving]           = useState(false);
-  const [saveError, setSaveError]         = useState('');
+  const [drawMode, setDrawMode]             = useState(false);
+  const [drawPoints, setDrawPoints]         = useState<[number, number][]>([]);
+  const [drawPointWidgets, setDrawPointWidgets] = useState<string[]>([]);   // widgetUuid per point ('' = none)
+  const [routes, setRoutes]                 = useState<RoutePolyline[]>([]);
+  const [availableWidgets, setAvailableWidgets] = useState<WidgetData[]>([]);
+  const [drawName, setDrawName]             = useState('');
+  const [drawType, setDrawType]             = useState('fiber_route');
+  const [drawColor, setDrawColor]           = useState('#3b82f6');
+  const [drawThickness, setDrawThickness]   = useState(2);
+  const [drawParentUuid, setDrawParentUuid] = useState('');
+  const [drawDescription, setDrawDescription] = useState('');
+  const [isSaving, setIsSaving]             = useState(false);
+  const [saveError, setSaveError]           = useState('');
+
+  // ── Edit mode ────────────────────────────────────────────────────────────
+  const [editMode, setEditMode]               = useState(false);
+  const [editRouteId, setEditRouteId]         = useState('');
+  const [editPoints, setEditPoints]           = useState<[number, number][]>([]);
+  const [editPointWidgets, setEditPointWidgets] = useState<string[]>([]);
+  const [editName, setEditName]               = useState('');
+  const [editType, setEditType]               = useState('fiber_route');
+  const [editColor, setEditColor]             = useState('#3b82f6');
+  const [editThickness, setEditThickness]     = useState(2);
+  const [editParentUuid, setEditParentUuid]   = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editStatus, setEditStatus]           = useState('active');
+  const [isSavingEdit, setIsSavingEdit]       = useState(false);
+  const [saveEditError, setSaveEditError]     = useState('');
 
   const [geoStatus, setGeoStatus]       = useState<GeoStatus>('idle');
   const [center, setCenter]             = useState<[number, number]>([0, 0]);
@@ -67,7 +109,8 @@ export default function MapClient() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [deviceTypeFilter, setDeviceTypeFilter] = useState('');
-  const [search, setSearch]             = useState('');
+  const [selectedRouteId, setSelectedRouteId] = useState('');
+  const [showRoutes, setShowRoutes]     = useState(false);
   const [categories, setCategories]     = useState<DeviceCategoryData[]>([]);
   const [deviceTypes, setDeviceTypes]   = useState<DeviceTypeData[]>([]);
   const [filtersOpen, setFiltersOpen]   = useState(DEFAULT_MAP_SETTINGS.filtersOpenByDefault);
@@ -132,27 +175,59 @@ export default function MapClient() {
 
   // ── API data ─────────────────────────────────────────────────────────────
   const loadApiData = useCallback(async () => {
-    const [catRes, dtRes, routeRes] = await Promise.all([
+    const [catRes, dtRes, routeRes, widgetRes] = await Promise.all([
       getDeviceCategories({ limit: -1 }),
       getDeviceTypes({ limit: -1 }),
-      getTenantRoutes({ limit: -1, filter: { status: 'active' } }),
+      getTenantRoutes({ limit: -1 }),
+      getTenantWidgets(),
     ]);
     if (catRes.success && Array.isArray(catRes.data)) setCategories(catRes.data);
     if (dtRes.success && Array.isArray(dtRes.data)) setDeviceTypes(dtRes.data);
+
+    // Build a uuid→widget lookup for icon resolution
+    const widgetMap = new Map<string, WidgetData>();
+    if (widgetRes.success && Array.isArray(widgetRes.data)) {
+      widgetRes.data.forEach((w: WidgetData) => widgetMap.set(w.id, w));
+      setAvailableWidgets(widgetRes.data);
+    }
+
     if (routeRes.success && Array.isArray(routeRes.data)) {
-      // Fetch full details (with points) for each route that has at least one point
       const withPoints = routeRes.data.filter((r: any) => (r.attributes?.pointsCount ?? 0) > 0);
       const detailResults = await Promise.all(withPoints.map((r: any) => getTenantRoute(r.id)));
       const polylines: RoutePolyline[] = detailResults
         .filter((res) => res.success && res.data)
         .map((res): RoutePolyline => {
           const r = res.data as any;
+          const pts: any[] = r.attributes.points ?? [];
           return {
-            id:        r.id,
-            label:     r.attributes.name,
-            color:     r.attributes.routeColor || '#3b82f6',
-            thickness: r.attributes.lineThickness || 3,
-            points:    (r.attributes.points ?? []).map((p: any) => [p.latitude, p.longitude] as [number, number]),
+            id:              r.id,
+            label:           r.attributes.name,
+            color:           r.attributes.routeColor || '#3b82f6',
+            thickness:       r.attributes.lineThickness || 3,
+            code:            r.attributes.code,
+            type:            r.attributes.type,
+            description:     r.attributes.description ?? null,
+            status:          r.attributes.status,
+            parentRouteName: r.attributes.parentRouteName ?? null,
+            pointsCount:     r.attributes.pointsCount ?? pts.length,
+            createdAt:       r.meta.createdAt,
+            updatedAt:       r.meta.updatedAt,
+            points:          pts.map((p) => [p.latitude, p.longitude] as [number, number]),
+            routePoints: pts.map((p): RoutePointWidget => {
+              const widget = p.widgetUuid ? widgetMap.get(p.widgetUuid) : undefined;
+              return {
+                lat:            p.latitude,
+                lng:            p.longitude,
+                pointType:      p.pointType,
+                sequenceNumber: p.sequenceNumber,
+                widgetIconType: widget?.attributes.iconType ?? null,
+                widgetSvg:      widget?.attributes.svgTemplate ?? null,
+                widgetIconUrl:  widget?.attributes.iconUrl ?? null,
+                widgetWidth:    widget?.attributes.width ?? null,
+                widgetHeight:   widget?.attributes.height ?? null,
+                widgetName:     widget?.attributes.name ?? null,
+              };
+            }),
           };
         })
         .filter((pl) => pl.points.length > 1);
@@ -183,35 +258,184 @@ export default function MapClient() {
 
   const filteredMarkers = useMemo<MapMarker[]>(() => [], []);
 
+  const filteredRoutes = useMemo(() => {
+    let result = routes;
+    if (statusFilter !== 'all') {
+      result = result.filter((r) => r.status === statusFilter);
+    }
+    if (selectedRouteId) {
+      result = result.filter((r) => r.id === selectedRouteId);
+    }
+    return result;
+  }, [routes, statusFilter, selectedRouteId]);
+
+  const routeFilterOptions = useMemo<DSOption[]>(() => [
+    { value: '', label: 'All routes' },
+    ...routes
+      .filter((r) => statusFilter === 'all' || r.status === statusFilter)
+      .map((r) => ({ value: r.id, label: `[${r.code}] ${r.label}` })),
+  ], [routes, statusFilter]);
+
   const activeCount   = 0;
   const inactiveCount = 0;
 
+  // ── Searchable select option arrays ─────────────────────────────────────
+  // Parent route list always uses all routes (not the filtered subset)
+  const parentRouteOptions = useMemo<DSOption[]>(() => [
+    { value: '', label: 'None (No parent)' },
+    ...routes.map((r) => ({ value: r.id, label: `[${r.code}] ${r.label}` })),
+  ], [routes]);
+
+  const widgetOptions = useMemo<DSOption[]>(() => [
+    { value: '', label: 'No widget' },
+    ...availableWidgets.map((w) => ({
+      value: w.id,
+      label: `[${w.attributes.code}] ${w.attributes.name}`,
+      renderOption: () => (
+        <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
+          <span className={dsStyles.widgetIcon}>
+            {w.attributes.iconType === 'svg'
+              ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(w.attributes.svgTemplate || '') }} style={{ display: 'flex', width: 22, height: 22 }} />
+              : <img src={w.attributes.iconUrl || ''} alt={w.attributes.name} />
+            }
+          </span>
+          <span className={dsStyles.widgetMeta}>
+            <span className={dsStyles.widgetName}>{w.attributes.name}</span>
+            <span className={dsStyles.widgetCode}>{w.attributes.code}</span>
+          </span>
+        </span>
+      ),
+    })),
+  ], [availableWidgets]);
+
+  const handleEditRoute = useCallback(async (routeId: string) => {
+    const res = await getTenantRoute(routeId);
+    if (!res.success || !res.data) return;
+    const r = res.data as any;
+    const pts: any[] = r.attributes.points ?? [];
+    setEditRouteId(routeId);
+    setEditPoints(pts.map((p: any) => [Number(p.latitude), Number(p.longitude)] as [number, number]));
+    setEditPointWidgets(pts.map((p: any) => p.widgetUuid || ''));
+    setEditName(r.attributes.name);
+    setEditType(r.attributes.type);
+    setEditColor(r.attributes.routeColor || '#3b82f6');
+    setEditThickness(r.attributes.lineThickness || 2);
+    setEditParentUuid(r.attributes.parentRouteUuid || '');
+    setEditDescription(r.attributes.description || '');
+    setEditStatus(r.attributes.status || 'active');
+    setSaveEditError('');
+    setDrawMode(false);
+    setEditMode(true);
+  }, []);
+
+  const cancelEdit = useCallback(() => {
+    setEditMode(false);
+    setEditRouteId('');
+    setEditPoints([]);
+    setEditPointWidgets([]);
+    setSaveEditError('');
+  }, []);
+
+  const onEditMapClick = useCallback((lat: number, lng: number) => {
+    setEditPoints((prev) => [...prev, [lat, lng]]);
+    setEditPointWidgets((prev) => [...prev, '']);
+  }, []);
+
+  const onEditPointMove = useCallback((idx: number, lat: number, lng: number) => {
+    setEditPoints((prev) => prev.map((pt, i) => i === idx ? [lat, lng] as [number, number] : pt));
+  }, []);
+
+  const deleteEditPoint = useCallback((idx: number) => {
+    setEditPoints((prev) => prev.filter((_, i) => i !== idx));
+    setEditPointWidgets((prev) => prev.filter((_, i) => i !== idx));
+  }, []);
+
+  const setEditPointWidget = useCallback((idx: number, widgetUuid: string) => {
+    setEditPointWidgets((prev) => prev.map((w, i) => i === idx ? widgetUuid : w));
+  }, []);
+
+  const saveEdit = useCallback(async () => {
+    if (!editName.trim()) { setSaveEditError('Route name is required.'); return; }
+    if (editPoints.length < 2) { setSaveEditError('At least 2 points required.'); return; }
+    setIsSavingEdit(true);
+    setSaveEditError('');
+    try {
+      const points = editPoints.map((pt, i) => ({
+        sequenceNumber: i + 1,
+        latitude:       pt[0],
+        longitude:      pt[1],
+        pointType:      getPointType(i, editPoints.length),
+        widgetUuid:     editPointWidgets[i] || null,
+      }));
+      const payload: Record<string, any> = {
+        name:            editName.trim(),
+        type:            editType,
+        routeColor:      editColor,
+        lineThickness:   editThickness,
+        status:          editStatus,
+        parentRouteUuid: editParentUuid || null,
+        description:     editDescription.trim() || null,
+        points,
+      };
+      const res = await updateTenantRoute(editRouteId, payload);
+      if (!res.success) { setSaveEditError((res as any).message || 'Failed to save.'); return; }
+      setEditMode(false);
+      setEditRouteId('');
+      setEditPoints([]);
+      setEditPointWidgets([]);
+      await loadApiData();
+    } catch {
+      setSaveEditError('Failed to save.');
+    } finally {
+      setIsSavingEdit(false);
+    }
+  }, [editName, editType, editColor, editThickness, editStatus, editParentUuid, editDescription, editPoints, editPointWidgets, editRouteId, loadApiData]);
+
   const handleMapClick = useCallback((lat: number, lng: number) => {
     setDrawPoints((prev) => [...prev, [lat, lng]]);
+    setDrawPointWidgets((prev) => [...prev, '']);
   }, []);
 
   const startDraw = useCallback(() => {
+    setEditMode(false);
+    setEditRouteId('');
+    setEditPoints([]);
+    setEditPointWidgets([]);
     setDrawMode(true);
     setDrawPoints([]);
+    setDrawPointWidgets([]);
     setDrawName('');
     setDrawType('fiber_route');
     setDrawColor('#3b82f6');
+    setDrawThickness(2);
+    setDrawParentUuid('');
+    setDrawDescription('');
     setSaveError('');
   }, []);
 
   const cancelDraw = useCallback(() => {
     setDrawMode(false);
     setDrawPoints([]);
+    setDrawPointWidgets([]);
     setSaveError('');
   }, []);
 
   const undoLastPoint = useCallback(() => {
     setDrawPoints((prev) => prev.slice(0, -1));
+    setDrawPointWidgets((prev) => prev.slice(0, -1));
   }, []);
+
+  const setPointWidget = useCallback((idx: number, widgetUuid: string) => {
+    setDrawPointWidgets((prev) => prev.map((w, i) => i === idx ? widgetUuid : w));
+  }, []);
+
+  const getPointType = (i: number, total: number) =>
+    i === 0 ? 'start' : i === total - 1 ? 'end' : 'middle';
 
   const saveRoute = useCallback(async () => {
     if (!drawName.trim()) { setSaveError('Route name is required.'); return; }
-    if (drawPoints.length < 2)  { setSaveError('Add at least 2 points.'); return; }
+    if (!drawType)        { setSaveError('Route type is required.'); return; }
+    if (drawPoints.length < 2) { setSaveError('Add at least 2 points on the map.'); return; }
     setIsSaving(true);
     setSaveError('');
     try {
@@ -219,19 +443,31 @@ export default function MapClient() {
         sequenceNumber: i + 1,
         latitude:       pt[0],
         longitude:      pt[1],
-        pointType:      i === 0 ? 'start' : i === drawPoints.length - 1 ? 'end' : 'middle',
+        pointType:      getPointType(i, drawPoints.length),
+        widgetUuid:     drawPointWidgets[i] || null,
       }));
-      const res = await createTenantRoute({ name: drawName.trim(), type: drawType, routeColor: drawColor, points });
-      if (!res.success) { setSaveError((res as any).error || 'Failed to save route.'); return; }
+      const payload: Record<string, any> = {
+        name:          drawName.trim(),
+        type:          drawType,
+        routeColor:    drawColor,
+        lineThickness: drawThickness,
+        points,
+      };
+      if (drawParentUuid)      payload.parentRouteUuid = drawParentUuid;
+      if (drawDescription.trim()) payload.description  = drawDescription.trim();
+
+      const res = await createTenantRoute(payload);
+      if (!res.success) { setSaveError((res as any).message || 'Failed to save route.'); return; }
       setDrawMode(false);
       setDrawPoints([]);
+      setDrawPointWidgets([]);
       await loadApiData();
     } catch {
       setSaveError('Failed to save route.');
     } finally {
       setIsSaving(false);
     }
-  }, [drawName, drawType, drawColor, drawPoints, loadApiData]);
+  }, [drawName, drawType, drawColor, drawThickness, drawParentUuid, drawDescription, drawPoints, drawPointWidgets, loadApiData]);
 
   // ── Permission screens ───────────────────────────────────────────────────
   if (geoStatus === 'idle' || geoStatus === 'requesting') {
@@ -400,16 +636,6 @@ export default function MapClient() {
           {filtersOpen && (
             <div className={styles.filtersBody}>
               <div className={styles.filterGroup}>
-                <label className={styles.filterLabel}>Search</label>
-                <div className={styles.searchWrapper}>
-                  <svg className={styles.searchIcon} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-                  </svg>
-                  <input type="text" className={styles.filterInput} placeholder="Search nodes..." value={search} onChange={(e) => setSearch(e.target.value)} />
-                </div>
-              </div>
-
-              <div className={styles.filterGroup}>
                 <label className={styles.filterLabel}>Map Layer</label>
                 <div className={styles.layerButtons}>
                   {LAYER_OPTIONS.map((opt) => (
@@ -421,11 +647,48 @@ export default function MapClient() {
               </div>
 
               <div className={styles.filterGroup}>
+                <div className={styles.filterLabelRow}>
+                  <label className={styles.filterLabel}>Routes</label>
+                  <button
+                    className={`${styles.routeToggle} ${showRoutes ? styles.routeToggleOn : ''}`}
+                    onClick={() => setShowRoutes((o) => !o)}
+                  >
+                    {showRoutes ? (
+                      <>
+                        <span className={styles.routeToggleDot} />
+                        Visible
+                      </>
+                    ) : (
+                      <>
+                        <span className={styles.routeToggleDot} />
+                        Hidden
+                      </>
+                    )}
+                  </button>
+                </div>
+                {showRoutes && (
+                  <>
+                    <DrawSearchableSelect
+                      options={routeFilterOptions}
+                      value={selectedRouteId}
+                      onChange={setSelectedRouteId}
+                      placeholder="All routes"
+                      searchPlaceholder="Search routes…"
+                    />
+                    <span className={styles.routeMatchCount}>
+                      {filteredRoutes.length} / {routes.length} route{routes.length !== 1 ? 's' : ''} visible
+                    </span>
+                  </>
+                )}
+              </div>
+
+              <div className={styles.filterGroup}>
                 <label className={styles.filterLabel}>Status</label>
                 <select className={styles.filterSelect} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                   <option value="all">All Status</option>
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
+                  <option value="maintenance">Maintenance</option>
                 </select>
               </div>
 
@@ -449,8 +712,8 @@ export default function MapClient() {
                 </select>
               </div>
 
-              {(statusFilter !== 'all' || categoryFilter || deviceTypeFilter || search) && (
-                <button className={styles.clearBtn} onClick={() => { setStatusFilter('all'); setCategoryFilter(''); setDeviceTypeFilter(''); setSearch(''); }}>
+              {(statusFilter !== 'all' || categoryFilter || deviceTypeFilter || selectedRouteId || showRoutes) && (
+                <button className={styles.clearBtn} onClick={() => { setStatusFilter('all'); setCategoryFilter(''); setDeviceTypeFilter(''); setSelectedRouteId(''); setShowRoutes(false); }}>
                   Clear all filters
                 </button>
               )}
@@ -477,9 +740,18 @@ export default function MapClient() {
             drawMode={drawMode}
             drawPoints={drawPoints}
             onMapClick={handleMapClick}
-            routes={routes}
+            routes={showRoutes ? filteredRoutes : []}
+            onEditRoute={handleEditRoute}
+            canEditRoutes={canUpdateRoutes}
+            editMode={editMode}
+            editRouteId={editRouteId}
+            editPoints={editPoints}
+            editRouteColor={editColor}
+            editRouteThickness={editThickness}
+            onEditMapClick={onEditMapClick}
+            onEditPointMove={onEditPointMove}
           />
-          {filteredMarkers.length === 0 && !drawMode && (
+          {filteredMarkers.length === 0 && !drawMode && !editMode && (
             <div className={styles.emptyOverlay}>
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.4, marginBottom: '0.75rem' }}>
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
@@ -487,6 +759,103 @@ export default function MapClient() {
               <p>No nodes match the current filters.</p>
             </div>
           )}
+          {/* Edit mode panel */}
+          {editMode && (
+            <div className={styles.drawPanel}>
+              <div className={styles.drawPanelHeader}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                <span>Edit Route</span>
+                <span className={styles.drawPointCount}>{editPoints.length} pts</span>
+              </div>
+              <p className={styles.drawHint}>Drag points to move. Click map to add.</p>
+
+              <div className={styles.drawField}>
+                <label>Route Name <span className={styles.req}>*</span></label>
+                <input type="text" className={styles.drawInput} value={editName} onChange={(e) => setEditName(e.target.value)} />
+              </div>
+
+              <div className={styles.drawField}>
+                <label>Type <span className={styles.req}>*</span></label>
+                <DrawSearchableSelect options={ROUTE_TYPE_OPTIONS} value={editType} onChange={setEditType} searchPlaceholder="Search type…" />
+              </div>
+
+              <div className={styles.drawField}>
+                <label>Status</label>
+                <select className={styles.drawInput} value={editStatus} onChange={(e) => setEditStatus(e.target.value)} style={{ cursor: 'pointer' }}>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="maintenance">Maintenance</option>
+                </select>
+              </div>
+
+              <div className={styles.drawField}>
+                <label>Parent Route</label>
+                <DrawSearchableSelect options={parentRouteOptions} value={editParentUuid} onChange={setEditParentUuid} placeholder="None (No parent)" searchPlaceholder="Search routes…" />
+              </div>
+
+              <div className={styles.drawFieldRow}>
+                <div className={styles.drawField} style={{ flex: 1 }}>
+                  <label>Color <span className={styles.req}>*</span></label>
+                  <div className={styles.drawColorRow}>
+                    <input type="color" className={styles.drawColorPicker} value={editColor} onChange={(e) => setEditColor(e.target.value)} />
+                    <span className={styles.drawColorHex}>{editColor}</span>
+                  </div>
+                </div>
+                <div className={styles.drawField} style={{ flex: 1 }}>
+                  <label>Thickness <span className={styles.req}>*</span> <span className={styles.drawThickVal}>{editThickness}px</span></label>
+                  <input type="range" min={1} max={12} value={editThickness} onChange={(e) => setEditThickness(Number(e.target.value))} className={styles.drawRange} />
+                </div>
+              </div>
+
+              <div className={styles.drawField}>
+                <label>Description <span className={styles.opt}>(optional)</span></label>
+                <textarea className={styles.drawTextarea} rows={2} value={editDescription} onChange={(e) => setEditDescription(e.target.value)} />
+              </div>
+
+              {editPoints.length > 0 && (
+                <div className={styles.drawPointsList}>
+                  <div className={styles.drawPointsHeader}><span>Points</span></div>
+                  <div className={styles.drawPointsScroll}>
+                    {editPoints.map((pt, i) => (
+                      <div key={i} className={styles.drawPointRow}>
+                        <div className={styles.drawPointMeta}>
+                          <span className={styles.drawSeq}>{i + 1}</span>
+                          <span className={`${styles.drawPtType} ${styles[`ptType_${getPointType(i, editPoints.length)}`]}`}>
+                            {getPointType(i, editPoints.length)}
+                          </span>
+                          <span className={styles.drawCoords}>{pt[0].toFixed(5)}, {pt[1].toFixed(5)}</span>
+                          <button
+                            onClick={() => deleteEditPoint(i)}
+                            style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: '0 2px', fontSize: '0.85rem', lineHeight: 1 }}
+                            title="Remove point"
+                          >×</button>
+                        </div>
+                        <DrawSearchableSelect
+                          options={widgetOptions}
+                          value={editPointWidgets[i] ?? ''}
+                          onChange={(val) => setEditPointWidget(i, val)}
+                          placeholder="No widget (optional)"
+                          searchPlaceholder="Search widgets…"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {saveEditError && <p className={styles.drawError}>{saveEditError}</p>}
+              <div className={styles.drawActions}>
+                <button className={styles.drawUndoBtn} onClick={cancelEdit}>Cancel</button>
+                <button className={styles.drawSaveBtn} onClick={saveEdit} disabled={isSavingEdit || editPoints.length < 2}>
+                  {isSavingEdit ? 'Saving…' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Draw mode save panel */}
           {drawMode && (
             <div className={styles.drawPanel}>
@@ -498,8 +867,10 @@ export default function MapClient() {
                 <span className={styles.drawPointCount}>{drawPoints.length} pts</span>
               </div>
               <p className={styles.drawHint}>Click on the map to place route points.</p>
+
+              {/* Route Name */}
               <div className={styles.drawField}>
-                <label>Route Name *</label>
+                <label>Route Name <span className={styles.req}>*</span></label>
                 <input
                   type="text"
                   className={styles.drawInput}
@@ -508,25 +879,94 @@ export default function MapClient() {
                   onChange={(e) => setDrawName(e.target.value)}
                 />
               </div>
+
+              {/* Route Type */}
               <div className={styles.drawField}>
-                <label>Type</label>
-                <select className={styles.drawSelect} value={drawType} onChange={(e) => setDrawType(e.target.value)}>
-                  <option value="fiber_route">Fiber Route</option>
-                  <option value="coaxial_route">Coaxial Route</option>
-                  <option value="backbone_route">Backbone Route</option>
-                  <option value="distribution_route">Distribution Route</option>
-                  <option value="drop_route">Drop Route</option>
-                  <option value="underground_duct">Underground Duct</option>
-                  <option value="pole_to_pole">Pole to Pole</option>
-                </select>
+                <label>Type <span className={styles.req}>*</span></label>
+                <DrawSearchableSelect
+                  options={ROUTE_TYPE_OPTIONS}
+                  value={drawType}
+                  onChange={setDrawType}
+                  searchPlaceholder="Search type…"
+                />
               </div>
+
+              {/* Parent Route */}
               <div className={styles.drawField}>
-                <label>Color</label>
-                <div className={styles.drawColorRow}>
-                  <input type="color" className={styles.drawColorPicker} value={drawColor} onChange={(e) => setDrawColor(e.target.value)} />
-                  <span className={styles.drawColorHex}>{drawColor}</span>
+                <label>Parent Route</label>
+                <DrawSearchableSelect
+                  options={parentRouteOptions}
+                  value={drawParentUuid}
+                  onChange={setDrawParentUuid}
+                  placeholder="None (No parent)"
+                  searchPlaceholder="Search routes…"
+                />
+              </div>
+
+              {/* Color + Thickness */}
+              <div className={styles.drawFieldRow}>
+                <div className={styles.drawField} style={{ flex: 1 }}>
+                  <label>Color <span className={styles.req}>*</span></label>
+                  <div className={styles.drawColorRow}>
+                    <input type="color" className={styles.drawColorPicker} value={drawColor} onChange={(e) => setDrawColor(e.target.value)} />
+                    <span className={styles.drawColorHex}>{drawColor}</span>
+                  </div>
+                </div>
+                <div className={styles.drawField} style={{ flex: 1 }}>
+                  <label>Thickness <span className={styles.req}>*</span> <span className={styles.drawThickVal}>{drawThickness}px</span></label>
+                  <input
+                    type="range"
+                    min={1} max={12}
+                    value={drawThickness}
+                    onChange={(e) => setDrawThickness(Number(e.target.value))}
+                    className={styles.drawRange}
+                  />
                 </div>
               </div>
+
+              {/* Description */}
+              <div className={styles.drawField}>
+                <label>Description <span className={styles.opt}>(optional)</span></label>
+                <textarea
+                  className={styles.drawTextarea}
+                  placeholder="Notes about this route…"
+                  rows={2}
+                  value={drawDescription}
+                  onChange={(e) => setDrawDescription(e.target.value)}
+                />
+              </div>
+
+              {/* Captured points list */}
+              {drawPoints.length > 0 && (
+                <div className={styles.drawPointsList}>
+                  <div className={styles.drawPointsHeader}>
+                    <span>Captured Points</span>
+                  </div>
+                  <div className={styles.drawPointsScroll}>
+                    {drawPoints.map((pt, i) => (
+                      <div key={i} className={styles.drawPointRow}>
+                        <div className={styles.drawPointMeta}>
+                          <span className={styles.drawSeq}>{i + 1}</span>
+                          <span className={`${styles.drawPtType} ${styles[`ptType_${getPointType(i, drawPoints.length)}`]}`}>
+                            {getPointType(i, drawPoints.length)}
+                          </span>
+                          <span className={styles.drawCoords}>
+                            {pt[0].toFixed(5)}, {pt[1].toFixed(5)}
+                          </span>
+                        </div>
+                        <DrawSearchableSelect
+                          options={widgetOptions}
+                          value={drawPointWidgets[i] ?? ''}
+                          onChange={(val) => setPointWidget(i, val)}
+                          placeholder="No widget (optional)"
+                          searchPlaceholder="Search widgets…"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {saveError && <p className={styles.drawError}>{saveError}</p>}
               <div className={styles.drawActions}>
                 <button className={styles.drawUndoBtn} onClick={undoLastPoint} disabled={drawPoints.length === 0}>
@@ -548,6 +988,7 @@ export default function MapClient() {
         current={mapSettings}
         onApply={handleSettingsApply}
       />
+
     </div>
   );
 }

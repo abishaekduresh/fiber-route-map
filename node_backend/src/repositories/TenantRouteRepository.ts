@@ -159,10 +159,10 @@ export class TenantRouteRepository {
       sequenceNumber: p.sequenceNumber,
       latitude:      p.latitude,
       longitude:     p.longitude,
-      altitude:      p.altitude   ?? null,
+      altitude:      p.altitude    ?? null,
       pointType:     p.pointType,
-      poleNumber:    p.poleNumber ?? null,
-      remarks:       p.remarks    ?? null,
+      widgetUuid:    p.widgetUuid  ?? null,
+      remarks:       p.remarks     ?? null,
       createdAt:     now,
       updatedAt:     now,
     }));

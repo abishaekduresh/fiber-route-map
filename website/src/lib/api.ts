@@ -1409,7 +1409,7 @@ export interface TenantRoutePoint {
   longitude: number;
   altitude: number | null;
   pointType: TenantRoutePointType;
-  poleNumber: string | null;
+  widgetUuid: string | null;
   remarks: string | null;
 }
 
@@ -1464,6 +1464,10 @@ export async function deleteTenantRoute(uuid: string): Promise<ApiResponse> {
 
 export async function getTenantRouteHistory(uuid: string): Promise<ApiResponse<any[]>> {
   return apiFetch(`/api/tenant/routes/${uuid}/history`);
+}
+
+export async function getTenantWidgets(): Promise<ApiResponse<WidgetData[]>> {
+  return apiFetch('/api/tenant/widgets');
 }
 
 

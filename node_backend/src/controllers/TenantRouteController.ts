@@ -34,7 +34,7 @@ export class TenantRouteController {
     longitude:      p.longitude,
     altitude:       p.altitude,
     pointType:      p.pointType,
-    poleNumber:     p.poleNumber,
+    widgetUuid:     p.widgetUuid ?? null,
     remarks:        p.remarks,
   });
 
