@@ -2,6 +2,30 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.60.0] - 2026-05-13
+
+### Added
+- **Route point name & description** (`/tenant/map`): Each route point can now have an optional **Point Name** and **Description**.
+  - New `pointName VARCHAR(100)` and `pointDescription TEXT` columns in `tenant_route_points` — auto-migrated on server start.
+  - Backend: `TenantRoutePoint` model, `CreateRoutePointDTO`, `upsertPoints`, and `transformPoint` all carry the new fields.
+  - Frontend: draw and edit panel point rows show a **Point name** text input; **Description** input appears once a name is typed or pre-loaded.
+  - Saved to the backend on "Save Route" / "Save Changes".
+- **Hover tooltip on route point markers** (`/tenant/map`): Hovering over any point marker shows a card with point name (bold), device type (blue), description, and point type / sequence number via Leaflet `<Tooltip>`.
+  - `RouteWidgetMarkers` now renders a marker for **every** point that has a widget icon, device type icon, name, or description — not just widget-icon points.
+  - Points without an icon but with a name/description get a small grey dot (8 px) for hover detection.
+- **Insert point between existing route points** (`/tenant/map` edit mode): Small hollow midpoint handles appear at the centre of every polyline segment.
+  - **Click** a handle → inserts a new point exactly at the midpoint.
+  - **Drag** a handle → inserts a new point at the dragged position.
+  - Inserted point is added to all per-point state arrays (widget, device type, name, description).
+  - Hint text in the edit panel updated: *"Drag points to move · Click/drag midpoint handle to insert · Click map to add at end."*
+- **Edit route panel close button** (`/tenant/map`): An × button in the edit panel header immediately closes/cancels the edit session without scrolling to the bottom Cancel button.
+- **Focus map to selected route** (`/tenant/map`): Selecting a specific route from the Routes dropdown now calls `map.flyToBounds()` on the route's bounding box (50 px padding, max zoom 17, 0.8 s animation) instead of staying on the GPS position. GPS auto-recentering is suppressed while a route is focused; selecting "All routes" restores it.
+- **Route line hover popup** (`/tenant/map`): Hovering over a route polyline now opens the route info card (code, name, type, thickness, points count, status, dates, Edit button) at the cursor position — no click required. The popup stays open for full interaction.
+
+### Changed
+- **`tenant_route_points` schema**: Added `pointName VARCHAR(100)` and `pointDescription TEXT` columns.
+- **`TenantRouteController` version**: Bumped internal VERSION constant to `1.60.0`.
+
 ## [1.59.0] - 2026-05-12
 
 ### Added
