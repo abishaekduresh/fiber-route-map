@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { createDeviceType, updateDeviceType, DeviceTypeData, DeviceCategoryData, getDeviceCategories, getTenantWidgets, WidgetData } from '@/lib/api';
+import { createDeviceType, updateDeviceType, DeviceTypeData, DeviceCategoryData, getDeviceCategories, getTenantIcons, IconData } from '@/lib/api';
 import styles from '@/app/(dashboard)/dashboard/dashboard.module.css';
 
 function fitSvg(svg: string): string {
@@ -31,7 +31,7 @@ type BoolKey = typeof BOOL_FIELDS[number]['key'];
 interface FormState {
   tenantDeviceCategoryId: string;
   name: string;
-  widgetUuid: string;
+  iconUuid: string;
   isModelNumberRequired: boolean;
   isSerialNumberRequired: boolean;
   isMacAddressRequired: boolean;
@@ -44,7 +44,7 @@ interface FormState {
 const EMPTY: FormState = {
   tenantDeviceCategoryId: '',
   name: '',
-  widgetUuid: '',
+  iconUuid: '',
   isModelNumberRequired: false,
   isSerialNumberRequired: false,
   isMacAddressRequired: false,
@@ -58,7 +58,7 @@ export default function DeviceTypeModal({ isOpen, onClose, onSuccess, deviceType
   const isEditing = Boolean(deviceType);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [categories, setCategories] = useState<DeviceCategoryData[]>([]);
-  const [widgets, setWidgets] = useState<WidgetData[]>([]);
+  const [widgets, setWidgets] = useState<IconData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,7 +67,7 @@ export default function DeviceTypeModal({ isOpen, onClose, onSuccess, deviceType
     getDeviceCategories({ limit: -1 }).then((res) => {
       if (res.success && Array.isArray(res.data)) setCategories(res.data);
     });
-    getTenantWidgets().then((res) => {
+    getTenantIcons().then((res) => {
       if (res.success && Array.isArray(res.data)) setWidgets(res.data);
     });
 
@@ -76,7 +76,7 @@ export default function DeviceTypeModal({ isOpen, onClose, onSuccess, deviceType
       setForm({
         tenantDeviceCategoryId: String(a.tenantDeviceCategoryId ?? ''),
         name: a.name ?? '',
-        widgetUuid: a.widgetUuid ?? '',
+        iconUuid: a.iconUuid ?? '',
         isModelNumberRequired: Boolean(a.isModelNumberRequired),
         isSerialNumberRequired: Boolean(a.isSerialNumberRequired),
         isMacAddressRequired: Boolean(a.isMacAddressRequired),
@@ -113,7 +113,7 @@ export default function DeviceTypeModal({ isOpen, onClose, onSuccess, deviceType
       const payload: any = {
         tenantDeviceCategoryId: Number(form.tenantDeviceCategoryId),
         name: form.name,
-        widgetUuid: form.widgetUuid || null,
+        iconUuid: form.iconUuid || null,
         isModelNumberRequired: form.isModelNumberRequired,
         isSerialNumberRequired: form.isSerialNumberRequired,
         isMacAddressRequired: form.isMacAddressRequired,
@@ -195,19 +195,19 @@ export default function DeviceTypeModal({ isOpen, onClose, onSuccess, deviceType
                 <input type="text" className={styles.input} value={form.name} onChange={set('name')} required placeholder="e.g. OLT" />
               </div>
 
-              {/* Widget */}
+              {/* Icon */}
               <div className={styles.inputGroup}>
-                <label className={styles.label}>Map Widget</label>
-                <select className={styles.select} value={form.widgetUuid} onChange={set('widgetUuid')}>
-                  <option value="">— No widget —</option>
+                <label className={styles.label}>Map Icon</label>
+                <select className={styles.select} value={form.iconUuid} onChange={set('iconUuid')}>
+                  <option value="">— No icon —</option>
                   {widgets.map((w) => (
                     <option key={w.id} value={w.id}>
                       [{w.attributes.code}] {w.attributes.name}
                     </option>
                   ))}
                 </select>
-                {form.widgetUuid && (() => {
-                  const w = widgets.find((x) => x.id === form.widgetUuid);
+                {form.iconUuid && (() => {
+                  const w = widgets.find((x) => x.id === form.iconUuid);
                   if (!w) return null;
                   return (
                     <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.6rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)' }}>

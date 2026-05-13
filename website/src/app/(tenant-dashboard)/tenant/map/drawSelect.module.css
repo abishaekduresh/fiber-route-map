@@ -158,8 +158,8 @@
   font-style: italic;
 }
 
-/* ── Widget icon preview ──────────────────────────────────────── */
-.widgetIcon {
+/* ── Icon preview ─────────────────────────────────────────────── */
+.iconPreview {
   width: 22px;
   height: 22px;
   flex-shrink: 0;
@@ -171,26 +171,26 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
-.widgetIcon img {
+.iconPreview img {
   width: 22px;
   height: 22px;
   object-fit: contain;
 }
 
-.widgetIcon svg,
-.widgetIcon :global(svg) {
+.iconPreview svg,
+.iconPreview :global(svg) {
   width: 22px;
   height: 22px;
 }
 
-.widgetMeta {
+.iconMeta {
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
   overflow: hidden;
 }
 
-.widgetName {
+.iconName {
   font-size: 0.78rem;
   font-weight: 600;
   white-space: nowrap;
@@ -198,7 +198,7 @@
   text-overflow: ellipsis;
 }
 
-.widgetCode {
+.iconCode {
   font-size: 0.64rem;
   font-family: monospace;
   color: var(--color-text-secondary);

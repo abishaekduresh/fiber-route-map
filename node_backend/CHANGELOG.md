@@ -5,6 +5,28 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.62.0] - 2026-05-13
+### Added
+- **Icon file upload** (`POST /api/icons`, `PUT /api/icons/:uuid`): Routes now accept `multipart/form-data` via `multer` (memory storage, 5 MB limit, SVG/PNG/WebP only).
+  - SVG uploads: buffer decoded to UTF-8, stored in `svgTemplate` column — no file on disk.
+  - PNG/WebP uploads: buffer written to `<uploadDir>/icons/<timestamp>-<uuid>.<ext>`; old file deleted on update/delete via `deleteIconFile()`.
+  - `src/utils/uploadPath.ts`: `getIconUploadDir()` / `getUploadBaseDir()` / `getIconPublicUrl()` / `deleteIconFile()`. Resolves to `<backend_root>/upload/` in development, `$UPLOAD_PATH/` in production.
+  - Static file serving: `app.use('/uploads', express.static(getUploadBaseDir()))` — public, before auth middleware.
+  - `.env`: `UPLOAD_PATH=/data/uploads` — set to Coolify persistent volume path in production.
+  - `IconController` version bumped to `1.62.0`; `create` and `update` handlers coerce FormData string fields (`width`, `height`) to numbers.
+- **`flag` icon type**: Added to `Icon.ts` `IconType` union, `ensureIconsTable` enum, and MODIFY COLUMN patch.
+- **Icon code format `ICOxxxx`**: `generateCode()` now returns `ICO0001`, `ICO0002`, …; `getLastCode()` matches `ICO%` pattern with `SUBSTRING(code, 4)` numeric sort.
+
+## [1.61.0] - 2026-05-13
+### Added
+- **Icons API** (renamed from Widgets): Full rename of the widget concept to icon.
+  - New files: `src/models/Icon.ts`, `src/repositories/IconRepository.ts`, `src/services/IconService.ts`, `src/controllers/IconController.ts`, `src/routes/iconRoutes.ts`, `src/routes/tenantIconRoutes.ts`.
+  - DB: `widgets` table renamed to `icons` (auto-migration on start); `widgetUuid` column in `tenant_device_types` renamed to `iconUuid`.
+  - API endpoints: `GET/POST /api/icons`, `GET/PUT/DELETE /api/icons/:uuid`, `GET /api/tenant/icons`.
+  - RBAC: `icon.view`, `icon.create`, `icon.update`, `icon.delete` (seeded via `SetupService`).
+  - `IconType` enum includes `active_device`, `passive_device`, `power_device`, `junction`, `fiber_terminal`, `splitter`, `coupler`, `route_point`, `customer_end`.
+  - `TenantDeviceType` model / DTO / repository / controller updated: `widgetUuid` → `iconUuid`; JOIN on `icons` table; transform includes `iconName`, `iconCode`, `iconFileType`, `iconSvgTemplate`, `iconUrl`.
+
 ## [1.49.0] - 2026-05-08
 ### Added
 - **Tenant Device Categories API** (`/api/tenant/device-categories`): Full CRUD for device categories scoped per tenant business.

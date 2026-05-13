@@ -5,13 +5,13 @@ import { toast } from 'sonner';
 import { useAuth } from '@/components/providers/AuthContext';
 import {
   getIcons, deleteIcon,
-  IconData as WidgetData, IconType as WidgetType, IconStatus as WidgetStatus,
+  IconData, IconType, IconStatus,
 } from '@/lib/api';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import WidgetModal from '@/components/widgets/WidgetModal';
+import IconModal from '@/components/widgets/IconModal';
 import styles from '@/app/(dashboard)/dashboard/dashboard.module.css';
 
-const WIDGET_TYPE_LABELS: Record<WidgetType, string> = {
+const ICON_TYPE_LABELS: Record<IconType, string> = {
   active_device:  'Active Device',
   passive_device: 'Passive Device',
   power_device:   'Power Device',
@@ -26,13 +26,13 @@ const WIDGET_TYPE_LABELS: Record<WidgetType, string> = {
 
 const PER_PAGE = 10;
 
-export default function WidgetsClient() {
+export default function IconsClient() {
   const { hasPermission } = useAuth();
   const canCreate = hasPermission('icon.create');
   const canUpdate = hasPermission('icon.update');
   const canDelete = hasPermission('icon.delete');
 
-  const [widgets, setWidgets]         = useState<WidgetData[]>([]);
+  const [icons, setIcons]             = useState<IconData[]>([]);
   const [total, setTotal]             = useState(0);
   const [page, setPage]               = useState(1);
   const [search, setSearch]           = useState('');
@@ -40,7 +40,7 @@ export default function WidgetsClient() {
   const [typeFilter, setType]         = useState('');
   const [loading, setLoading]         = useState(true);
   const [modalOpen, setModalOpen]     = useState(false);
-  const [selected, setSelected]       = useState<WidgetData | null>(null);
+  const [selected, setSelected]       = useState<IconData | null>(null);
   const [deletingId, setDeletingId]   = useState<string | null>(null);
 
   const totalPages = Math.ceil(total / PER_PAGE);
@@ -50,11 +50,11 @@ export default function WidgetsClient() {
     try {
       const res = await getIcons({ page, limit: PER_PAGE, search, status: statusFilter, type: typeFilter });
       if (res.success && Array.isArray(res.data)) {
-        setWidgets(res.data);
+        setIcons(res.data);
         setTotal((res.meta as any)?.pagination?.total ?? res.data.length);
       }
     } catch {
-      toast.error('Failed to load widgets');
+      toast.error('Failed to load icons');
     } finally {
       setLoading(false);
     }
@@ -63,15 +63,15 @@ export default function WidgetsClient() {
   useEffect(() => { load(); }, [load]);
 
   const openCreate = () => { setSelected(null); setModalOpen(true); };
-  const openEdit   = (w: WidgetData) => { setSelected(w); setModalOpen(true); };
+  const openEdit   = (w: IconData) => { setSelected(w); setModalOpen(true); };
 
-  const handleDelete = async (w: WidgetData) => {
-    if (!confirm(`Delete widget "${w.attributes.name}"? This cannot be undone.`)) return;
+  const handleDelete = async (w: IconData) => {
+    if (!confirm(`Delete icon "${w.attributes.name}"? This cannot be undone.`)) return;
     setDeletingId(w.id);
     try {
       const res = await deleteIcon(w.id);
       if (res.success) {
-        toast.success('Widget deleted');
+        toast.success('Icon deleted');
         load();
       } else {
         toast.error(res.message || 'Delete failed');
@@ -83,7 +83,7 @@ export default function WidgetsClient() {
     }
   };
 
-  const statusBadge = (status: WidgetStatus) => {
+  const statusBadge = (status: IconStatus) => {
     const map: Record<string, string> = {
       active:   styles['status-active'],
       inactive: styles['status-pending'],
@@ -110,7 +110,7 @@ export default function WidgetsClient() {
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
                   </svg>
-                  Add Widget
+                  Add Icon
                 </button>
               )}
             </div>
@@ -135,7 +135,7 @@ export default function WidgetsClient() {
               onChange={e => { setType(e.target.value); setPage(1); }}
             >
               <option value="">All Types</option>
-              {(Object.entries(WIDGET_TYPE_LABELS) as [WidgetType, string][]).map(([v, l]) => (
+              {(Object.entries(ICON_TYPE_LABELS) as [IconType, string][]).map(([v, l]) => (
                 <option key={v} value={v}>{l}</option>
               ))}
             </select>
@@ -159,12 +159,12 @@ export default function WidgetsClient() {
             </svg>
             Loading…
           </div>
-        ) : widgets.length === 0 ? (
+        ) : icons.length === 0 ? (
           <div className={styles.emptyState}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 9h6M9 12h6M9 15h4" />
             </svg>
-            <p>No widgets found</p>
+            <p>No icons found</p>
           </div>
         ) : (
           <table className={styles.userTable}>
@@ -181,7 +181,7 @@ export default function WidgetsClient() {
               </tr>
             </thead>
             <tbody>
-              {widgets.map(w => {
+              {icons.map(w => {
                 const a = w.attributes;
                 return (
                   <tr key={w.id}>
@@ -193,7 +193,7 @@ export default function WidgetsClient() {
                     <td style={{ fontWeight: 500 }}>{a.name}</td>
                     <td>
                       <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
-                        {WIDGET_TYPE_LABELS[a.type] ?? a.type}
+                        {ICON_TYPE_LABELS[a.type] ?? a.type}
                       </span>
                     </td>
                     <td>
@@ -266,8 +266,8 @@ export default function WidgetsClient() {
       </div>
 
       {modalOpen && (
-        <WidgetModal
-          widget={selected}
+        <IconModal
+          icon={selected}
           onClose={() => setModalOpen(false)}
           onSuccess={() => { setModalOpen(false); load(); }}
         />

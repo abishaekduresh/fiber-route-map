@@ -38,13 +38,14 @@ import tenantDeviceTypeRoutes from './routes/tenantDeviceTypeRoutes.js';
 import tenantUserSettingRoutes from './routes/tenantUserSettingRoutes.js';
 import tenantSupportTicketRoutes from './routes/tenantSupportTicketRoutes.js';
 import adminSupportTicketRoutes from './routes/adminSupportTicketRoutes.js';
-import widgetRoutes from './routes/widgetRoutes.js';
+import iconRoutes from './routes/iconRoutes.js';
 import tenantRouteRoutes from './routes/tenantRouteRoutes.js';
-import tenantWidgetRoutes from './routes/tenantWidgetRoutes.js';
+import tenantIconRoutes from './routes/tenantIconRoutes.js';
 import auditLogRoutes, { auditLogService } from './routes/auditLogRoutes.js';
 import { auditLog } from './middleware/auditLog.js';
 import logger from './utils/logger.js';
 import db from './config/database.js';
+import { getUploadBaseDir } from './utils/uploadPath.js';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './docs/swaggerConfig.js';
 import { AuthRepository } from './repositories/AuthRepository.js';
@@ -75,6 +76,10 @@ app.use(cors({
 app.use(express.json());
 app.use(requestId);
 
+// Serve uploaded files — public, no auth required
+// Dev: <backend_root>/upload/  |  Prod: $UPLOAD_PATH/
+app.use('/uploads', express.static(getUploadBaseDir()));
+
 // Setup routes — BEFORE versionCheck/dbCheck/auth so they work before DB exists
 app.use('/api/setup', setupRoutes);
 
@@ -102,9 +107,9 @@ app.use('/api/tenant/user-settings', tenantUserSettingRoutes);
 app.use('/api/tenant/support-tickets', tenantSupportTicketRoutes);
 app.use('/api/support-tickets', auth(authService), adminSupportTicketRoutes);
 app.use('/api/audit-logs', auth(authService), auditLogRoutes);
-app.use('/api/widgets', auth(authService), widgetRoutes);
+app.use('/api/icons', auth(authService), iconRoutes);
 app.use('/api/tenant/routes', tenantRouteRoutes);
-app.use('/api/tenant/widgets', tenantWidgetRoutes);
+app.use('/api/tenant/icons', tenantIconRoutes);
 app.use('/api/health', healthRoutes);
 app.get('/api/docs/spec', (_req: express.Request, res: express.Response) => res.json(swaggerSpec));
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
@@ -557,17 +562,23 @@ const ensureSupportTicketTables = async () => {
   }
 };
 
-// Ensure widgets table exists (auto-migration for v1.56.0)
-const ensureWidgetsTable = async () => {
+// Ensure icons table exists (auto-migration for v1.56.0, renamed widgets→icons in v1.61.0)
+const ensureIconsTable = async () => {
   try {
-    const exists = await db.schema.hasTable('widgets');
-    if (!exists) {
-      await db.schema.createTable('widgets', (t: any) => {
+    // Rename legacy widgets table to icons if it still exists
+    const widgetsExists = await db.schema.hasTable('widgets');
+    const iconsExists   = await db.schema.hasTable('icons');
+    if (widgetsExists && !iconsExists) {
+      await db.raw('RENAME TABLE `widgets` TO `icons`');
+      logger.info('Auto-migration: renamed table widgets → icons');
+    }
+    if (!iconsExists && !widgetsExists) {
+      await db.schema.createTable('icons', (t: any) => {
         t.increments('id').primary();
         t.string('uuid', 36).notNullable().unique();
         t.string('code', 100).notNullable().unique();
         t.string('name', 255).notNullable();
-        t.enum('type', ['active_device', 'passive_device', 'power_device', 'junction', 'fiber_terminal', 'splitter', 'coupler']).notNullable();
+        t.enum('type', ['active_device', 'passive_device', 'power_device', 'junction', 'fiber_terminal', 'splitter', 'coupler', 'route_point', 'customer_end', 'flag']).notNullable();
         t.enum('iconType', ['svg', 'png', 'webp']).notNullable().defaultTo('svg');
         t.specificType('svgTemplate', 'LONGTEXT').nullable();
         t.string('iconUrl', 512).nullable();
@@ -577,13 +588,13 @@ const ensureWidgetsTable = async () => {
         t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
         t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
         t.datetime('deletedAt').nullable();
-        t.index(['type'],   'idx_widgets_type');
-        t.index(['status'], 'idx_widgets_status');
+        t.index(['type'],   'idx_icons_type');
+        t.index(['status'], 'idx_icons_status');
       });
-      logger.info('Auto-migration: widgets table created');
+      logger.info('Auto-migration: icons table created');
     }
   } catch (err: any) {
-    logger.warn('Auto-migration for widgets table skipped or failed', { error: err.message });
+    logger.warn('Auto-migration for icons table skipped or failed', { error: err.message });
   }
 };
 
@@ -784,37 +795,41 @@ const startServer = async () => {
     // Ensure support ticket tables exist (v1.47.0)
     await ensureSupportTicketTables();
 
-    // Ensure widgets table exists (v1.56.0)
-    await ensureWidgetsTable();
+    // Ensure icons table exists (v1.56.0, renamed from widgets in v1.61.0)
+    await ensureIconsTable();
 
     // Ensure tenant_route tables exist (v1.57.0)
     await ensureTenantRouteTables();
 
-    // Patch: add route_point to widgets.type enum (v1.59.0)
+    // Patch: update icons.type enum with route_point + customer_end (v1.61.0)
     try {
       await db.raw(`
-        ALTER TABLE widgets
+        ALTER TABLE icons
         MODIFY COLUMN type ENUM(
           'active_device','passive_device','power_device',
-          'junction','fiber_terminal','splitter','coupler','route_point'
+          'junction','fiber_terminal','splitter','coupler','route_point','customer_end','flag'
         ) NOT NULL
       `);
-      logger.info('Auto-migration: widgets.type enum updated with route_point');
+      logger.info('Auto-migration: icons.type enum updated with route_point and customer_end');
     } catch (err: any) {
-      logger.warn('Auto-migration for widgets.type enum skipped or failed', { error: err.message });
+      logger.warn('Auto-migration for icons.type enum skipped or failed', { error: err.message });
     }
 
-    // Patch: add widgetUuid column to tenant_device_types (v1.59.0)
+    // Patch: rename widgetUuid → iconUuid in tenant_device_types (v1.61.0)
     try {
       const hasWidgetUuid = await db.schema.hasColumn('tenant_device_types', 'widgetUuid');
-      if (!hasWidgetUuid) {
+      const hasIconUuid   = await db.schema.hasColumn('tenant_device_types', 'iconUuid');
+      if (hasWidgetUuid && !hasIconUuid) {
+        await db.raw('ALTER TABLE `tenant_device_types` CHANGE COLUMN `widgetUuid` `iconUuid` VARCHAR(36) NULL');
+        logger.info('Auto-migration: renamed widgetUuid → iconUuid in tenant_device_types');
+      } else if (!hasWidgetUuid && !hasIconUuid) {
         await db.schema.alterTable('tenant_device_types', (t: any) => {
-          t.string('widgetUuid', 36).nullable().after('isGpsLocationRequired');
+          t.string('iconUuid', 36).nullable().after('isGpsLocationRequired');
         });
-        logger.info('Auto-migration: added widgetUuid column to tenant_device_types');
+        logger.info('Auto-migration: added iconUuid column to tenant_device_types');
       }
     } catch (err: any) {
-      logger.warn('Auto-migration for tenant_device_types.widgetUuid skipped or failed', { error: err.message });
+      logger.warn('Auto-migration for tenant_device_types.iconUuid skipped or failed', { error: err.message });
     }
   } catch (error: any) {
     logger.error('Initial database connection failed. Server is starting but database-dependent routes will return connectivity errors.', {

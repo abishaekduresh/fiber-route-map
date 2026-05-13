@@ -7,7 +7,7 @@ export interface TenantDeviceType {
   tenantDeviceCategoryId: number;
   name: string;
   code: string;
-  widgetUuid: string | null;
+  iconUuid: string | null;
   isModelNumberRequired: boolean;
   isSerialNumberRequired: boolean;
   isMacAddressRequired: boolean;
@@ -25,7 +25,7 @@ export interface TenantDeviceType {
 export interface CreateDeviceTypeDTO {
   tenantDeviceCategoryId: number;
   name: string;
-  widgetUuid?: string | null;
+  iconUuid?: string | null;
   isModelNumberRequired?: boolean;
   isSerialNumberRequired?: boolean;
   isMacAddressRequired?: boolean;
@@ -37,7 +37,7 @@ export interface CreateDeviceTypeDTO {
 export interface UpdateDeviceTypeDTO {
   tenantDeviceCategoryId?: number;
   name?: string;
-  widgetUuid?: string | null;
+  iconUuid?: string | null;
   isModelNumberRequired?: boolean;
   isSerialNumberRequired?: boolean;
   isMacAddressRequired?: boolean;

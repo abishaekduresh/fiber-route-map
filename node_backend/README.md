@@ -4,7 +4,7 @@ The authoritative backend REST API for the Fiber Route Map system, replicated in
 Built using [Express](https://expressjs.com/) and [TypeScript](https://www.typescriptlang.org/), leveraging [Knex.js](https://knexjs.org/) for database interaction.
 
 ## Version
-**Current Version:** 1.60.0 (pointIcon/deviceTypeUuid/pointName/pointDescription on route points, device type icon resolution, route point hover tooltips)
+**Current Version:** 1.62.0 (Icons API with file upload, ICOxxxx code format, flag icon type, persistent storage via UPLOAD_PATH)
 
 ## Interactive Documentation
 The API is fully documented using Swagger/OpenAPI 3.0.
@@ -38,6 +38,10 @@ The recommended way to configure the application is through the **web-based Setu
    DB_NAME=fiber_route_map
    DB_USER=root
    DB_PASS=
+
+   # File Storage (development: files go to <backend_root>/upload/)
+   # Production: set APP_ENV=production and point UPLOAD_PATH to your persistent volume
+   UPLOAD_PATH=/data/uploads
    ```
 
 ## Running Locally

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { createWidget, updateWidget, WidgetData, WidgetType, WidgetIconType } from '@/lib/api';
+import { createIcon, updateIcon, IconData as WidgetData, IconType as WidgetType, IconFileType as WidgetIconType } from '@/lib/api';
 import styles from '@/app/(dashboard)/dashboard/dashboard.module.css';
 
 const WIDGET_TYPES: { value: WidgetType; label: string }[] = [
@@ -100,8 +100,8 @@ export default function WidgetModal({ widget, onClose, onSuccess }: Props) {
       if (isEdit) payload.status = form.status;
 
       const res = isEdit
-        ? await updateWidget(widget!.id, payload)
-        : await createWidget(payload);
+        ? await updateIcon(widget!.id, payload)
+        : await createIcon(payload);
 
       if (res.success) {
         toast.success(isEdit ? 'Widget updated' : 'Widget created');

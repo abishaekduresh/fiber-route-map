@@ -3,9 +3,9 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { getDeviceCategories, getDeviceTypes, getUserSettings, getTenantRoutes, getTenantRoute, createTenantRoute, updateTenantRoute, deleteTenantRoute, getTenantWidgets, WidgetData, DeviceCategoryData, DeviceTypeData } from '@/lib/api';
+import { getDeviceCategories, getDeviceTypes, getUserSettings, getTenantRoutes, getTenantRoute, createTenantRoute, updateTenantRoute, deleteTenantRoute, getTenantIcons, IconData, DeviceCategoryData, DeviceTypeData } from '@/lib/api';
 import { useTenantAuth } from '@/components/providers/TenantAuthContext';
-import type { MapMarker, RoutePolyline, RoutePointWidget } from './LeafletMap';
+import type { MapMarker, RoutePolyline, RoutePointIcon } from './LeafletMap';
 import MapSettingsPanel, { MapSettings, DEFAULT_MAP_SETTINGS } from '@/components/tenant-map/MapSettingsPanel';
 import DrawSearchableSelect, { DSOption } from './DrawSearchableSelect';
 import styles from './map.module.css';
@@ -70,12 +70,12 @@ export default function MapClient() {
   // ── Draw mode ────────────────────────────────────────────────────────────
   const [drawMode, setDrawMode]             = useState(false);
   const [drawPoints, setDrawPoints]         = useState<[number, number][]>([]);
-  const [drawPointWidgets, setDrawPointWidgets]           = useState<string[]>([]);
+  const [drawPointIcons, setDrawPointIcons]               = useState<string[]>([]);
   const [drawPointDeviceTypes, setDrawPointDeviceTypes]   = useState<string[]>([]);
   const [drawPointNames, setDrawPointNames]               = useState<string[]>([]);
   const [drawPointDescriptions, setDrawPointDescriptions] = useState<string[]>([]);
   const [routes, setRoutes]                 = useState<RoutePolyline[]>([]);
-  const [availableWidgets, setAvailableWidgets] = useState<WidgetData[]>([]);
+  const [availableIcons, setAvailableIcons] = useState<IconData[]>([]);
   const [drawName, setDrawName]             = useState('');
   const [drawType, setDrawType]             = useState('fiber_route');
   const [drawColor, setDrawColor]           = useState('#3b82f6');
@@ -89,7 +89,7 @@ export default function MapClient() {
   const [editMode, setEditMode]               = useState(false);
   const [editRouteId, setEditRouteId]         = useState('');
   const [editPoints, setEditPoints]           = useState<[number, number][]>([]);
-  const [editPointWidgets, setEditPointWidgets]           = useState<string[]>([]);
+  const [editPointIcons, setEditPointIcons]               = useState<string[]>([]);
   const [editPointDeviceTypes, setEditPointDeviceTypes]   = useState<string[]>([]);
   const [editPointNames, setEditPointNames]               = useState<string[]>([]);
   const [editPointDescriptions, setEditPointDescriptions] = useState<string[]>([]);
@@ -102,6 +102,9 @@ export default function MapClient() {
   const [editStatus, setEditStatus]           = useState('active');
   const [isSavingEdit, setIsSavingEdit]       = useState(false);
   const [saveEditError, setSaveEditError]     = useState('');
+
+  type EditSnapshot = { points: [number,number][]; icons: string[]; deviceTypes: string[]; names: string[]; descriptions: string[] };
+  const [editHistory, setEditHistory] = useState<EditSnapshot[]>([]);
 
   const [geoStatus, setGeoStatus]       = useState<GeoStatus>('idle');
   const [center, setCenter]             = useState<[number, number]>([0, 0]);
@@ -182,11 +185,11 @@ export default function MapClient() {
 
   // ── API data ─────────────────────────────────────────────────────────────
   const loadApiData = useCallback(async () => {
-    const [catRes, dtRes, routeRes, widgetRes] = await Promise.all([
+    const [catRes, dtRes, routeRes, iconRes] = await Promise.all([
       getDeviceCategories({ limit: -1 }),
       getDeviceTypes({ limit: -1 }),
       getTenantRoutes({ limit: -1 }),
-      getTenantWidgets(),
+      getTenantIcons(),
     ]);
     if (catRes.success && Array.isArray(catRes.data)) setCategories(catRes.data);
 
@@ -197,11 +200,11 @@ export default function MapClient() {
       setDeviceTypes(dtRes.data);
     }
 
-    // Build uuid→widget lookup for icon resolution
-    const widgetMap = new Map<string, WidgetData>();
-    if (widgetRes.success && Array.isArray(widgetRes.data)) {
-      widgetRes.data.forEach((w: WidgetData) => widgetMap.set(w.id, w));
-      setAvailableWidgets(widgetRes.data);
+    // Build uuid→icon lookup for icon resolution
+    const iconMap = new Map<string, IconData>();
+    if (iconRes.success && Array.isArray(iconRes.data)) {
+      iconRes.data.forEach((w: IconData) => iconMap.set(w.id, w));
+      setAvailableIcons(iconRes.data);
     }
 
     if (routeRes.success && Array.isArray(routeRes.data)) {
@@ -226,8 +229,8 @@ export default function MapClient() {
             createdAt:       r.meta.createdAt,
             updatedAt:       r.meta.updatedAt,
             points:          pts.map((p) => [p.latitude, p.longitude] as [number, number]),
-            routePoints: pts.map((p): RoutePointWidget => {
-              const widget  = p.pointIcon      ? widgetMap.get(p.pointIcon)           : undefined;
+            routePoints: pts.map((p): RoutePointIcon => {
+              const widget  = p.pointIcon      ? iconMap.get(p.pointIcon)             : undefined;
               const devType = p.deviceTypeUuid ? deviceTypeMap.get(p.deviceTypeUuid)  : undefined;
               const dtAttrs = devType?.attributes;
               return {
@@ -235,12 +238,12 @@ export default function MapClient() {
                 lng:            p.longitude,
                 pointType:      p.pointType,
                 sequenceNumber: p.sequenceNumber,
-                widgetIconType: widget?.attributes.iconType ?? (dtAttrs?.widgetIconType ?? null),
-                widgetSvg:      widget?.attributes.svgTemplate ?? (dtAttrs?.widgetSvgTemplate ?? null),
-                widgetIconUrl:  widget?.attributes.iconUrl ?? (dtAttrs?.widgetIconUrl ?? null),
-                widgetWidth:      widget?.attributes.width ?? null,
-                widgetHeight:     widget?.attributes.height ?? null,
-                widgetName:       widget?.attributes.name ?? null,
+                iconFileType: widget?.attributes.iconType ?? (dtAttrs?.iconFileType ?? null),
+                iconSvg:      widget?.attributes.svgTemplate ?? (dtAttrs?.iconSvgTemplate ?? null),
+                iconUrl:      widget?.attributes.iconUrl ?? (dtAttrs?.iconUrl ?? null),
+                iconWidth:    widget?.attributes.width ?? null,
+                iconHeight:   widget?.attributes.height ?? null,
+                iconName:     widget?.attributes.name ?? null,
                 deviceTypeName:   dtAttrs?.name ?? null,
                 pointName:        p.pointName        ?? null,
                 pointDescription: p.pointDescription ?? null,
@@ -317,27 +320,27 @@ export default function MapClient() {
     })),
   ], [deviceTypes]);
 
-  const widgetOptions = useMemo<DSOption[]>(() => [
-    { value: '', label: 'No widget' },
-    ...availableWidgets.filter((w) => w.attributes.type === 'route_point').map((w) => ({
+  const iconOptions = useMemo<DSOption[]>(() => [
+    { value: '', label: 'No icon' },
+    ...availableIcons.filter((w) => w.attributes.type === 'route_point').map((w) => ({
       value: w.id,
       label: `[${w.attributes.code}] ${w.attributes.name}`,
       renderOption: () => (
         <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
-          <span className={dsStyles.widgetIcon}>
+          <span className={dsStyles.iconPreview}>
             {w.attributes.iconType === 'svg'
               ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(w.attributes.svgTemplate || '') }} style={{ display: 'flex', width: 22, height: 22 }} />
               : <img src={w.attributes.iconUrl || ''} alt={w.attributes.name} />
             }
           </span>
-          <span className={dsStyles.widgetMeta}>
-            <span className={dsStyles.widgetName}>{w.attributes.name}</span>
-            <span className={dsStyles.widgetCode}>{w.attributes.code}</span>
+          <span className={dsStyles.iconMeta}>
+            <span className={dsStyles.iconName}>{w.attributes.name}</span>
+            <span className={dsStyles.iconCode}>{w.attributes.code}</span>
           </span>
         </span>
       ),
     })),
-  ], [availableWidgets]);
+  ], [availableIcons]);
 
   const handleEditRoute = useCallback(async (routeId: string) => {
     const res = await getTenantRoute(routeId);
@@ -346,7 +349,7 @@ export default function MapClient() {
     const pts: any[] = r.attributes.points ?? [];
     setEditRouteId(routeId);
     setEditPoints(pts.map((p: any) => [Number(p.latitude), Number(p.longitude)] as [number, number]));
-    setEditPointWidgets(pts.map((p: any) => p.pointIcon || ''));
+    setEditPointIcons(pts.map((p: any) => p.pointIcon || ''));
     setEditPointDeviceTypes(pts.map((p: any) => p.deviceTypeUuid || ''));
     setEditPointNames(pts.map((p: any) => p.pointName || ''));
     setEditPointDescriptions(pts.map((p: any) => p.pointDescription || ''));
@@ -358,6 +361,7 @@ export default function MapClient() {
     setEditDescription(r.attributes.description || '');
     setEditStatus(r.attributes.status || 'active');
     setSaveEditError('');
+    setEditHistory([]);
     setDrawMode(false);
     setEditMode(true);
   }, []);
@@ -366,11 +370,12 @@ export default function MapClient() {
     setEditMode(false);
     setEditRouteId('');
     setEditPoints([]);
-    setEditPointWidgets([]);
+    setEditPointIcons([]);
     setEditPointDeviceTypes([]);
     setEditPointNames([]);
     setEditPointDescriptions([]);
     setSaveEditError('');
+    setEditHistory([]);
   }, []);
 
   const handleDeleteRoute = useCallback(async (routeId: string) => {
@@ -380,40 +385,77 @@ export default function MapClient() {
     } catch { /* best-effort */ }
   }, [loadApiData]);
 
+  // Refs that always mirror current edit-point arrays — used for snapshot capture
+  const _epRef   = useRef(editPoints);
+  const _eiRef   = useRef(editPointIcons);
+  const _edtRef  = useRef(editPointDeviceTypes);
+  const _enRef   = useRef(editPointNames);
+  const _edRef   = useRef(editPointDescriptions);
+  useEffect(() => { _epRef.current  = editPoints; },            [editPoints]);
+  useEffect(() => { _eiRef.current  = editPointIcons; },        [editPointIcons]);
+  useEffect(() => { _edtRef.current = editPointDeviceTypes; },  [editPointDeviceTypes]);
+  useEffect(() => { _enRef.current  = editPointNames; },        [editPointNames]);
+  useEffect(() => { _edRef.current  = editPointDescriptions; }, [editPointDescriptions]);
+
+  const pushEditSnapshot = useCallback(() => {
+    setEditHistory((h) => [...h, {
+      points:       [..._epRef.current],
+      icons:        [..._eiRef.current],
+      deviceTypes:  [..._edtRef.current],
+      names:        [..._enRef.current],
+      descriptions: [..._edRef.current],
+    }]);
+  }, []);
+
   const onEditMapClick = useCallback((lat: number, lng: number) => {
+    pushEditSnapshot();
     setEditPoints((prev) => [...prev, [lat, lng]]);
-    setEditPointWidgets((prev) => [...prev, '']);
+    setEditPointIcons((prev) => [...prev, '']);
     setEditPointDeviceTypes((prev) => [...prev, '']);
     setEditPointNames((prev) => [...prev, '']);
     setEditPointDescriptions((prev) => [...prev, '']);
-  }, []);
+  }, [pushEditSnapshot]);
 
   const onEditPointMove = useCallback((idx: number, lat: number, lng: number) => {
     setEditPoints((prev) => prev.map((pt, i) => i === idx ? [lat, lng] as [number, number] : pt));
   }, []);
 
   const onInsertEditPoint = useCallback((afterIdx: number, lat: number, lng: number) => {
+    pushEditSnapshot();
     setEditPoints((prev) => [
       ...prev.slice(0, afterIdx + 1),
       [lat, lng] as [number, number],
       ...prev.slice(afterIdx + 1),
     ]);
-    setEditPointWidgets((prev) => [...prev.slice(0, afterIdx + 1), '', ...prev.slice(afterIdx + 1)]);
+    setEditPointIcons((prev) => [...prev.slice(0, afterIdx + 1), '', ...prev.slice(afterIdx + 1)]);
     setEditPointDeviceTypes((prev) => [...prev.slice(0, afterIdx + 1), '', ...prev.slice(afterIdx + 1)]);
     setEditPointNames((prev) => [...prev.slice(0, afterIdx + 1), '', ...prev.slice(afterIdx + 1)]);
     setEditPointDescriptions((prev) => [...prev.slice(0, afterIdx + 1), '', ...prev.slice(afterIdx + 1)]);
-  }, []);
+  }, [pushEditSnapshot]);
 
   const deleteEditPoint = useCallback((idx: number) => {
     setEditPoints((prev) => prev.filter((_, i) => i !== idx));
-    setEditPointWidgets((prev) => prev.filter((_, i) => i !== idx));
+    setEditPointIcons((prev) => prev.filter((_, i) => i !== idx));
     setEditPointDeviceTypes((prev) => prev.filter((_, i) => i !== idx));
     setEditPointNames((prev) => prev.filter((_, i) => i !== idx));
     setEditPointDescriptions((prev) => prev.filter((_, i) => i !== idx));
   }, []);
 
-  const setEditPointWidget = useCallback((idx: number, val: string) => {
-    setEditPointWidgets((prev) => prev.map((w, i) => i === idx ? val : w));
+  const undoEditPoint = useCallback(() => {
+    setEditHistory((h) => {
+      if (h.length === 0) return h;
+      const snap = h[h.length - 1];
+      setEditPoints(snap.points);
+      setEditPointIcons(snap.icons);
+      setEditPointDeviceTypes(snap.deviceTypes);
+      setEditPointNames(snap.names);
+      setEditPointDescriptions(snap.descriptions);
+      return h.slice(0, -1);
+    });
+  }, []);
+
+  const setEditPointIcon = useCallback((idx: number, val: string) => {
+    setEditPointIcons((prev) => prev.map((w, i) => i === idx ? val : w));
   }, []);
 
   const setEditPointDeviceType = useCallback((idx: number, val: string) => {
@@ -439,7 +481,7 @@ export default function MapClient() {
         latitude:         pt[0],
         longitude:        pt[1],
         pointType:        getPointType(i, editPoints.length),
-        pointIcon:        editPointWidgets[i]      || null,
+        pointIcon:        editPointIcons[i]         || null,
         deviceTypeUuid:   editPointDeviceTypes[i]  || null,
         pointName:        editPointNames[i]        || null,
         pointDescription: editPointDescriptions[i] || null,
@@ -459,7 +501,7 @@ export default function MapClient() {
       setEditMode(false);
       setEditRouteId('');
       setEditPoints([]);
-      setEditPointWidgets([]);
+      setEditPointIcons([]);
       setEditPointDeviceTypes([]);
       setEditPointNames([]);
       setEditPointDescriptions([]);
@@ -469,11 +511,11 @@ export default function MapClient() {
     } finally {
       setIsSavingEdit(false);
     }
-  }, [editName, editType, editColor, editThickness, editStatus, editParentUuid, editDescription, editPoints, editPointWidgets, editPointDeviceTypes, editPointNames, editPointDescriptions, editRouteId, loadApiData]);
+  }, [editName, editType, editColor, editThickness, editStatus, editParentUuid, editDescription, editPoints, editPointIcons, editPointDeviceTypes, editPointNames, editPointDescriptions, editRouteId, loadApiData]);
 
   const handleMapClick = useCallback((lat: number, lng: number) => {
     setDrawPoints((prev) => [...prev, [lat, lng]]);
-    setDrawPointWidgets((prev) => [...prev, '']);
+    setDrawPointIcons((prev) => [...prev, '']);
     setDrawPointDeviceTypes((prev) => [...prev, '']);
     setDrawPointNames((prev) => [...prev, '']);
     setDrawPointDescriptions((prev) => [...prev, '']);
@@ -483,13 +525,13 @@ export default function MapClient() {
     setEditMode(false);
     setEditRouteId('');
     setEditPoints([]);
-    setEditPointWidgets([]);
+    setEditPointIcons([]);
     setEditPointDeviceTypes([]);
     setEditPointNames([]);
     setEditPointDescriptions([]);
     setDrawMode(true);
     setDrawPoints([]);
-    setDrawPointWidgets([]);
+    setDrawPointIcons([]);
     setDrawPointDeviceTypes([]);
     setDrawPointNames([]);
     setDrawPointDescriptions([]);
@@ -505,7 +547,7 @@ export default function MapClient() {
   const cancelDraw = useCallback(() => {
     setDrawMode(false);
     setDrawPoints([]);
-    setDrawPointWidgets([]);
+    setDrawPointIcons([]);
     setDrawPointDeviceTypes([]);
     setDrawPointNames([]);
     setDrawPointDescriptions([]);
@@ -514,14 +556,14 @@ export default function MapClient() {
 
   const undoLastPoint = useCallback(() => {
     setDrawPoints((prev) => prev.slice(0, -1));
-    setDrawPointWidgets((prev) => prev.slice(0, -1));
+    setDrawPointIcons((prev) => prev.slice(0, -1));
     setDrawPointDeviceTypes((prev) => prev.slice(0, -1));
     setDrawPointNames((prev) => prev.slice(0, -1));
     setDrawPointDescriptions((prev) => prev.slice(0, -1));
   }, []);
 
-  const setPointWidget = useCallback((idx: number, val: string) => {
-    setDrawPointWidgets((prev) => prev.map((w, i) => i === idx ? val : w));
+  const setPointIcon = useCallback((idx: number, val: string) => {
+    setDrawPointIcons((prev) => prev.map((w, i) => i === idx ? val : w));
   }, []);
 
   const setPointDeviceType = useCallback((idx: number, val: string) => {
@@ -551,7 +593,7 @@ export default function MapClient() {
         latitude:         pt[0],
         longitude:        pt[1],
         pointType:        getPointType(i, drawPoints.length),
-        pointIcon:        drawPointWidgets[i]      || null,
+        pointIcon:        drawPointIcons[i]         || null,
         deviceTypeUuid:   drawPointDeviceTypes[i]  || null,
         pointName:        drawPointNames[i]        || null,
         pointDescription: drawPointDescriptions[i] || null,
@@ -570,7 +612,7 @@ export default function MapClient() {
       if (!res.success) { setSaveError((res as any).message || 'Failed to save route.'); return; }
       setDrawMode(false);
       setDrawPoints([]);
-      setDrawPointWidgets([]);
+      setDrawPointIcons([]);
       setDrawPointDeviceTypes([]);
       setDrawPointNames([]);
       setDrawPointDescriptions([]);
@@ -580,7 +622,7 @@ export default function MapClient() {
     } finally {
       setIsSaving(false);
     }
-  }, [drawName, drawType, drawColor, drawThickness, drawParentUuid, drawDescription, drawPoints, drawPointWidgets, drawPointDeviceTypes, drawPointNames, drawPointDescriptions, loadApiData]);
+  }, [drawName, drawType, drawColor, drawThickness, drawParentUuid, drawDescription, drawPoints, drawPointIcons, drawPointDeviceTypes, drawPointNames, drawPointDescriptions, loadApiData]);
 
   // ── Permission screens ───────────────────────────────────────────────────
   if (geoStatus === 'idle' || geoStatus === 'requesting') {
@@ -935,7 +977,21 @@ export default function MapClient() {
 
               {editPoints.length > 0 && (
                 <div className={styles.drawPointsList}>
-                  <div className={styles.drawPointsHeader}><span>Points</span></div>
+                  <div className={styles.drawPointsHeader}>
+                    <span>Points</span>
+                    {editHistory.length > 0 && (
+                      <button
+                        onClick={undoEditPoint}
+                        title="Undo last added point"
+                        style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#6366f1', padding: '0 2px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '0.2rem', lineHeight: 1 }}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 7v6h6" /><path d="M3 13C5.33 9.33 8.5 7 12 7c4.42 0 8 3.58 8 8" />
+                        </svg>
+                        Undo
+                      </button>
+                    )}
+                  </div>
                   <div className={styles.drawPointsScroll}>
                     {editPoints.map((pt, i) => (
                       <div key={i} className={styles.drawPointRow}>
@@ -951,20 +1007,42 @@ export default function MapClient() {
                             title="Remove point"
                           >×</button>
                         </div>
-                        <DrawSearchableSelect
-                          options={widgetOptions}
-                          value={editPointWidgets[i] ?? ''}
-                          onChange={(val) => setEditPointWidget(i, val)}
-                          placeholder="No widget (optional)"
-                          searchPlaceholder="Search widgets…"
-                        />
-                        <DrawSearchableSelect
-                          options={deviceTypeOptions}
-                          value={editPointDeviceTypes[i] ?? ''}
-                          onChange={(val) => setEditPointDeviceType(i, val)}
-                          placeholder="No device type (optional)"
-                          searchPlaceholder="Search device types…"
-                        />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <DrawSearchableSelect
+                              options={iconOptions}
+                              value={editPointIcons[i] ?? ''}
+                              onChange={(val) => setEditPointIcon(i, val)}
+                              placeholder="No icon (optional)"
+                              searchPlaceholder="Search icons…"
+                            />
+                          </div>
+                          {editPointIcons[i] && (() => {
+                            const w = availableIcons.find(x => x.id === editPointIcons[i]);
+                            if (!w) return null;
+                            return w.attributes.iconType === 'svg'
+                              ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(w.attributes.svgTemplate || '') }} style={{ flexShrink: 0, width: 24, height: 24, display: 'flex' }} />
+                              : <img src={w.attributes.iconUrl || ''} alt="" style={{ flexShrink: 0, width: 24, height: 24, objectFit: 'contain' }} />;
+                          })()}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <DrawSearchableSelect
+                              options={deviceTypeOptions}
+                              value={editPointDeviceTypes[i] ?? ''}
+                              onChange={(val) => setEditPointDeviceType(i, val)}
+                              placeholder="No device type (optional)"
+                              searchPlaceholder="Search device types…"
+                            />
+                          </div>
+                          {editPointDeviceTypes[i] && (() => {
+                            const dt = deviceTypes.find(x => x.id === editPointDeviceTypes[i]);
+                            if (!dt?.attributes.iconFileType) return null;
+                            return dt.attributes.iconFileType === 'svg'
+                              ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(dt.attributes.iconSvgTemplate || '') }} style={{ flexShrink: 0, width: 24, height: 24, display: 'flex' }} />
+                              : <img src={dt.attributes.iconUrl || ''} alt="" style={{ flexShrink: 0, width: 24, height: 24, objectFit: 'contain' }} />;
+                          })()}
+                        </div>
                         <input
                           type="text"
                           className={styles.drawInput}
@@ -1095,20 +1173,42 @@ export default function MapClient() {
                             {pt[0].toFixed(5)}, {pt[1].toFixed(5)}
                           </span>
                         </div>
-                        <DrawSearchableSelect
-                          options={widgetOptions}
-                          value={drawPointWidgets[i] ?? ''}
-                          onChange={(val) => setPointWidget(i, val)}
-                          placeholder="No widget (optional)"
-                          searchPlaceholder="Search widgets…"
-                        />
-                        <DrawSearchableSelect
-                          options={deviceTypeOptions}
-                          value={drawPointDeviceTypes[i] ?? ''}
-                          onChange={(val) => setPointDeviceType(i, val)}
-                          placeholder="No device type (optional)"
-                          searchPlaceholder="Search device types…"
-                        />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <DrawSearchableSelect
+                              options={iconOptions}
+                              value={drawPointIcons[i] ?? ''}
+                              onChange={(val) => setPointIcon(i, val)}
+                              placeholder="No icon (optional)"
+                              searchPlaceholder="Search icons…"
+                            />
+                          </div>
+                          {drawPointIcons[i] && (() => {
+                            const w = availableIcons.find(x => x.id === drawPointIcons[i]);
+                            if (!w) return null;
+                            return w.attributes.iconType === 'svg'
+                              ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(w.attributes.svgTemplate || '') }} style={{ flexShrink: 0, width: 24, height: 24, display: 'flex' }} />
+                              : <img src={w.attributes.iconUrl || ''} alt="" style={{ flexShrink: 0, width: 24, height: 24, objectFit: 'contain' }} />;
+                          })()}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <DrawSearchableSelect
+                              options={deviceTypeOptions}
+                              value={drawPointDeviceTypes[i] ?? ''}
+                              onChange={(val) => setPointDeviceType(i, val)}
+                              placeholder="No device type (optional)"
+                              searchPlaceholder="Search device types…"
+                            />
+                          </div>
+                          {drawPointDeviceTypes[i] && (() => {
+                            const dt = deviceTypes.find(x => x.id === drawPointDeviceTypes[i]);
+                            if (!dt?.attributes.iconFileType) return null;
+                            return dt.attributes.iconFileType === 'svg'
+                              ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(dt.attributes.iconSvgTemplate || '') }} style={{ flexShrink: 0, width: 24, height: 24, display: 'flex' }} />
+                              : <img src={dt.attributes.iconUrl || ''} alt="" style={{ flexShrink: 0, width: 24, height: 24, objectFit: 'contain' }} />;
+                          })()}
+                        </div>
                         <input
                           type="text"
                           className={styles.drawInput}

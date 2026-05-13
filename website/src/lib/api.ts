@@ -229,6 +229,36 @@ async function apiFetch<T = unknown>(
 }
 
 /**
+ * Like apiFetch but for multipart/form-data (file uploads).
+ * Does NOT set Content-Type — browser sets it automatically with the correct boundary.
+ */
+async function apiFetchMultipart<T = unknown>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<ApiResponse<T>> {
+  const token = typeof window !== 'undefined'
+    ? (localStorage.getItem('fiber_tenant_token') || localStorage.getItem('fiber_auth_token'))
+    : null;
+
+  const headers: Record<string, string> = {
+    'X-API-Version': 'v1',
+    'X-Device-Id': getDeviceId(),
+    'X-Device-Name': getDeviceName(),
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers });
+
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return response.json();
+  }
+  const text = await response.text();
+  console.error(`[apiFetchMultipart] Non-JSON response from ${endpoint}:`, text.substring(0, 200));
+  throw new Error(`Server returned non-JSON response (${response.status}).`);
+}
+
+/**
  * Authenticate a user with their identifier (email/username/phone) and password.
  * On success, stores the token in localStorage.
  */
@@ -1145,12 +1175,12 @@ export interface DeviceTypeData {
     isMacAddressRequired: boolean;
     isIPAddressRequired: boolean;
     isGpsLocationRequired: boolean;
-    widgetUuid: string | null;
-    widgetName: string | null;
-    widgetCode: string | null;
-    widgetIconType: 'svg' | 'png' | 'webp' | null;
-    widgetSvgTemplate: string | null;
-    widgetIconUrl: string | null;
+    iconUuid: string | null;
+    iconName: string | null;
+    iconCode: string | null;
+    iconFileType: 'svg' | 'png' | 'webp' | null;
+    iconSvgTemplate: string | null;
+    iconUrl: string | null;
     description: string | null;
     status: 'active' | 'inactive' | 'deleted';
   };
@@ -1348,30 +1378,30 @@ export async function deleteUserSetting(key: string): Promise<ApiResponse> {
   return apiFetch(`/api/tenant/user-settings/${encodeURIComponent(key)}`, { method: 'DELETE' });
 }
 
-// ─── Widgets ──────────────────────────────────────────────────────────────────
+// ─── Icons ────────────────────────────────────────────────────────────────────
 
-export type WidgetType = 'active_device' | 'passive_device' | 'power_device' | 'junction' | 'fiber_terminal' | 'splitter' | 'coupler' | 'route_point';
-export type WidgetIconType = 'svg' | 'png' | 'webp';
-export type WidgetStatus = 'active' | 'inactive' | 'deleted';
+export type IconType = 'active_device' | 'passive_device' | 'power_device' | 'junction' | 'fiber_terminal' | 'splitter' | 'coupler' | 'route_point' | 'customer_end' | 'flag';
+export type IconFileType = 'svg' | 'png' | 'webp';
+export type IconStatus = 'active' | 'inactive' | 'deleted';
 
-export interface WidgetData {
+export interface IconData {
   id: string;
   type: string;
   attributes: {
     code: string;
     name: string;
-    type: WidgetType;
-    iconType: WidgetIconType;
+    type: IconType;
+    iconType: IconFileType;
     svgTemplate: string | null;
     iconUrl: string | null;
     width: number;
     height: number;
-    status: WidgetStatus;
+    status: IconStatus;
   };
   meta: { createdAt: string; updatedAt: string };
 }
 
-export async function getWidgets(params?: { page?: number; limit?: number; search?: string; status?: string; type?: string }): Promise<ApiResponse<WidgetData[]>> {
+export async function getIcons(params?: { page?: number; limit?: number; search?: string; status?: string; type?: string }): Promise<ApiResponse<IconData[]>> {
   const q = new URLSearchParams();
   if (params?.page)   q.set('page',   String(params.page));
   if (params?.limit)  q.set('limit',  String(params.limit));
@@ -1379,23 +1409,23 @@ export async function getWidgets(params?: { page?: number; limit?: number; searc
   if (params?.status) q.set('filter[status]', params.status);
   if (params?.type)   q.set('filter[type]',   params.type);
   const qs = q.toString();
-  return apiFetch(`/api/widgets${qs ? `?${qs}` : ''}`);
+  return apiFetch(`/api/icons${qs ? `?${qs}` : ''}`);
 }
 
-export async function getWidget(uuid: string): Promise<ApiResponse<WidgetData>> {
-  return apiFetch(`/api/widgets/${uuid}`);
+export async function getIcon(uuid: string): Promise<ApiResponse<IconData>> {
+  return apiFetch(`/api/icons/${uuid}`);
 }
 
-export async function createWidget(data: Omit<WidgetData['attributes'], 'status'>): Promise<ApiResponse<WidgetData>> {
-  return apiFetch('/api/widgets', { method: 'POST', body: JSON.stringify(data) });
+export async function createIcon(data: FormData): Promise<ApiResponse<IconData>> {
+  return apiFetchMultipart('/api/icons', { method: 'POST', body: data });
 }
 
-export async function updateWidget(uuid: string, data: Partial<WidgetData['attributes']>): Promise<ApiResponse<WidgetData>> {
-  return apiFetch(`/api/widgets/${uuid}`, { method: 'PUT', body: JSON.stringify(data) });
+export async function updateIcon(uuid: string, data: FormData): Promise<ApiResponse<IconData>> {
+  return apiFetchMultipart(`/api/icons/${uuid}`, { method: 'PUT', body: data });
 }
 
-export async function deleteWidget(uuid: string): Promise<ApiResponse> {
-  return apiFetch(`/api/widgets/${uuid}`, { method: 'DELETE' });
+export async function deleteIcon(uuid: string): Promise<ApiResponse> {
+  return apiFetch(`/api/icons/${uuid}`, { method: 'DELETE' });
 }
 
 // ─── Tenant Routes ─────────────────────────────────────────────────────────────
@@ -1475,8 +1505,8 @@ export async function getTenantRouteHistory(uuid: string): Promise<ApiResponse<a
   return apiFetch(`/api/tenant/routes/${uuid}/history`);
 }
 
-export async function getTenantWidgets(): Promise<ApiResponse<WidgetData[]>> {
-  return apiFetch('/api/tenant/widgets');
+export async function getTenantIcons(): Promise<ApiResponse<IconData[]>> {
+  return apiFetch('/api/tenant/icons');
 }
 
 

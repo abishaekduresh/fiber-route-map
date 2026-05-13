@@ -2,6 +2,45 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.62.0] - 2026-05-13
+
+### Added
+- **Icon file upload** (`/manage/icons`): Icons can now store actual image files (SVG, PNG, WebP) instead of only a URL or pasted SVG code.
+  - Backend: `multer` (memory storage, 5 MB limit) on `POST /api/icons` and `PUT /api/icons/:uuid`.
+  - SVG uploads: file buffer read as UTF-8 text and stored in `svgTemplate` — no disk write needed.
+  - PNG/WebP uploads: buffer written to `upload/icons/<timestamp>-<uuid>.<ext>` on disk; old file deleted on update or delete.
+  - Static file serving at `/uploads/*` (`express.static`) — public, no auth required.
+  - `UPLOAD_PATH` env var: in `APP_ENV=production` all files go to `$UPLOAD_PATH/icons/` (e.g. Coolify persistent volume mount); in development files go to `<backend_root>/upload/icons/`.
+  - `src/utils/uploadPath.ts`: `getIconUploadDir()`, `getUploadBaseDir()`, `getIconPublicUrl()`, `deleteIconFile()`.
+  - Frontend: SVG mode shows "Upload .svg file" link — `FileReader` fills the textarea client-side.
+  - PNG/WebP mode: click-to-upload drop zone with current-file preview and "Remove" button.
+  - `api.ts`: `createIcon` / `updateIcon` now accept `FormData`; new `apiFetchMultipart` helper omits `Content-Type` so the browser sets the multipart boundary.
+- **`flag` icon type**: Added `flag` to `IconType` union in backend model, DB ENUM patch, `api.ts`, `IconModal`, `IconsClient`, and `WidgetsClient`.
+- **Icon code format `ICOxxxx`**: Auto-generated codes now follow `ICO0001`, `ICO0002`, … (was `ICN-0001`). `getLastCode` query and `generateCode` updated accordingly.
+
+### Changed
+- **Icons sidebar always visible**: Removed `permission: 'icon.view'` gate from the Icons nav entry — visible to all admin users like Countries and Users.
+
+## [1.61.0] - 2026-05-13
+
+### Added
+- **Icons system** (renamed from Widgets): Entire widget concept renamed to Icon across frontend, backend, and database.
+  - DB table `widgets` → `icons`; `widgetUuid` column in `tenant_device_types` → `iconUuid`. Auto-migration on server start.
+  - API endpoints `/api/widgets` → `/api/icons`; RBAC slugs `widget.*` → `icon.*`; code prefix `WID-` → `ICN-` (see v1.62.0 for final `ICO` format).
+  - New files: `Icon.ts`, `IconRepository.ts`, `IconService.ts`, `IconController.ts`, `iconRoutes.ts`, `tenantIconRoutes.ts`.
+  - `customer_end` added to `IconType` enum.
+  - Frontend: `IconModal.tsx`, `IconsClient.tsx`, `/manage/icons/page.tsx` (new); `/manage/widgets/page.tsx` redirects to `IconsClient`.
+  - `api.ts`: `IconData`, `IconType`, `IconFileType`, `IconStatus`, `getIcons`, `createIcon`, `updateIcon`, `deleteIcon`, `getTenantIcons`.
+  - `DeviceTypeModal`: uses `iconUuid`, `getTenantIcons`, "Map Icon" label.
+- **Route popup auto-close on mouseout** (`/tenant/map`): Hovering off a polyline starts a 120 ms timer to close the popup; entering the popup DOM cancels the timer so the Edit button remains clickable.
+- **Undo in edit-point mode** (`/tenant/map`): "Undo" button (indigo) appears in the Edit Points header whenever a new point was added. Uses `useRef` mirrors for synchronous snapshot capture; each `pushEditSnapshot` records the full arrays before the mutation.
+- **Icon previews in draw/edit point rows** (`/tenant/map`): Selecting a device type in a point row shows an inline icon preview (SVG or image) next to the dropdown.
+- **Sidebar SVG icons** (admin): All nav sub-items (Users, Roles, Permissions, Countries, Icons, Audit Logs, Businesses, Tenants, Support Tickets, API Docs) now render individual SVG icons via a DRY `icon()` helper.
+
+### Changed
+- **`DashboardLayout.module.css`**: Removed `.subItem::before` bullet pseudo-element; added `svg` opacity transitions for sub-items.
+- **`LeafletMap.tsx`**: `RoutePointWidget` → `RoutePointIcon`; all widget field names updated to `iconFileType`, `iconSvg`, `iconUrl`, `iconWidth`, `iconHeight`, `iconName`.
+
 ## [1.60.0] - 2026-05-13
 
 ### Added

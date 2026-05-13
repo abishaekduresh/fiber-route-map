@@ -197,14 +197,13 @@
   position: relative;
 }
 
-.subItem::before {
-  content: '';
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--color-text-muted);
-  flex-shrink: 0;
-  transition: background var(--transition-fast);
+.subItem svg {
+  opacity: 0.65;
+  transition: opacity var(--transition-fast);
+}
+
+.subItem:hover svg {
+  opacity: 1;
 }
 
 .subItem:hover {
@@ -212,8 +211,8 @@
   color: var(--color-text-primary);
 }
 
-.subItem:hover::before {
-  background: var(--color-text-secondary);
+.activeSubItem svg {
+  opacity: 1;
 }
 
 .activeSubItem {

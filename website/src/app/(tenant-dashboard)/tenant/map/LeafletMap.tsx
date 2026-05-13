@@ -193,17 +193,17 @@ export interface MapMarker {
   status?: string;
 }
 
-export interface RoutePointWidget {
+export interface RoutePointIcon {
   lat: number;
   lng: number;
   pointType: string;
   sequenceNumber: number;
-  widgetIconType?: 'svg' | 'png' | 'webp' | null;
-  widgetSvg?: string | null;
-  widgetIconUrl?: string | null;
-  widgetWidth?: number | null;
-  widgetHeight?: number | null;
-  widgetName?: string | null;
+  iconFileType?: 'svg' | 'png' | 'webp' | null;
+  iconSvg?: string | null;
+  iconUrl?: string | null;
+  iconWidth?: number | null;
+  iconHeight?: number | null;
+  iconName?: string | null;
   deviceTypeName?: string | null;
   pointName?: string | null;
   pointDescription?: string | null;
@@ -215,7 +215,7 @@ export interface RoutePolyline {
   color: string;
   label: string;
   thickness: number;
-  routePoints: RoutePointWidget[];
+  routePoints: RoutePointIcon[];
   // 360 detail fields
   code: string;
   type: string;
@@ -338,7 +338,7 @@ function RoutePopup({ r, onEdit, onDelete }: { r: RoutePolyline; onEdit?: () => 
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
                   </svg>
-                  Delete
+                  {/* Delete */}
                 </button>
               )}
               {onEdit && (
@@ -350,7 +350,7 @@ function RoutePopup({ r, onEdit, onDelete }: { r: RoutePolyline; onEdit?: () => 
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                   </svg>
-                  Edit
+                  {/* Edit */}
                 </button>
               )}
             </div>
@@ -367,8 +367,8 @@ function fitSvgForMap(svg: string): string {
   );
 }
 
-function PointTooltipContent({ p }: { p: RoutePointWidget }) {
-  const title = p.pointName || p.widgetName || p.deviceTypeName || null;
+function PointTooltipContent({ p }: { p: RoutePointIcon }) {
+  const title = p.pointName || p.iconName || p.deviceTypeName || null;
   return (
     <div style={{ minWidth: 120, maxWidth: 220, fontFamily: 'system-ui,sans-serif' }}>
       {title && <div style={{ fontWeight: 700, fontSize: '0.82rem', marginBottom: 2 }}>{title}</div>}
@@ -385,20 +385,20 @@ function PointTooltipContent({ p }: { p: RoutePointWidget }) {
   );
 }
 
-function RouteWidgetMarkers({ routePoints }: { routePoints: RoutePointWidget[] }) {
+function RouteWidgetMarkers({ routePoints }: { routePoints: RoutePointIcon[] }) {
   const visible = routePoints.filter(
-    (p) => p.widgetIconType || p.pointName || p.pointDescription || p.deviceTypeName,
+    (p) => p.iconFileType || p.pointName || p.pointDescription || p.deviceTypeName,
   );
   if (visible.length === 0) return null;
   return (
     <>
       {visible.map((p, i) => {
-        if (p.widgetIconType) {
-          const size = Math.min(Math.max(p.widgetWidth || 32, 16), 48);
+        if (p.iconFileType) {
+          const size = Math.min(Math.max(p.iconWidth || 32, 16), 48);
           const html =
-            p.widgetIconType === 'svg'
-              ? `<div style="width:${size}px;height:${size}px;overflow:hidden;display:flex;align-items:center;justify-content:center;">${fitSvgForMap(p.widgetSvg || '')}</div>`
-              : `<img src="${p.widgetIconUrl}" style="width:${size}px;height:${size}px;object-fit:contain;" alt="" />`;
+            p.iconFileType === 'svg'
+              ? `<div style="width:${size}px;height:${size}px;overflow:hidden;display:flex;align-items:center;justify-content:center;">${fitSvgForMap(p.iconSvg || '')}</div>`
+              : `<img src="${p.iconUrl}" style="width:${size}px;height:${size}px;object-fit:contain;" alt="" />`;
           const icon = L.divIcon({ className: '', html, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
           return (
             <Marker key={`rp-${i}`} position={[p.lat, p.lng]} icon={icon} zIndexOffset={600}>
@@ -602,7 +602,32 @@ export default function LeafletMap({ layer, markers, center, zoom, showScaleBar 
             positions={r.points}
             pathOptions={{ color: r.color || '#3b82f6', weight: r.thickness || 3, opacity: 0.85 }}
             eventHandlers={{
-              mouseover(e) { e.target.openPopup(e.latlng); },
+              mouseover(e) {
+                const polyline = e.target;
+                if ((polyline as any)._closeTimer) {
+                  clearTimeout((polyline as any)._closeTimer);
+                  (polyline as any)._closeTimer = null;
+                }
+                polyline.openPopup(e.latlng);
+                // Keep popup open when mouse is over the popup pane
+                const popupEl = polyline.getPopup()?.getElement();
+                if (popupEl && !(popupEl as any)._routeHoverBound) {
+                  (popupEl as any)._routeHoverBound = true;
+                  popupEl.addEventListener('mouseenter', () => {
+                    if ((polyline as any)._closeTimer) {
+                      clearTimeout((polyline as any)._closeTimer);
+                      (polyline as any)._closeTimer = null;
+                    }
+                  });
+                  popupEl.addEventListener('mouseleave', () => {
+                    (polyline as any)._closeTimer = setTimeout(() => polyline.closePopup(), 120);
+                  });
+                }
+              },
+              mouseout(e) {
+                const polyline = e.target;
+                (polyline as any)._closeTimer = setTimeout(() => polyline.closePopup(), 120);
+              },
             }}
           >
             <Popup minWidth={244}>

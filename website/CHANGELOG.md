@@ -2,6 +2,34 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
+## [1.62.0] - 2026-05-13
+### Added
+- **Icon file upload** (`/manage/icons` modal): PNG and WebP icons now use a click-to-upload drop zone with live file preview and "Remove" button. SVG mode gains an "Upload .svg file" link — `FileReader` reads the content client-side and fills the SVG code textarea; no binary upload needed.
+  - `api.ts`: `createIcon` / `updateIcon` accept `FormData`; new `apiFetchMultipart` helper (no `Content-Type` header) handles multipart submission.
+- **`flag` icon type**: Added to `ICON_TYPES` in `IconModal`, `ICON_TYPE_LABELS` in `IconsClient` and `WidgetsClient`.
+
+### Changed
+- **Icons sidebar always visible**: `permission: 'icon.view'` gate removed from the Icons nav entry in `Sidebar.tsx`.
+- **Icon code display**: Codes now show as `ICO0001` format instead of `ICN-0001`.
+
+## [1.61.0] - 2026-05-13
+### Added
+- **Icons module** (renamed from Widgets): Full rename across all frontend surfaces.
+  - New: `website/src/components/widgets/IconModal.tsx`, `website/src/app/(dashboard)/manage/icons/IconsClient.tsx`, `website/src/app/(dashboard)/manage/icons/page.tsx`.
+  - `/manage/widgets/page.tsx` now renders `<IconsClient>` (backward-compatible URL).
+  - `api.ts`: `IconData`, `IconType` (+ `customer_end`), `IconFileType`, `IconStatus`, `getIcons`, `createIcon`, `updateIcon`, `deleteIcon`, `getTenantIcons`.
+  - `DeviceTypeModal`: `iconUuid`, `getTenantIcons`, "Map Icon" label, "— No icon —" option, inline preview.
+  - Sidebar: Icons nav entry under Manage, pointing to `/manage/icons`.
+- **Route popup auto-close on mouseout** (`/tenant/map`): 120 ms delay timer; popup DOM `mouseenter`/`mouseleave` listeners cancel the timer so the Edit button stays accessible.
+- **Undo in edit-point mode** (`/tenant/map`): Indigo "Undo" button in Edit Points header; `pushEditSnapshot` saves state before each add/insert using `useRef` mirrors.
+- **Device type icon previews in draw/edit point rows** (`/tenant/map`): Inline icon preview (SVG or image) shown next to the Device Type dropdown.
+- **Admin sidebar SVG icons**: All nav sub-items use individual inline SVGs via a DRY `icon()` helper in `Sidebar.tsx`.
+
+### Changed
+- **`DashboardLayout.module.css`**: Removed `.subItem::before` bullet dot; added `opacity` transitions on sub-item SVGs.
+- **`LeafletMap.tsx`**: `RoutePointWidget` → `RoutePointIcon`; field names updated to `iconFileType`, `iconSvg`, `iconUrl`, `iconWidth`, `iconHeight`, `iconName`.
+- **`drawSelect.module.css`**: `.widgetIcon` → `.iconPreview`, `.widgetMeta` → `.iconMeta`, etc.
+
 ## [1.49.0] - 2026-05-08
 ### Added
 - **Device Categories Module** (`/tenant/device-categories`): Full CRUD UI for tenant device categories.
