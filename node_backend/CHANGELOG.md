@@ -5,6 +5,10 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.63.0] - 2026-05-13
+### Changed
+- No backend changes — frontend-only release. See `website/CHANGELOG.md` for details.
+
 ## [1.62.0] - 2026-05-13
 ### Added
 - **Icon file upload** (`POST /api/icons`, `PUT /api/icons/:uuid`): Routes now accept `multipart/form-data` via `multer` (memory storage, 5 MB limit, SVG/PNG/WebP only).

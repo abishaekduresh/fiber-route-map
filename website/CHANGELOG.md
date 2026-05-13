@@ -2,6 +2,18 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
+## [1.63.0] - 2026-05-13
+### Added
+- **Collapsible route point rows** (`/tenant/map`): Both draw and edit panels now show compact, collapsible point rows. Each row header shows: sequence badge, type badge (colored), point name or coordinates (flex-fill), inline icon/device-type preview when collapsed, amber data-dot when the point has any data, and an expand chevron. Expanding a row reveals labeled fields — Icon (with 28×28 preview), Device Type (with preview), Point Name, Note, and a pin-icon coordinate display.
+- **Remove point confirm dialog** (`/tenant/map`): Clicking × on an edit-mode point row now opens a `ConfirmDialog` ("Remove Point", danger variant) instead of deleting immediately. Cancelling dismisses the dialog; confirming calls `deleteEditPoint`.
+- **Type-accent left border on point rows**: Each row gets a 3 px left border — green for start, amber for middle, red for end — via CSS `data-type` attribute selectors.
+- **Points count badge** in the points list header for both draw and edit panels.
+
+### Changed
+- **`drawPointsScroll` max-height**: Increased from `160px` to `280px` for better visibility with many points.
+- **`ConfirmDialog` z-index**: Raised from `200` to `9999` so it always renders above the map panel stack (`z-index: 800`).
+- **Draw mode point rows**: Replaced flat, always-expanded rows (icon dropdown + device type dropdown + name input + optional description) with the new collapsible row design, consistent with edit mode.
+
 ## [1.62.0] - 2026-05-13
 ### Added
 - **Icon file upload** (`/manage/icons` modal): PNG and WebP icons now use a click-to-upload drop zone with live file preview and "Remove" button. SVG mode gains an "Upload .svg file" link — `FileReader` reads the content client-side and fills the SVG code textarea; no binary upload needed.

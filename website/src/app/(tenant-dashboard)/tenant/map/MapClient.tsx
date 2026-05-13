@@ -8,6 +8,7 @@ import { useTenantAuth } from '@/components/providers/TenantAuthContext';
 import type { MapMarker, RoutePolyline, RoutePointIcon } from './LeafletMap';
 import MapSettingsPanel, { MapSettings, DEFAULT_MAP_SETTINGS } from '@/components/tenant-map/MapSettingsPanel';
 import DrawSearchableSelect, { DSOption } from './DrawSearchableSelect';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import styles from './map.module.css';
 import dsStyles from './drawSelect.module.css';
 
@@ -74,6 +75,7 @@ export default function MapClient() {
   const [drawPointDeviceTypes, setDrawPointDeviceTypes]   = useState<string[]>([]);
   const [drawPointNames, setDrawPointNames]               = useState<string[]>([]);
   const [drawPointDescriptions, setDrawPointDescriptions] = useState<string[]>([]);
+  const [drawPointExpanded, setDrawPointExpanded]         = useState<boolean[]>([]);
   const [routes, setRoutes]                 = useState<RoutePolyline[]>([]);
   const [availableIcons, setAvailableIcons] = useState<IconData[]>([]);
   const [drawName, setDrawName]             = useState('');
@@ -93,6 +95,7 @@ export default function MapClient() {
   const [editPointDeviceTypes, setEditPointDeviceTypes]   = useState<string[]>([]);
   const [editPointNames, setEditPointNames]               = useState<string[]>([]);
   const [editPointDescriptions, setEditPointDescriptions] = useState<string[]>([]);
+  const [editPointExpanded, setEditPointExpanded]         = useState<boolean[]>([]);
   const [editName, setEditName]               = useState('');
   const [editType, setEditType]               = useState('fiber_route');
   const [editColor, setEditColor]             = useState('#3b82f6');
@@ -102,8 +105,9 @@ export default function MapClient() {
   const [editStatus, setEditStatus]           = useState('active');
   const [isSavingEdit, setIsSavingEdit]       = useState(false);
   const [saveEditError, setSaveEditError]     = useState('');
+  const [pendingDeleteIdx, setPendingDeleteIdx] = useState<number | null>(null);
 
-  type EditSnapshot = { points: [number,number][]; icons: string[]; deviceTypes: string[]; names: string[]; descriptions: string[] };
+  type EditSnapshot = { points: [number,number][]; icons: string[]; deviceTypes: string[]; names: string[]; descriptions: string[]; expanded: boolean[] };
   const [editHistory, setEditHistory] = useState<EditSnapshot[]>([]);
 
   const [geoStatus, setGeoStatus]       = useState<GeoStatus>('idle');
@@ -353,6 +357,7 @@ export default function MapClient() {
     setEditPointDeviceTypes(pts.map((p: any) => p.deviceTypeUuid || ''));
     setEditPointNames(pts.map((p: any) => p.pointName || ''));
     setEditPointDescriptions(pts.map((p: any) => p.pointDescription || ''));
+    setEditPointExpanded(pts.map(() => false)); // all collapsed on load
     setEditName(r.attributes.name);
     setEditType(r.attributes.type);
     setEditColor(r.attributes.routeColor || '#3b82f6');
@@ -374,6 +379,7 @@ export default function MapClient() {
     setEditPointDeviceTypes([]);
     setEditPointNames([]);
     setEditPointDescriptions([]);
+    setEditPointExpanded([]);
     setSaveEditError('');
     setEditHistory([]);
   }, []);
@@ -397,6 +403,9 @@ export default function MapClient() {
   useEffect(() => { _enRef.current  = editPointNames; },        [editPointNames]);
   useEffect(() => { _edRef.current  = editPointDescriptions; }, [editPointDescriptions]);
 
+  const _eexRef = useRef(editPointExpanded);
+  useEffect(() => { _eexRef.current = editPointExpanded; }, [editPointExpanded]);
+
   const pushEditSnapshot = useCallback(() => {
     setEditHistory((h) => [...h, {
       points:       [..._epRef.current],
@@ -404,6 +413,7 @@ export default function MapClient() {
       deviceTypes:  [..._edtRef.current],
       names:        [..._enRef.current],
       descriptions: [..._edRef.current],
+      expanded:     [..._eexRef.current],
     }]);
   }, []);
 
@@ -414,6 +424,7 @@ export default function MapClient() {
     setEditPointDeviceTypes((prev) => [...prev, '']);
     setEditPointNames((prev) => [...prev, '']);
     setEditPointDescriptions((prev) => [...prev, '']);
+    setEditPointExpanded((prev) => [...prev.map(() => false), true]); // collapse all, expand new
   }, [pushEditSnapshot]);
 
   const onEditPointMove = useCallback((idx: number, lat: number, lng: number) => {
@@ -431,6 +442,11 @@ export default function MapClient() {
     setEditPointDeviceTypes((prev) => [...prev.slice(0, afterIdx + 1), '', ...prev.slice(afterIdx + 1)]);
     setEditPointNames((prev) => [...prev.slice(0, afterIdx + 1), '', ...prev.slice(afterIdx + 1)]);
     setEditPointDescriptions((prev) => [...prev.slice(0, afterIdx + 1), '', ...prev.slice(afterIdx + 1)]);
+    setEditPointExpanded((prev) => [
+      ...prev.slice(0, afterIdx + 1).map(() => false),
+      true, // new inserted point expanded
+      ...prev.slice(afterIdx + 1).map(() => false),
+    ]);
   }, [pushEditSnapshot]);
 
   const deleteEditPoint = useCallback((idx: number) => {
@@ -439,6 +455,7 @@ export default function MapClient() {
     setEditPointDeviceTypes((prev) => prev.filter((_, i) => i !== idx));
     setEditPointNames((prev) => prev.filter((_, i) => i !== idx));
     setEditPointDescriptions((prev) => prev.filter((_, i) => i !== idx));
+    setEditPointExpanded((prev) => prev.filter((_, i) => i !== idx));
   }, []);
 
   const undoEditPoint = useCallback(() => {
@@ -450,6 +467,7 @@ export default function MapClient() {
       setEditPointDeviceTypes(snap.deviceTypes);
       setEditPointNames(snap.names);
       setEditPointDescriptions(snap.descriptions);
+      setEditPointExpanded(snap.expanded);
       return h.slice(0, -1);
     });
   }, []);
@@ -505,6 +523,7 @@ export default function MapClient() {
       setEditPointDeviceTypes([]);
       setEditPointNames([]);
       setEditPointDescriptions([]);
+      setEditPointExpanded([]);
       await loadApiData();
     } catch {
       setSaveEditError('Failed to save.');
@@ -519,6 +538,7 @@ export default function MapClient() {
     setDrawPointDeviceTypes((prev) => [...prev, '']);
     setDrawPointNames((prev) => [...prev, '']);
     setDrawPointDescriptions((prev) => [...prev, '']);
+    setDrawPointExpanded((prev) => [...prev.map(() => false), true]); // collapse all, expand new
   }, []);
 
   const startDraw = useCallback(() => {
@@ -535,6 +555,7 @@ export default function MapClient() {
     setDrawPointDeviceTypes([]);
     setDrawPointNames([]);
     setDrawPointDescriptions([]);
+    setDrawPointExpanded([]);
     setDrawName('');
     setDrawType('fiber_route');
     setDrawColor('#3b82f6');
@@ -551,6 +572,7 @@ export default function MapClient() {
     setDrawPointDeviceTypes([]);
     setDrawPointNames([]);
     setDrawPointDescriptions([]);
+    setDrawPointExpanded([]);
     setSaveError('');
   }, []);
 
@@ -560,6 +582,7 @@ export default function MapClient() {
     setDrawPointDeviceTypes((prev) => prev.slice(0, -1));
     setDrawPointNames((prev) => prev.slice(0, -1));
     setDrawPointDescriptions((prev) => prev.slice(0, -1));
+    setDrawPointExpanded((prev) => prev.slice(0, -1));
   }, []);
 
   const setPointIcon = useCallback((idx: number, val: string) => {
@@ -576,6 +599,14 @@ export default function MapClient() {
 
   const setPointDescription = useCallback((idx: number, val: string) => {
     setDrawPointDescriptions((prev) => prev.map((v, i) => i === idx ? val : v));
+  }, []);
+
+  const toggleDrawPointExpanded = useCallback((idx: number) => {
+    setDrawPointExpanded((prev) => prev.map((v, i) => i === idx ? !v : v));
+  }, []);
+
+  const toggleEditPointExpanded = useCallback((idx: number) => {
+    setEditPointExpanded((prev) => prev.map((v, i) => i === idx ? !v : v));
   }, []);
 
   const getPointType = (i: number, total: number) =>
@@ -616,6 +647,7 @@ export default function MapClient() {
       setDrawPointDeviceTypes([]);
       setDrawPointNames([]);
       setDrawPointDescriptions([]);
+      setDrawPointExpanded([]);
       await loadApiData();
     } catch {
       setSaveError('Failed to save route.');
@@ -979,13 +1011,10 @@ export default function MapClient() {
                 <div className={styles.drawPointsList}>
                   <div className={styles.drawPointsHeader}>
                     <span>Points</span>
+                    <span className={styles.drawPointsCount}>{editPoints.length}</span>
                     {editHistory.length > 0 && (
-                      <button
-                        onClick={undoEditPoint}
-                        title="Undo last added point"
-                        style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#6366f1', padding: '0 2px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '0.2rem', lineHeight: 1 }}
-                      >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <button className={styles.drawUndoInlineBtn} onClick={undoEditPoint} title="Undo last added point">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M3 7v6h6" /><path d="M3 13C5.33 9.33 8.5 7 12 7c4.42 0 8 3.58 8 8" />
                         </svg>
                         Undo
@@ -993,74 +1022,100 @@ export default function MapClient() {
                     )}
                   </div>
                   <div className={styles.drawPointsScroll}>
-                    {editPoints.map((pt, i) => (
-                      <div key={i} className={styles.drawPointRow}>
-                        <div className={styles.drawPointMeta}>
-                          <span className={styles.drawSeq}>{i + 1}</span>
-                          <span className={`${styles.drawPtType} ${styles[`ptType_${getPointType(i, editPoints.length)}`]}`}>
-                            {getPointType(i, editPoints.length)}
-                          </span>
-                          <span className={styles.drawCoords}>{pt[0].toFixed(5)}, {pt[1].toFixed(5)}</span>
-                          <button
-                            onClick={() => deleteEditPoint(i)}
-                            style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: '0 2px', fontSize: '0.85rem', lineHeight: 1 }}
-                            title="Remove point"
-                          >×</button>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <DrawSearchableSelect
-                              options={iconOptions}
-                              value={editPointIcons[i] ?? ''}
-                              onChange={(val) => setEditPointIcon(i, val)}
-                              placeholder="No icon (optional)"
-                              searchPlaceholder="Search icons…"
-                            />
+                    {editPoints.map((pt, i) => {
+                      const ptType = getPointType(i, editPoints.length);
+                      const isExpanded = editPointExpanded[i] ?? false;
+                      const hasData = !!(editPointIcons[i] || editPointDeviceTypes[i] || editPointNames[i]);
+                      const w = editPointIcons[i] ? availableIcons.find(x => x.id === editPointIcons[i]) : null;
+                      const dt = editPointDeviceTypes[i] ? deviceTypes.find(x => x.id === editPointDeviceTypes[i]) : null;
+                      return (
+                        <div key={i} className={styles.drawPointRow} data-type={ptType}>
+                          {/* Always-visible row header */}
+                          <div className={styles.drawPointMeta}>
+                            <span className={styles.drawSeq}>{i + 1}</span>
+                            <span className={`${styles.drawPtType} ${styles[`ptType_${ptType}`]}`}>{ptType}</span>
+                            {editPointNames[i] ? (
+                              <span className={styles.drawPointLabel}>{editPointNames[i]}</span>
+                            ) : (
+                              <span className={styles.drawCoords}>{pt[0].toFixed(4)}, {pt[1].toFixed(4)}</span>
+                            )}
+                            {/* Inline icon/dt previews when collapsed */}
+                            {!isExpanded && w && (
+                              <span className={styles.drawPointInlineIcon}>
+                                {w.attributes.iconType === 'svg'
+                                  ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(w.attributes.svgTemplate || '') }} style={{ display: 'flex', width: 14, height: 14 }} />
+                                  : <img src={w.attributes.iconUrl || ''} alt="" style={{ width: 14, height: 14, objectFit: 'contain' }} />}
+                              </span>
+                            )}
+                            {!isExpanded && !w && dt && dt.attributes.iconFileType && (
+                              <span className={styles.drawPointInlineIcon}>
+                                {dt.attributes.iconFileType === 'svg'
+                                  ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(dt.attributes.iconSvgTemplate || '') }} style={{ display: 'flex', width: 14, height: 14 }} />
+                                  : <img src={dt.attributes.iconUrl || ''} alt="" style={{ width: 14, height: 14, objectFit: 'contain' }} />}
+                              </span>
+                            )}
+                            {hasData && !isExpanded && <span className={styles.drawPointDataDot} title="Has data" />}
+                            <button className={styles.drawPointExpandBtn} onClick={() => toggleEditPointExpanded(i)} title={isExpanded ? 'Collapse' : 'Expand'}>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transition: 'transform 0.15s', transform: isExpanded ? 'rotate(180deg)' : 'none' }}>
+                                <polyline points="6 9 12 15 18 9" />
+                              </svg>
+                            </button>
+                            <button className={styles.drawPointDeleteBtn} onClick={() => setPendingDeleteIdx(i)} title="Remove point">
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <path d="M18 6L6 18M6 6l12 12" />
+                              </svg>
+                            </button>
                           </div>
-                          {editPointIcons[i] && (() => {
-                            const w = availableIcons.find(x => x.id === editPointIcons[i]);
-                            if (!w) return null;
-                            return w.attributes.iconType === 'svg'
-                              ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(w.attributes.svgTemplate || '') }} style={{ flexShrink: 0, width: 24, height: 24, display: 'flex' }} />
-                              : <img src={w.attributes.iconUrl || ''} alt="" style={{ flexShrink: 0, width: 24, height: 24, objectFit: 'contain' }} />;
-                          })()}
+                          {/* Expandable details */}
+                          {isExpanded && (
+                            <div className={styles.drawPointDetails}>
+                              <div className={styles.drawPointField}>
+                                <span className={styles.drawPointFieldLabel}>Icon</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <DrawSearchableSelect options={iconOptions} value={editPointIcons[i] ?? ''} onChange={(val) => setEditPointIcon(i, val)} placeholder="No icon" searchPlaceholder="Search icons…" />
+                                  </div>
+                                  {w && (
+                                    <span className={styles.drawPointIconPreview}>
+                                      {w.attributes.iconType === 'svg'
+                                        ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(w.attributes.svgTemplate || '') }} style={{ display: 'flex', width: 22, height: 22 }} />
+                                        : <img src={w.attributes.iconUrl || ''} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className={styles.drawPointField}>
+                                <span className={styles.drawPointFieldLabel}>Device Type</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <DrawSearchableSelect options={deviceTypeOptions} value={editPointDeviceTypes[i] ?? ''} onChange={(val) => setEditPointDeviceType(i, val)} placeholder="No device type" searchPlaceholder="Search types…" />
+                                  </div>
+                                  {dt && dt.attributes.iconFileType && (
+                                    <span className={styles.drawPointIconPreview}>
+                                      {dt.attributes.iconFileType === 'svg'
+                                        ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(dt.attributes.iconSvgTemplate || '') }} style={{ display: 'flex', width: 22, height: 22 }} />
+                                        : <img src={dt.attributes.iconUrl || ''} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className={styles.drawPointField}>
+                                <span className={styles.drawPointFieldLabel}>Point Name</span>
+                                <input type="text" className={styles.drawInput} placeholder="e.g. Junction Box A" value={editPointNames[i] ?? ''} onChange={(e) => setEditPointName(i, e.target.value)} />
+                              </div>
+                              <div className={styles.drawPointField}>
+                                <span className={styles.drawPointFieldLabel}>Note</span>
+                                <input type="text" className={styles.drawInput} placeholder="Optional note…" value={editPointDescriptions[i] ?? ''} onChange={(e) => setEditPointDescription(i, e.target.value)} />
+                              </div>
+                              <div className={styles.drawPointCoordRow}>
+                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                {pt[0].toFixed(5)}, {pt[1].toFixed(5)}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <DrawSearchableSelect
-                              options={deviceTypeOptions}
-                              value={editPointDeviceTypes[i] ?? ''}
-                              onChange={(val) => setEditPointDeviceType(i, val)}
-                              placeholder="No device type (optional)"
-                              searchPlaceholder="Search device types…"
-                            />
-                          </div>
-                          {editPointDeviceTypes[i] && (() => {
-                            const dt = deviceTypes.find(x => x.id === editPointDeviceTypes[i]);
-                            if (!dt?.attributes.iconFileType) return null;
-                            return dt.attributes.iconFileType === 'svg'
-                              ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(dt.attributes.iconSvgTemplate || '') }} style={{ flexShrink: 0, width: 24, height: 24, display: 'flex' }} />
-                              : <img src={dt.attributes.iconUrl || ''} alt="" style={{ flexShrink: 0, width: 24, height: 24, objectFit: 'contain' }} />;
-                          })()}
-                        </div>
-                        <input
-                          type="text"
-                          className={styles.drawInput}
-                          placeholder="Point name (optional)"
-                          value={editPointNames[i] ?? ''}
-                          onChange={(e) => setEditPointName(i, e.target.value)}
-                        />
-                        {(editPointNames[i] || editPointDescriptions[i]) && (
-                          <input
-                            type="text"
-                            className={styles.drawInput}
-                            placeholder="Description (optional)"
-                            value={editPointDescriptions[i] ?? ''}
-                            onChange={(e) => setEditPointDescription(i, e.target.value)}
-                          />
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -1159,74 +1214,99 @@ export default function MapClient() {
               {drawPoints.length > 0 && (
                 <div className={styles.drawPointsList}>
                   <div className={styles.drawPointsHeader}>
-                    <span>Captured Points</span>
+                    <span>Points</span>
+                    <span className={styles.drawPointsCount}>{drawPoints.length}</span>
                   </div>
                   <div className={styles.drawPointsScroll}>
-                    {drawPoints.map((pt, i) => (
-                      <div key={i} className={styles.drawPointRow}>
-                        <div className={styles.drawPointMeta}>
-                          <span className={styles.drawSeq}>{i + 1}</span>
-                          <span className={`${styles.drawPtType} ${styles[`ptType_${getPointType(i, drawPoints.length)}`]}`}>
-                            {getPointType(i, drawPoints.length)}
-                          </span>
-                          <span className={styles.drawCoords}>
-                            {pt[0].toFixed(5)}, {pt[1].toFixed(5)}
-                          </span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <DrawSearchableSelect
-                              options={iconOptions}
-                              value={drawPointIcons[i] ?? ''}
-                              onChange={(val) => setPointIcon(i, val)}
-                              placeholder="No icon (optional)"
-                              searchPlaceholder="Search icons…"
-                            />
+                    {drawPoints.map((pt, i) => {
+                      const ptType = getPointType(i, drawPoints.length);
+                      const isExpanded = drawPointExpanded[i] ?? false;
+                      const hasData = !!(drawPointIcons[i] || drawPointDeviceTypes[i] || drawPointNames[i]);
+                      const w = drawPointIcons[i] ? availableIcons.find(x => x.id === drawPointIcons[i]) : null;
+                      const dt = drawPointDeviceTypes[i] ? deviceTypes.find(x => x.id === drawPointDeviceTypes[i]) : null;
+                      return (
+                        <div key={i} className={styles.drawPointRow} data-type={ptType}>
+                          {/* Always-visible row header */}
+                          <div className={styles.drawPointMeta}>
+                            <span className={styles.drawSeq}>{i + 1}</span>
+                            <span className={`${styles.drawPtType} ${styles[`ptType_${ptType}`]}`}>{ptType}</span>
+                            {drawPointNames[i] ? (
+                              <span className={styles.drawPointLabel}>{drawPointNames[i]}</span>
+                            ) : (
+                              <span className={styles.drawCoords}>{pt[0].toFixed(4)}, {pt[1].toFixed(4)}</span>
+                            )}
+                            {/* Inline icon/dt previews when collapsed */}
+                            {!isExpanded && w && (
+                              <span className={styles.drawPointInlineIcon}>
+                                {w.attributes.iconType === 'svg'
+                                  ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(w.attributes.svgTemplate || '') }} style={{ display: 'flex', width: 14, height: 14 }} />
+                                  : <img src={w.attributes.iconUrl || ''} alt="" style={{ width: 14, height: 14, objectFit: 'contain' }} />}
+                              </span>
+                            )}
+                            {!isExpanded && !w && dt && dt.attributes.iconFileType && (
+                              <span className={styles.drawPointInlineIcon}>
+                                {dt.attributes.iconFileType === 'svg'
+                                  ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(dt.attributes.iconSvgTemplate || '') }} style={{ display: 'flex', width: 14, height: 14 }} />
+                                  : <img src={dt.attributes.iconUrl || ''} alt="" style={{ width: 14, height: 14, objectFit: 'contain' }} />}
+                              </span>
+                            )}
+                            {hasData && !isExpanded && <span className={styles.drawPointDataDot} title="Has data" />}
+                            <button className={styles.drawPointExpandBtn} onClick={() => toggleDrawPointExpanded(i)} title={isExpanded ? 'Collapse' : 'Expand'}>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transition: 'transform 0.15s', transform: isExpanded ? 'rotate(180deg)' : 'none' }}>
+                                <polyline points="6 9 12 15 18 9" />
+                              </svg>
+                            </button>
                           </div>
-                          {drawPointIcons[i] && (() => {
-                            const w = availableIcons.find(x => x.id === drawPointIcons[i]);
-                            if (!w) return null;
-                            return w.attributes.iconType === 'svg'
-                              ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(w.attributes.svgTemplate || '') }} style={{ flexShrink: 0, width: 24, height: 24, display: 'flex' }} />
-                              : <img src={w.attributes.iconUrl || ''} alt="" style={{ flexShrink: 0, width: 24, height: 24, objectFit: 'contain' }} />;
-                          })()}
+                          {/* Expandable details */}
+                          {isExpanded && (
+                            <div className={styles.drawPointDetails}>
+                              <div className={styles.drawPointField}>
+                                <span className={styles.drawPointFieldLabel}>Icon</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <DrawSearchableSelect options={iconOptions} value={drawPointIcons[i] ?? ''} onChange={(val) => setPointIcon(i, val)} placeholder="No icon" searchPlaceholder="Search icons…" />
+                                  </div>
+                                  {w && (
+                                    <span className={styles.drawPointIconPreview}>
+                                      {w.attributes.iconType === 'svg'
+                                        ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(w.attributes.svgTemplate || '') }} style={{ display: 'flex', width: 22, height: 22 }} />
+                                        : <img src={w.attributes.iconUrl || ''} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className={styles.drawPointField}>
+                                <span className={styles.drawPointFieldLabel}>Device Type</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <DrawSearchableSelect options={deviceTypeOptions} value={drawPointDeviceTypes[i] ?? ''} onChange={(val) => setPointDeviceType(i, val)} placeholder="No device type" searchPlaceholder="Search types…" />
+                                  </div>
+                                  {dt && dt.attributes.iconFileType && (
+                                    <span className={styles.drawPointIconPreview}>
+                                      {dt.attributes.iconFileType === 'svg'
+                                        ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(dt.attributes.iconSvgTemplate || '') }} style={{ display: 'flex', width: 22, height: 22 }} />
+                                        : <img src={dt.attributes.iconUrl || ''} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className={styles.drawPointField}>
+                                <span className={styles.drawPointFieldLabel}>Point Name</span>
+                                <input type="text" className={styles.drawInput} placeholder="e.g. Junction Box A" value={drawPointNames[i] ?? ''} onChange={(e) => setPointName(i, e.target.value)} />
+                              </div>
+                              <div className={styles.drawPointField}>
+                                <span className={styles.drawPointFieldLabel}>Note</span>
+                                <input type="text" className={styles.drawInput} placeholder="Optional note…" value={drawPointDescriptions[i] ?? ''} onChange={(e) => setPointDescription(i, e.target.value)} />
+                              </div>
+                              <div className={styles.drawPointCoordRow}>
+                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                {pt[0].toFixed(5)}, {pt[1].toFixed(5)}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <DrawSearchableSelect
-                              options={deviceTypeOptions}
-                              value={drawPointDeviceTypes[i] ?? ''}
-                              onChange={(val) => setPointDeviceType(i, val)}
-                              placeholder="No device type (optional)"
-                              searchPlaceholder="Search device types…"
-                            />
-                          </div>
-                          {drawPointDeviceTypes[i] && (() => {
-                            const dt = deviceTypes.find(x => x.id === drawPointDeviceTypes[i]);
-                            if (!dt?.attributes.iconFileType) return null;
-                            return dt.attributes.iconFileType === 'svg'
-                              ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(dt.attributes.iconSvgTemplate || '') }} style={{ flexShrink: 0, width: 24, height: 24, display: 'flex' }} />
-                              : <img src={dt.attributes.iconUrl || ''} alt="" style={{ flexShrink: 0, width: 24, height: 24, objectFit: 'contain' }} />;
-                          })()}
-                        </div>
-                        <input
-                          type="text"
-                          className={styles.drawInput}
-                          placeholder="Point name (optional)"
-                          value={drawPointNames[i] ?? ''}
-                          onChange={(e) => setPointName(i, e.target.value)}
-                        />
-                        {(drawPointNames[i] || drawPointDescriptions[i]) && (
-                          <input
-                            type="text"
-                            className={styles.drawInput}
-                            placeholder="Description (optional)"
-                            value={drawPointDescriptions[i] ?? ''}
-                            onChange={(e) => setPointDescription(i, e.target.value)}
-                          />
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -1251,6 +1331,17 @@ export default function MapClient() {
         onClose={() => setSettingsPanelOpen(false)}
         current={mapSettings}
         onApply={handleSettingsApply}
+      />
+
+      {/* Remove point confirm */}
+      <ConfirmDialog
+        isOpen={pendingDeleteIdx !== null}
+        title="Remove Point"
+        message={pendingDeleteIdx !== null ? `Remove point #${pendingDeleteIdx + 1} from the route?` : ''}
+        confirmLabel="Remove"
+        variant="danger"
+        onConfirm={() => { if (pendingDeleteIdx !== null) { deleteEditPoint(pendingDeleteIdx); setPendingDeleteIdx(null); } }}
+        onCancel={() => setPendingDeleteIdx(null)}
       />
 
     </div>
