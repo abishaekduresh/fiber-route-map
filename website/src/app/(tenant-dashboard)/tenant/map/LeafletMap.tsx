@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Tooltip, Circle, CircleMarker, Polyline, useMap, useMapEvents, ScaleControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -249,7 +249,8 @@ function fmtDate(iso: string) {
   } catch { return iso; }
 }
 
-function RoutePopup({ r, onEdit }: { r: RoutePolyline; onEdit?: () => void }) {
+function RoutePopup({ r, onEdit, onDelete }: { r: RoutePolyline; onEdit?: () => void; onDelete?: () => void }) {
+  const [confirming, setConfirming] = useState(false);
   const statusStyle = STATUS_COLORS[r.status] ?? STATUS_COLORS.inactive;
   return (
     <div style={{ minWidth: 240, maxWidth: 300, fontFamily: 'system-ui,sans-serif', fontSize: '0.8rem', lineHeight: 1.5 }}>
@@ -303,22 +304,57 @@ function RoutePopup({ r, onEdit }: { r: RoutePolyline; onEdit?: () => void }) {
       )}
 
       {/* Footer */}
-      <div style={{ borderTop: '1px solid #e2e8f0', marginTop: '0.5rem', paddingTop: '0.4rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.68rem', color: '#94a3b8' }}>
-        <div>
-          <div>Created {fmtDate(r.createdAt)}</div>
-          <div>Updated {fmtDate(r.updatedAt)}</div>
-        </div>
-        {onEdit && (
-          <button
-            onClick={onEdit}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.3rem 0.65rem', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 6, color: '#3b82f6', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
-          >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
-            Edit
-          </button>
+      <div style={{ borderTop: '1px solid #e2e8f0', marginTop: '0.5rem', paddingTop: '0.4rem', fontSize: '0.68rem', color: '#94a3b8' }}>
+        {confirming ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <span style={{ color: '#ef4444', fontWeight: 600, fontSize: '0.75rem' }}>Delete this route permanently?</span>
+            <div style={{ display: 'flex', gap: '0.4rem' }}>
+              <button
+                onClick={() => setConfirming(false)}
+                style={{ flex: 1, padding: '0.3rem', background: 'transparent', border: '1px solid #cbd5e1', borderRadius: 6, color: '#64748b', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={onDelete}
+                style={{ flex: 1, padding: '0.3rem', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 6, color: '#ef4444', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div>Created {fmtDate(r.createdAt)}</div>
+              <div>Updated {fmtDate(r.updatedAt)}</div>
+            </div>
+            <div style={{ display: 'flex', gap: '0.35rem' }}>
+              {onDelete && (
+                <button
+                  onClick={() => setConfirming(true)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.3rem 0.6rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 6, color: '#ef4444', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                  </svg>
+                  Delete
+                </button>
+              )}
+              {onEdit && (
+                <button
+                  onClick={onEdit}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.3rem 0.65rem', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 6, color: '#3b82f6', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                  Edit
+                </button>
+              )}
+            </div>
+          </div>
         )}
       </div>
     </div>
@@ -524,6 +560,8 @@ interface LeafletMapProps {
   routes?: RoutePolyline[];
   onEditRoute?: (routeId: string) => void;
   canEditRoutes?: boolean;
+  onDeleteRoute?: (routeId: string) => void;
+  canDeleteRoutes?: boolean;
   editMode?: boolean;
   editRouteId?: string;
   editPoints?: [number, number][];
@@ -535,7 +573,7 @@ interface LeafletMapProps {
   focusPoints?: [number, number][] | null;
 }
 
-export default function LeafletMap({ layer, markers, center, zoom, showScaleBar = true, scaleUnit = 'metric', userLocation, drawMode, drawPoints = [], onMapClick, routes = [], onEditRoute, canEditRoutes, editMode, editRouteId, editPoints = [], editRouteColor = '#3b82f6', editRouteThickness = 2, onEditMapClick, onEditPointMove, onInsertEditPoint, focusPoints }: LeafletMapProps) {
+export default function LeafletMap({ layer, markers, center, zoom, showScaleBar = true, scaleUnit = 'metric', userLocation, drawMode, drawPoints = [], onMapClick, routes = [], onEditRoute, canEditRoutes, onDeleteRoute, canDeleteRoutes, editMode, editRouteId, editPoints = [], editRouteColor = '#3b82f6', editRouteThickness = 2, onEditMapClick, onEditPointMove, onInsertEditPoint, focusPoints }: LeafletMapProps) {
   const tile = TILE_LAYERS[layer] ?? TILE_LAYERS.street;
 
   return (
@@ -568,7 +606,11 @@ export default function LeafletMap({ layer, markers, center, zoom, showScaleBar 
             }}
           >
             <Popup minWidth={244}>
-              <RoutePopup r={r} onEdit={canEditRoutes && onEditRoute ? () => onEditRoute(r.id) : undefined} />
+              <RoutePopup
+                r={r}
+                onEdit={canEditRoutes && onEditRoute ? () => onEditRoute(r.id) : undefined}
+                onDelete={canDeleteRoutes && onDeleteRoute ? () => onDeleteRoute(r.id) : undefined}
+              />
             </Popup>
           </Polyline>
           <RouteWidgetMarkers routePoints={r.routePoints} />

@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { getDeviceCategories, getDeviceTypes, getUserSettings, getTenantRoutes, getTenantRoute, createTenantRoute, updateTenantRoute, getTenantWidgets, WidgetData, DeviceCategoryData, DeviceTypeData } from '@/lib/api';
+import { getDeviceCategories, getDeviceTypes, getUserSettings, getTenantRoutes, getTenantRoute, createTenantRoute, updateTenantRoute, deleteTenantRoute, getTenantWidgets, WidgetData, DeviceCategoryData, DeviceTypeData } from '@/lib/api';
 import { useTenantAuth } from '@/components/providers/TenantAuthContext';
 import type { MapMarker, RoutePolyline, RoutePointWidget } from './LeafletMap';
 import MapSettingsPanel, { MapSettings, DEFAULT_MAP_SETTINGS } from '@/components/tenant-map/MapSettingsPanel';
@@ -59,6 +59,7 @@ export default function MapClient() {
   const { hasPermission } = useTenantAuth();
 
   const canUpdateRoutes = hasPermission('tenant_routes.update');
+  const canDeleteRoutes = hasPermission('tenant_routes.delete');
 
   useEffect(() => {
     if (!hasPermission('map.view')) {
@@ -371,6 +372,13 @@ export default function MapClient() {
     setEditPointDescriptions([]);
     setSaveEditError('');
   }, []);
+
+  const handleDeleteRoute = useCallback(async (routeId: string) => {
+    try {
+      const res = await deleteTenantRoute(routeId);
+      if (res.success) await loadApiData();
+    } catch { /* best-effort */ }
+  }, [loadApiData]);
 
   const onEditMapClick = useCallback((lat: number, lng: number) => {
     setEditPoints((prev) => [...prev, [lat, lng]]);
@@ -848,6 +856,8 @@ export default function MapClient() {
             routes={showRoutes ? filteredRoutes : []}
             onEditRoute={handleEditRoute}
             canEditRoutes={canUpdateRoutes}
+            onDeleteRoute={handleDeleteRoute}
+            canDeleteRoutes={canDeleteRoutes}
             editMode={editMode}
             editRouteId={editRouteId}
             editPoints={editPoints}
