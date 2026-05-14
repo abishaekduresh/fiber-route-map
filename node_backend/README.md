@@ -4,7 +4,7 @@ The authoritative backend REST API for the Fiber Route Map system, replicated in
 Built using [Express](https://expressjs.com/) and [TypeScript](https://www.typescriptlang.org/), leveraging [Knex.js](https://knexjs.org/) for database interaction.
 
 ## Version
-**Current Version:** 1.63.0 (no backend changes — see website for collapsible route point rows, remove-point confirm dialog)
+**Current Version:** 1.64.0 — Global Device Categories & Device Types (superadmin-managed, DC/DT auto-codes, RBAC), Route Point Templates system (RPTxxxx codes, icon+device-type linking, full CRUD API + Swagger), global device tables with auto-migration
 
 ## Interactive Documentation
 The API is fully documented using Swagger/OpenAPI 3.0.

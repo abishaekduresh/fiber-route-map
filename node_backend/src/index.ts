@@ -42,6 +42,9 @@ import iconRoutes from './routes/iconRoutes.js';
 import tenantRouteRoutes from './routes/tenantRouteRoutes.js';
 import tenantIconRoutes from './routes/tenantIconRoutes.js';
 import auditLogRoutes, { auditLogService } from './routes/auditLogRoutes.js';
+import routePointTemplateRoutes from './routes/routePointTemplateRoutes.js';
+import deviceCategoryRoutes from './routes/deviceCategoryRoutes.js';
+import deviceTypeRoutes from './routes/deviceTypeRoutes.js';
 import { auditLog } from './middleware/auditLog.js';
 import logger from './utils/logger.js';
 import db from './config/database.js';
@@ -108,6 +111,9 @@ app.use('/api/tenant/support-tickets', tenantSupportTicketRoutes);
 app.use('/api/support-tickets', auth(authService), adminSupportTicketRoutes);
 app.use('/api/audit-logs', auth(authService), auditLogRoutes);
 app.use('/api/icons', auth(authService), iconRoutes);
+app.use('/api/route-point-templates', auth(authService), routePointTemplateRoutes);
+app.use('/api/device-categories', auth(authService), deviceCategoryRoutes);
+app.use('/api/device-types', auth(authService), deviceTypeRoutes);
 app.use('/api/tenant/routes', tenantRouteRoutes);
 app.use('/api/tenant/icons', tenantIconRoutes);
 app.use('/api/health', healthRoutes);
@@ -758,6 +764,220 @@ const ensureTenantRouteTables = async () => {
   }
 };
 
+// Ensure route_point_templates and tenant_route_point_details tables exist (v1.64.0)
+const ensureRoutePointTemplateTables = async () => {
+  try {
+    // Global device_categories table
+    const dcExists = await db.schema.hasTable('device_categories');
+    if (!dcExists) {
+      await db.schema.createTable('device_categories', (t: any) => {
+        t.bigIncrements('id').primary();
+        t.string('uuid', 36).notNullable().unique();
+        t.string('code', 20).notNullable().unique();
+        t.string('name', 150).notNullable();
+        t.text('description').nullable();
+        t.enum('status', ['active', 'inactive', 'deleted']).notNullable().defaultTo('active');
+        t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('deletedAt').nullable();
+        t.index(['status'], 'idx_dc_status');
+      });
+      logger.info('Auto-migration: device_categories table created');
+    }
+
+    // Global device_types table
+    const dtExists = await db.schema.hasTable('device_types');
+    if (!dtExists) {
+      await db.schema.createTable('device_types', (t: any) => {
+        t.bigIncrements('id').primary();
+        t.string('uuid', 36).notNullable().unique();
+        t.string('code', 20).notNullable().unique();
+        t.string('name', 150).notNullable();
+        t.bigInteger('deviceCategoryId').unsigned().nullable();
+        t.bigInteger('iconId').unsigned().nullable();
+        t.boolean('isModelNumberRequired').notNullable().defaultTo(false);
+        t.boolean('isSerialNumberRequired').notNullable().defaultTo(false);
+        t.boolean('isMacAddressRequired').notNullable().defaultTo(false);
+        t.boolean('isIPAddressRequired').notNullable().defaultTo(false);
+        t.boolean('isGpsLocationRequired').notNullable().defaultTo(false);
+        t.text('description').nullable();
+        t.enum('status', ['active', 'inactive', 'deleted']).notNullable().defaultTo('active');
+        t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('deletedAt').nullable();
+        t.index(['deviceCategoryId'], 'idx_dt_cat_id');
+        t.index(['iconId'],           'idx_dt_icon_id');
+        t.index(['status'],           'idx_dt_status');
+      });
+      logger.info('Auto-migration: device_types table created');
+    }
+
+    const rptExists = await db.schema.hasTable('route_point_templates');
+    if (!rptExists) {
+      await db.schema.createTable('route_point_templates', (t: any) => {
+        t.bigIncrements('id').primary();
+        t.string('uuid', 36).notNullable().unique();
+        t.string('code', 20).notNullable().unique();
+        t.string('name', 150).notNullable();
+        t.bigInteger('iconId').unsigned().nullable();
+        t.bigInteger('deviceTypeId').unsigned().nullable();
+        t.boolean('isDevice').notNullable().defaultTo(false);
+        t.boolean('isPointNameRequired').notNullable().defaultTo(true);
+        t.boolean('isPoleNumberRequired').notNullable().defaultTo(false);
+        t.boolean('isLandmarkRequired').notNullable().defaultTo(false);
+        t.boolean('isAddressRequired').notNullable().defaultTo(false);
+        t.boolean('isPhotoRequired').notNullable().defaultTo(false);
+        t.boolean('isHeightRequired').notNullable().defaultTo(false);
+        t.boolean('isOwnerNameRequired').notNullable().defaultTo(false);
+        t.boolean('isContactNumberRequired').notNullable().defaultTo(false);
+        t.boolean('isElectricityAvailable').notNullable().defaultTo(false);
+        t.text('description').nullable();
+        t.enum('status', ['active', 'inactive', 'deleted']).notNullable().defaultTo('active');
+        t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('deletedAt').nullable();
+        t.index(['iconId'],        'idx_rpt_icon_id');
+        t.index(['deviceTypeId'], 'idx_rpt_device_type_id');
+        t.index(['isDevice'],     'idx_rpt_is_device');
+        t.index(['status'],       'idx_rpt_status');
+      });
+      logger.info('Auto-migration: route_point_templates table created');
+    }
+
+    const detailsExists = await db.schema.hasTable('tenant_route_point_details');
+    if (!detailsExists) {
+      await db.schema.createTable('tenant_route_point_details', (t: any) => {
+        t.bigIncrements('id').primary();
+        t.string('uuid', 36).notNullable().unique();
+        t.bigInteger('tenantRoutePointId').unsigned().notNullable();
+        t.bigInteger('routePointTemplateId').unsigned().notNullable();
+        t.string('pointName', 150).nullable();
+        t.string('poleNumber', 100).nullable();
+        t.string('landmark', 255).nullable();
+        t.string('addressLine1', 255).nullable();
+        t.string('ownerName', 150).nullable();
+        t.string('contactNumber', 30).nullable();
+        t.decimal('heightMeters', 10, 2).nullable();
+        t.boolean('electricityAvailable').notNullable().defaultTo(false);
+        t.text('photoUrl').nullable();
+        t.text('remarks').nullable();
+        t.bigInteger('tenantDeviceId').unsigned().nullable();
+        t.json('metadata').nullable();
+        t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
+        t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
+        t.unique(['tenantRoutePointId']);
+        t.index(['routePointTemplateId'], 'idx_trpd_template_id');
+        t.index(['tenantDeviceId'],       'idx_trpd_device_id');
+      });
+      logger.info('Auto-migration: tenant_route_point_details table created');
+    }
+
+    // Patch: add tenantRoutePointDetailId to tenant_route_points
+    const hasDetailId = await db.schema.hasColumn('tenant_route_points', 'tenantRoutePointDetailId');
+    if (!hasDetailId) {
+      await db.schema.alterTable('tenant_route_points', (t: any) => {
+        t.bigInteger('tenantRoutePointDetailId').unsigned().nullable().after('pointDescription');
+      });
+      logger.info('Auto-migration: added tenantRoutePointDetailId column to tenant_route_points');
+    }
+
+    // Seed permissions
+    const hasPermissions = await db.schema.hasTable('permissions');
+    if (hasPermissions && !rptExists) {
+      const { generateUuidV7 } = await import('./utils/uuid.js');
+      const { nowDb } = await import('./utils/time.js');
+      const now = nowDb();
+      for (const action of ['view', 'create', 'update', 'delete']) {
+        const slug = `route_point_templates.${action}`;
+        const existing = await db('permissions').where('slug', slug).first();
+        if (!existing) {
+          await db('permissions').insert({
+            uuid: generateUuidV7(),
+            name: `${action.charAt(0).toUpperCase() + action.slice(1)} Route Point Templates`,
+            slug,
+            resource: 'route_point_templates',
+            description: `Can ${action} route point templates`,
+            createdAt: now,
+            updatedAt: now,
+          });
+          logger.info(`Auto-migration: seeded permission '${slug}'`);
+        }
+      }
+      const superAdminRole = await db('roles').where('slug', 'super-admin').select('id').first();
+      if (superAdminRole) {
+        const newPerms = await db('permissions')
+          .whereIn('slug', ['route_point_templates.view', 'route_point_templates.create', 'route_point_templates.update', 'route_point_templates.delete'])
+          .select('id');
+        for (const perm of newPerms) {
+          await db.raw('INSERT IGNORE INTO role_permissions (roleId, permissionId) VALUES (?, ?)', [superAdminRole.id, perm.id]);
+        }
+        logger.info('Auto-migration: route_point_templates permissions assigned to Super Admin role');
+      }
+    }
+
+    // Seed device_categories permissions
+    if (hasPermissions && !dcExists) {
+      const { generateUuidV7 } = await import('./utils/uuid.js');
+      const { nowDb } = await import('./utils/time.js');
+      const now = nowDb();
+      for (const action of ['view', 'create', 'update', 'delete']) {
+        const slug = `device_categories.${action}`;
+        const existing = await db('permissions').where('slug', slug).first();
+        if (!existing) {
+          await db('permissions').insert({
+            uuid: generateUuidV7(), name: `${action.charAt(0).toUpperCase() + action.slice(1)} Device Categories`,
+            slug, resource: 'device_categories', description: `Can ${action} device categories`, createdAt: now, updatedAt: now,
+          });
+        }
+      }
+      const superAdminRole2 = await db('roles').where('slug', 'super-admin').select('id').first();
+      if (superAdminRole2) {
+        const perms2 = await db('permissions').whereIn('slug', ['device_categories.view','device_categories.create','device_categories.update','device_categories.delete']).select('id');
+        for (const p of perms2) await db.raw('INSERT IGNORE INTO role_permissions (roleId, permissionId) VALUES (?, ?)', [superAdminRole2.id, p.id]);
+        logger.info('Auto-migration: device_categories permissions assigned to Super Admin role');
+      }
+    }
+
+    // Seed device_types permissions
+    if (hasPermissions && !dtExists) {
+      const { generateUuidV7 } = await import('./utils/uuid.js');
+      const { nowDb } = await import('./utils/time.js');
+      const now = nowDb();
+      for (const action of ['view', 'create', 'update', 'delete']) {
+        const slug = `device_types.${action}`;
+        const existing = await db('permissions').where('slug', slug).first();
+        if (!existing) {
+          await db('permissions').insert({
+            uuid: generateUuidV7(), name: `${action.charAt(0).toUpperCase() + action.slice(1)} Device Types`,
+            slug, resource: 'device_types', description: `Can ${action} device types`, createdAt: now, updatedAt: now,
+          });
+        }
+      }
+      const superAdminRole3 = await db('roles').where('slug', 'super-admin').select('id').first();
+      if (superAdminRole3) {
+        const perms3 = await db('permissions').whereIn('slug', ['device_types.view','device_types.create','device_types.update','device_types.delete']).select('id');
+        for (const p of perms3) await db.raw('INSERT IGNORE INTO role_permissions (roleId, permissionId) VALUES (?, ?)', [superAdminRole3.id, p.id]);
+        logger.info('Auto-migration: device_types permissions assigned to Super Admin role');
+      }
+    }
+
+    // Patch: route_point_templates — rename tenantDeviceCategoryId → deviceTypeId
+    const hasTenantDevCat = await db.schema.hasColumn('route_point_templates', 'tenantDeviceCategoryId');
+    const hasDevTypeId    = await db.schema.hasColumn('route_point_templates', 'deviceTypeId');
+    if (hasTenantDevCat && !hasDevTypeId) {
+      await db.raw('ALTER TABLE `route_point_templates` CHANGE COLUMN `tenantDeviceCategoryId` `deviceTypeId` BIGINT UNSIGNED NULL');
+      logger.info('Auto-migration: route_point_templates.tenantDeviceCategoryId renamed to deviceTypeId');
+    } else if (!hasTenantDevCat && !hasDevTypeId) {
+      await db.schema.alterTable('route_point_templates', (t: any) => {
+        t.bigInteger('deviceTypeId').unsigned().nullable().after('iconId');
+      });
+      logger.info('Auto-migration: route_point_templates.deviceTypeId column added');
+    }
+  } catch (err: any) {
+    logger.warn('Auto-migration for route_point_templates tables skipped or failed', { error: err.message });
+  }
+};
+
 // Start server
 const startServer = async () => {
   try {
@@ -800,6 +1020,9 @@ const startServer = async () => {
 
     // Ensure tenant_route tables exist (v1.57.0)
     await ensureTenantRouteTables();
+
+    // Ensure route_point_templates tables exist (v1.64.0)
+    await ensureRoutePointTemplateTables();
 
     // Patch: update icons.type enum with route_point + customer_end (v1.61.0)
     try {
