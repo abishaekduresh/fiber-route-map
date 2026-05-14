@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/components/providers/AuthContext';
 import { toast } from 'sonner';
-import { getGlobalDeviceCategories, deleteGlobalDeviceCategory, type GlobalDeviceCategoryData } from '@/lib/api';
+import { getDeviceCategories, deleteDeviceCategory, type DeviceCategoryData } from '@/lib/api';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import GlobalDeviceCategoryModal from '@/components/widgets/GlobalDeviceCategoryModal';
 
@@ -15,16 +15,16 @@ export default function DeviceCategoriesGlobalClient() {
   const canUpdate = hasPermission('device_categories.update');
   const canDelete = hasPermission('device_categories.delete');
 
-  const [categories, setCategories] = useState<GlobalDeviceCategoryData[]>([]);
+  const [categories, setCategories] = useState<DeviceCategoryData[]>([]);
   const [total, setTotal]           = useState(0);
   const [page, setPage]             = useState(1);
   const [search, setSearch]         = useState('');
   const [statusFilter, setStatus]   = useState('');
   const [loading, setLoading]       = useState(true);
   const [modalOpen, setModalOpen]   = useState(false);
-  const [selected, setSelected]     = useState<GlobalDeviceCategoryData | null>(null);
+  const [selected, setSelected]     = useState<DeviceCategoryData | null>(null);
   const [confirmOpen, setConfirmOpen]   = useState(false);
-  const [pendingDelete, setPendingDelete] = useState<GlobalDeviceCategoryData | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<DeviceCategoryData | null>(null);
   const [deleting, setDeleting]     = useState(false);
 
   const totalPages = Math.ceil(total / PER_PAGE);
@@ -32,7 +32,7 @@ export default function DeviceCategoriesGlobalClient() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getGlobalDeviceCategories({ page, limit: PER_PAGE, search, status: statusFilter });
+      const res = await getDeviceCategories({ page, limit: PER_PAGE, search, status: statusFilter });
       if (res.success && Array.isArray(res.data)) {
         setCategories(res.data);
         setTotal((res.meta as any)?.pagination?.total ?? res.data.length);
@@ -44,13 +44,13 @@ export default function DeviceCategoriesGlobalClient() {
   useEffect(() => { load(); }, [load]);
 
   const openCreate = () => { setSelected(null); setModalOpen(true); };
-  const openEdit   = (c: GlobalDeviceCategoryData) => { setSelected(c); setModalOpen(true); };
-  const askDelete  = (c: GlobalDeviceCategoryData) => { setPendingDelete(c); setConfirmOpen(true); };
+  const openEdit   = (c: DeviceCategoryData) => { setSelected(c); setModalOpen(true); };
+  const askDelete  = (c: DeviceCategoryData) => { setPendingDelete(c); setConfirmOpen(true); };
   const handleDelete = async () => {
     if (!pendingDelete) return;
     setDeleting(true);
     try {
-      const res = await deleteGlobalDeviceCategory(pendingDelete.id);
+      const res = await deleteDeviceCategory(pendingDelete.id);
       if (res.success) { toast.success('Category deleted'); load(); }
       else toast.error(res.message || 'Delete failed');
     } catch { toast.error('Delete failed'); }

@@ -33,8 +33,6 @@ import lcoRoutes from './routes/lcoRoutes.js';
 import tenantUserRoutes from './routes/tenantUserRoutes.js';
 import tenantUpstreamProviderRoutes from './routes/tenantUpstreamProviderRoutes.js';
 import tenantCableTypeRoutes from './routes/tenantCableTypeRoutes.js';
-import tenantDeviceCategoryRoutes from './routes/tenantDeviceCategoryRoutes.js';
-import tenantDeviceTypeRoutes from './routes/tenantDeviceTypeRoutes.js';
 import tenantUserSettingRoutes from './routes/tenantUserSettingRoutes.js';
 import tenantSupportTicketRoutes from './routes/tenantSupportTicketRoutes.js';
 import adminSupportTicketRoutes from './routes/adminSupportTicketRoutes.js';
@@ -104,8 +102,6 @@ app.use('/api/tenant/lcos', lcoRoutes);
 app.use('/api/tenant/users', tenantUserRoutes);
 app.use('/api/tenant/upstream-providers', tenantUpstreamProviderRoutes);
 app.use('/api/tenant/cable-types', tenantCableTypeRoutes);
-app.use('/api/tenant/device-categories', tenantDeviceCategoryRoutes);
-app.use('/api/tenant/device-types', tenantDeviceTypeRoutes);
 app.use('/api/tenant/user-settings', tenantUserSettingRoutes);
 app.use('/api/tenant/support-tickets', tenantSupportTicketRoutes);
 app.use('/api/support-tickets', auth(authService), adminSupportTicketRoutes);
@@ -395,64 +391,42 @@ const ensureTenantCableTypesTable = async () => {
   }
 };
 
-// Ensure tenant_device_categories table exists (auto-migration for v1.49.0)
+// Ensure tenant_device_categories table is migrated (auto-migration for v1.49.0 → v1.64.0)
 const ensureTenantDeviceCategoriesTable = async () => {
   try {
-    const exists = await db.schema.hasTable('tenant_device_categories');
-    if (!exists) {
-      await db.schema.createTable('tenant_device_categories', (t: any) => {
-        t.increments('id').primary();
-        t.string('uuid', 36).notNullable().unique();
-        t.integer('tenantBusinessId').unsigned().notNullable();
-        t.string('name', 255).notNullable();
-        t.string('code', 50).notNullable();
-        t.text('description').nullable();
-        t.enum('status', ['active', 'inactive', 'deleted']).notNullable().defaultTo('active');
-        t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
-        t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
-        t.datetime('deletedAt').nullable();
-        t.index(['tenantBusinessId'], 'idx_device_categories_business_id');
-        t.index(['status'], 'idx_device_categories_status');
-        t.unique(['tenantBusinessId', 'code'], 'uq_device_categories_business_code');
-      });
-      logger.info('Auto-migration: tenant_device_categories table created');
+    const oldExists = await db.schema.hasTable('tenant_device_categories');
+    if (oldExists) {
+      const newExists = await db.schema.hasTable('device_categories');
+      if (!newExists) {
+        await db.schema.renameTable('tenant_device_categories', 'device_categories');
+        logger.info('Auto-migration: renamed tenant_device_categories to device_categories');
+      } else {
+        // new table already exists; drop old one
+        await db.schema.dropTable('tenant_device_categories');
+        logger.info('Auto-migration: dropped obsolete tenant_device_categories table');
+      }
     }
   } catch (err: any) {
-    logger.warn('Auto-migration for tenant_device_categories skipped or failed', { error: err.message });
+    logger.warn('Auto-migration for tenant_device_categories rename skipped', { error: err.message });
   }
 };
 
-// Ensure tenant_device_types table exists (auto-migration for v1.50.0)
+// Ensure tenant_device_types table is migrated (auto-migration for v1.50.0 → v1.64.0)
 const ensureTenantDeviceTypesTable = async () => {
   try {
-    const exists = await db.schema.hasTable('tenant_device_types');
-    if (!exists) {
-      await db.schema.createTable('tenant_device_types', (t: any) => {
-        t.bigIncrements('id').primary();
-        t.string('uuid', 36).notNullable().unique();
-        t.bigInteger('tenantBusinessId').unsigned().notNullable();
-        t.bigInteger('tenantDeviceCategoryId').unsigned().notNullable();
-        t.string('name', 100).notNullable();
-        t.string('code', 50).notNullable();
-        t.boolean('isModelNumberRequired').notNullable().defaultTo(false);
-        t.boolean('isSerialNumberRequired').notNullable().defaultTo(false);
-        t.boolean('isMacAddressRequired').notNullable().defaultTo(false);
-        t.boolean('isIPAddressRequired').notNullable().defaultTo(false);
-        t.boolean('isGpsLocationRequired').notNullable().defaultTo(false);
-        t.text('description').nullable();
-        t.enum('status', ['active', 'inactive', 'deleted']).notNullable().defaultTo('active');
-        t.datetime('createdAt').notNullable().defaultTo(db.fn.now());
-        t.datetime('updatedAt').notNullable().defaultTo(db.fn.now());
-        t.datetime('deletedAt').nullable();
-        t.index(['tenantBusinessId'], 'idx_device_types_business_id');
-        t.index(['tenantDeviceCategoryId'], 'idx_device_types_category_id');
-        t.index(['status'], 'idx_device_types_status');
-        t.unique(['tenantBusinessId', 'code'], 'uq_device_types_business_code');
-      });
-      logger.info('Auto-migration: tenant_device_types table created');
+    const oldExists = await db.schema.hasTable('tenant_device_types');
+    if (oldExists) {
+      const newExists = await db.schema.hasTable('device_types');
+      if (!newExists) {
+        await db.schema.renameTable('tenant_device_types', 'device_types');
+        logger.info('Auto-migration: renamed tenant_device_types to device_types');
+      } else {
+        await db.schema.dropTable('tenant_device_types');
+        logger.info('Auto-migration: dropped obsolete tenant_device_types table');
+      }
     }
   } catch (err: any) {
-    logger.warn('Auto-migration for tenant_device_types skipped or failed', { error: err.message });
+    logger.warn('Auto-migration for tenant_device_types rename skipped', { error: err.message });
   }
 };
 
@@ -1038,22 +1012,6 @@ const startServer = async () => {
       logger.warn('Auto-migration for icons.type enum skipped or failed', { error: err.message });
     }
 
-    // Patch: rename widgetUuid → iconUuid in tenant_device_types (v1.61.0)
-    try {
-      const hasWidgetUuid = await db.schema.hasColumn('tenant_device_types', 'widgetUuid');
-      const hasIconUuid   = await db.schema.hasColumn('tenant_device_types', 'iconUuid');
-      if (hasWidgetUuid && !hasIconUuid) {
-        await db.raw('ALTER TABLE `tenant_device_types` CHANGE COLUMN `widgetUuid` `iconUuid` VARCHAR(36) NULL');
-        logger.info('Auto-migration: renamed widgetUuid → iconUuid in tenant_device_types');
-      } else if (!hasWidgetUuid && !hasIconUuid) {
-        await db.schema.alterTable('tenant_device_types', (t: any) => {
-          t.string('iconUuid', 36).nullable().after('isGpsLocationRequired');
-        });
-        logger.info('Auto-migration: added iconUuid column to tenant_device_types');
-      }
-    } catch (err: any) {
-      logger.warn('Auto-migration for tenant_device_types.iconUuid skipped or failed', { error: err.message });
-    }
   } catch (error: any) {
     logger.error('Initial database connection failed. Server is starting but database-dependent routes will return connectivity errors.', {
       error: error.message,

@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { createGlobalDeviceCategory, updateGlobalDeviceCategory, type GlobalDeviceCategoryData } from '@/lib/api';
+import { createDeviceCategory, updateDeviceCategory, type DeviceCategoryData } from '@/lib/api';
 
-interface Props { category: GlobalDeviceCategoryData | null; onClose: () => void; onSuccess: () => void; }
+interface Props { category: DeviceCategoryData | null; onClose: () => void; onSuccess: () => void; }
 
 export default function GlobalDeviceCategoryModal({ category, onClose, onSuccess }: Props) {
   const isEdit = !!category;
@@ -32,8 +32,8 @@ export default function GlobalDeviceCategoryModal({ category, onClose, onSuccess
       const body: any = { name: name.trim(), description: description.trim() || null };
       if (isEdit) body.status = status;
       const res = isEdit
-        ? await updateGlobalDeviceCategory(category!.id, body)
-        : await createGlobalDeviceCategory(body);
+        ? await updateDeviceCategory(category!.id, body)
+        : await createDeviceCategory(body);
       if (res.success) { toast.success(isEdit ? 'Category updated' : 'Category created'); onSuccess(); }
       else toast.error(res.message || 'Save failed');
     } catch { toast.error('Save failed'); }

@@ -6,10 +6,10 @@ import {
   createRoutePointTemplate,
   updateRoutePointTemplate,
   getIcons,
-  getGlobalDeviceTypes,
+  getDeviceTypes,
   type RoutePointTemplateData,
   type IconData,
-  type GlobalDeviceTypeData,
+  type DeviceTypeData,
 } from '@/lib/api';
 import styles from '@/app/(dashboard)/dashboard/dashboard.module.css';
 
@@ -74,11 +74,11 @@ export default function RoutePointTemplateModal({ template, onClose, onSuccess }
   const [saving, setSaving]       = useState(false);
   const [errors, setErrors]       = useState<Record<string, string>>({});
   const [icons, setIcons]         = useState<IconData[]>([]);
-  const [deviceTypes, setDeviceTypes] = useState<GlobalDeviceTypeData[]>([]);
+  const [deviceTypes, setDeviceTypes] = useState<DeviceTypeData[]>([]);
 
   useEffect(() => {
     getIcons({ limit: 100, status: 'active' }).then(r => { if (r.success && Array.isArray(r.data)) setIcons(r.data); }).catch(() => {});
-    getGlobalDeviceTypes({ limit: 100, status: 'active' }).then(r => { if (r.success && Array.isArray(r.data)) setDeviceTypes(r.data); }).catch(() => {});
+    getDeviceTypes({ limit: 100, status: 'active' }).then(r => { if (r.success && Array.isArray(r.data)) setDeviceTypes(r.data); }).catch(() => {});
   }, []);
 
   useEffect(() => {

@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/components/providers/AuthContext';
 import { toast } from 'sonner';
-import { getGlobalDeviceTypes, getGlobalDeviceCategories, deleteGlobalDeviceType, type GlobalDeviceTypeData, type GlobalDeviceCategoryData } from '@/lib/api';
+import { getDeviceTypes, getDeviceCategories, deleteDeviceType, type DeviceTypeData, type DeviceCategoryData } from '@/lib/api';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import GlobalDeviceTypeModal from '@/components/widgets/GlobalDeviceTypeModal';
 
@@ -18,8 +18,8 @@ export default function DeviceTypesGlobalClient() {
   const canUpdate = hasPermission('device_types.update');
   const canDelete = hasPermission('device_types.delete');
 
-  const [types, setTypes]               = useState<GlobalDeviceTypeData[]>([]);
-  const [categories, setCategories]     = useState<GlobalDeviceCategoryData[]>([]);
+  const [types, setTypes]               = useState<DeviceTypeData[]>([]);
+  const [categories, setCategories]     = useState<DeviceCategoryData[]>([]);
   const [total, setTotal]               = useState(0);
   const [page, setPage]                 = useState(1);
   const [search, setSearch]             = useState('');
@@ -27,15 +27,15 @@ export default function DeviceTypesGlobalClient() {
   const [catFilter, setCatFilter]       = useState('');
   const [loading, setLoading]           = useState(true);
   const [modalOpen, setModalOpen]       = useState(false);
-  const [selected, setSelected]         = useState<GlobalDeviceTypeData | null>(null);
+  const [selected, setSelected]         = useState<DeviceTypeData | null>(null);
   const [confirmOpen, setConfirmOpen]   = useState(false);
-  const [pendingDelete, setPendingDelete] = useState<GlobalDeviceTypeData | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<DeviceTypeData | null>(null);
   const [deleting, setDeleting]         = useState(false);
 
   const totalPages = Math.ceil(total / PER_PAGE);
 
   useEffect(() => {
-    getGlobalDeviceCategories({ limit: 100 }).then(res => {
+    getDeviceCategories({ limit: 100 }).then(res => {
       if (res.success && Array.isArray(res.data)) setCategories(res.data);
     }).catch(() => {});
   }, []);
@@ -43,7 +43,7 @@ export default function DeviceTypesGlobalClient() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getGlobalDeviceTypes({ page, limit: PER_PAGE, search, status: statusFilter, categoryId: catFilter || undefined });
+      const res = await getDeviceTypes({ page, limit: PER_PAGE, search, status: statusFilter, categoryId: catFilter || undefined });
       if (res.success && Array.isArray(res.data)) {
         setTypes(res.data);
         setTotal((res.meta as any)?.pagination?.total ?? res.data.length);
@@ -55,13 +55,13 @@ export default function DeviceTypesGlobalClient() {
   useEffect(() => { load(); }, [load]);
 
   const openCreate = () => { setSelected(null); setModalOpen(true); };
-  const openEdit   = (t: GlobalDeviceTypeData) => { setSelected(t); setModalOpen(true); };
-  const askDelete  = (t: GlobalDeviceTypeData) => { setPendingDelete(t); setConfirmOpen(true); };
+  const openEdit   = (t: DeviceTypeData) => { setSelected(t); setModalOpen(true); };
+  const askDelete  = (t: DeviceTypeData) => { setPendingDelete(t); setConfirmOpen(true); };
   const handleDelete = async () => {
     if (!pendingDelete) return;
     setDeleting(true);
     try {
-      const res = await deleteGlobalDeviceType(pendingDelete.id);
+      const res = await deleteDeviceType(pendingDelete.id);
       if (res.success) { toast.success('Device type deleted'); load(); }
       else toast.error(res.message || 'Delete failed');
     } catch { toast.error('Delete failed'); }

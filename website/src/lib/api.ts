@@ -1114,105 +1114,6 @@ export async function deleteCableType(uuid: string): Promise<ApiResponse> {
   return apiFetch(`/api/tenant/cable-types/${uuid}`, { method: 'DELETE' });
 }
 
-// ─── Device Categories ────────────────────────────────────────────────────────
-
-export interface DeviceCategoryData {
-  id: string;
-  type: string;
-  attributes: {
-    numericId: number;
-    name: string;
-    code: string;
-    description: string | null;
-    status: 'active' | 'inactive' | 'deleted';
-  };
-  meta: { createdAt: string; updatedAt: string };
-}
-
-export async function getDeviceCategories(params?: { page?: number; limit?: number; filter?: { status?: string; search?: string } }): Promise<ApiResponse<DeviceCategoryData[]>> {
-  const qs = new URLSearchParams();
-  if (params?.page) qs.set('page', String(params.page));
-  if (params?.limit) qs.set('limit', String(params.limit));
-  if (params?.filter?.status) qs.set('filter[status]', params.filter.status);
-  if (params?.filter?.search) qs.set('filter[search]', params.filter.search);
-  const query = qs.toString() ? `?${qs.toString()}` : '';
-  return apiFetch(`/api/tenant/device-categories${query}`);
-}
-
-export async function createDeviceCategory(data: any): Promise<ApiResponse<DeviceCategoryData>> {
-  return apiFetch('/api/tenant/device-categories', { method: 'POST', body: JSON.stringify(data) });
-}
-
-export async function updateDeviceCategory(uuid: string, data: any): Promise<ApiResponse<DeviceCategoryData>> {
-  return apiFetch(`/api/tenant/device-categories/${uuid}`, { method: 'PUT', body: JSON.stringify(data) });
-}
-
-export async function deactivateDeviceCategory(uuid: string): Promise<ApiResponse<DeviceCategoryData>> {
-  return apiFetch(`/api/tenant/device-categories/${uuid}/deactivate`, { method: 'POST' });
-}
-
-export async function activateDeviceCategory(uuid: string): Promise<ApiResponse<DeviceCategoryData>> {
-  return apiFetch(`/api/tenant/device-categories/${uuid}/activate`, { method: 'PUT' });
-}
-
-export async function deleteDeviceCategory(uuid: string): Promise<ApiResponse> {
-  return apiFetch(`/api/tenant/device-categories/${uuid}`, { method: 'DELETE' });
-}
-
-// ─── Device Types ─────────────────────────────────────────────────────────────
-
-export interface DeviceTypeData {
-  id: string;
-  type: string;
-  attributes: {
-    name: string;
-    code: string;
-    tenantDeviceCategoryId: number;
-    categoryName: string | null;
-    categoryUuid: string | null;
-    isModelNumberRequired: boolean;
-    isSerialNumberRequired: boolean;
-    isMacAddressRequired: boolean;
-    isIPAddressRequired: boolean;
-    isGpsLocationRequired: boolean;
-    iconUuid: string | null;
-    iconName: string | null;
-    iconCode: string | null;
-    iconFileType: 'svg' | 'png' | 'webp' | null;
-    iconSvgTemplate: string | null;
-    iconUrl: string | null;
-    description: string | null;
-    status: 'active' | 'inactive' | 'deleted';
-  };
-  meta: { createdAt: string; updatedAt: string };
-}
-
-export async function getDeviceTypes(params?: {
-  page?: number;
-  limit?: number;
-  filter?: { status?: string; categoryId?: number | string; search?: string };
-}): Promise<ApiResponse<DeviceTypeData[]>> {
-  const qs = new URLSearchParams();
-  if (params?.page) qs.set('page', String(params.page));
-  if (params?.limit) qs.set('limit', String(params.limit));
-  if (params?.filter?.status) qs.set('filter[status]', params.filter.status);
-  if (params?.filter?.categoryId) qs.set('filter[categoryId]', String(params.filter.categoryId));
-  if (params?.filter?.search) qs.set('filter[search]', params.filter.search);
-  const query = qs.toString() ? `?${qs.toString()}` : '';
-  return apiFetch(`/api/tenant/device-types${query}`);
-}
-
-export async function createDeviceType(data: any): Promise<ApiResponse<DeviceTypeData>> {
-  return apiFetch('/api/tenant/device-types', { method: 'POST', body: JSON.stringify(data) });
-}
-
-export async function updateDeviceType(uuid: string, data: any): Promise<ApiResponse<DeviceTypeData>> {
-  return apiFetch(`/api/tenant/device-types/${uuid}`, { method: 'PUT', body: JSON.stringify(data) });
-}
-
-export async function deleteDeviceType(uuid: string): Promise<ApiResponse> {
-  return apiFetch(`/api/tenant/device-types/${uuid}`, { method: 'DELETE' });
-}
 
 // ─── Support Tickets ──────────────────────────────────────────────────────────
 
@@ -1439,7 +1340,7 @@ export interface RoutePointTemplateData {
     code:                    string;
     name:                    string;
     iconId:                  number | null;
-    tenantDeviceCategoryId:  number | null;
+    deviceTypeId:            number | null;
     isDevice:                boolean;
     isPointNameRequired:     boolean;
     isPoleNumberRequired:    boolean;
@@ -1487,9 +1388,9 @@ export async function deleteRoutePointTemplate(uuid: string): Promise<ApiRespons
   return apiFetch(`/api/route-point-templates/${uuid}`, { method: 'DELETE' });
 }
 
-// ── Global Device Categories ─────────────────────────────────────────────────
+// ── Device Categories ────────────────────────────────────────────────────────
 
-export interface GlobalDeviceCategoryData {
+export interface DeviceCategoryData {
   id: string;
   type: string;
   attributes: {
@@ -1501,7 +1402,7 @@ export interface GlobalDeviceCategoryData {
   meta: { createdAt: string; updatedAt: string };
 }
 
-export async function getGlobalDeviceCategories(params?: { page?: number; limit?: number; search?: string; status?: string }): Promise<ApiResponse<GlobalDeviceCategoryData[]>> {
+export async function getDeviceCategories(params?: { page?: number; limit?: number; search?: string; status?: string }): Promise<ApiResponse<DeviceCategoryData[]>> {
   const q = new URLSearchParams();
   if (params?.page)   q.set('page',           String(params.page));
   if (params?.limit)  q.set('limit',          String(params.limit));
@@ -1510,21 +1411,21 @@ export async function getGlobalDeviceCategories(params?: { page?: number; limit?
   return apiFetch(`/api/device-categories${q.toString() ? `?${q}` : ''}`);
 }
 
-export async function createGlobalDeviceCategory(data: Record<string, any>): Promise<ApiResponse<GlobalDeviceCategoryData>> {
+export async function createDeviceCategory(data: Record<string, any>): Promise<ApiResponse<DeviceCategoryData>> {
   return apiFetch('/api/device-categories', { method: 'POST', body: JSON.stringify(data) });
 }
 
-export async function updateGlobalDeviceCategory(uuid: string, data: Record<string, any>): Promise<ApiResponse<GlobalDeviceCategoryData>> {
+export async function updateDeviceCategory(uuid: string, data: Record<string, any>): Promise<ApiResponse<DeviceCategoryData>> {
   return apiFetch(`/api/device-categories/${uuid}`, { method: 'PUT', body: JSON.stringify(data) });
 }
 
-export async function deleteGlobalDeviceCategory(uuid: string): Promise<ApiResponse> {
+export async function deleteDeviceCategory(uuid: string): Promise<ApiResponse> {
   return apiFetch(`/api/device-categories/${uuid}`, { method: 'DELETE' });
 }
 
-// ── Global Device Types ──────────────────────────────────────────────────────
+// ── Device Types ─────────────────────────────────────────────────────────────
 
-export interface GlobalDeviceTypeData {
+export interface DeviceTypeData {
   id: string;
   type: string;
   attributes: {
@@ -1550,7 +1451,7 @@ export interface GlobalDeviceTypeData {
   meta: { createdAt: string; updatedAt: string };
 }
 
-export async function getGlobalDeviceTypes(params?: { page?: number; limit?: number; search?: string; status?: string; categoryId?: string | number }): Promise<ApiResponse<GlobalDeviceTypeData[]>> {
+export async function getDeviceTypes(params?: { page?: number; limit?: number; search?: string; status?: string; categoryId?: string | number }): Promise<ApiResponse<DeviceTypeData[]>> {
   const q = new URLSearchParams();
   if (params?.page)       q.set('page',               String(params.page));
   if (params?.limit)      q.set('limit',              String(params.limit));
@@ -1560,15 +1461,15 @@ export async function getGlobalDeviceTypes(params?: { page?: number; limit?: num
   return apiFetch(`/api/device-types${q.toString() ? `?${q}` : ''}`);
 }
 
-export async function createGlobalDeviceType(data: Record<string, any>): Promise<ApiResponse<GlobalDeviceTypeData>> {
+export async function createDeviceType(data: Record<string, any>): Promise<ApiResponse<DeviceTypeData>> {
   return apiFetch('/api/device-types', { method: 'POST', body: JSON.stringify(data) });
 }
 
-export async function updateGlobalDeviceType(uuid: string, data: Record<string, any>): Promise<ApiResponse<GlobalDeviceTypeData>> {
+export async function updateDeviceType(uuid: string, data: Record<string, any>): Promise<ApiResponse<DeviceTypeData>> {
   return apiFetch(`/api/device-types/${uuid}`, { method: 'PUT', body: JSON.stringify(data) });
 }
 
-export async function deleteGlobalDeviceType(uuid: string): Promise<ApiResponse> {
+export async function deleteDeviceType(uuid: string): Promise<ApiResponse> {
   return apiFetch(`/api/device-types/${uuid}`, { method: 'DELETE' });
 }
 

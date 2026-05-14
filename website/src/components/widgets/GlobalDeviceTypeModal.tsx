@@ -1,11 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { createGlobalDeviceType, updateGlobalDeviceType, getIcons, type GlobalDeviceTypeData, type GlobalDeviceCategoryData, type IconData } from '@/lib/api';
+import { createDeviceType, updateDeviceType, getIcons, type DeviceTypeData, type DeviceCategoryData, type IconData } from '@/lib/api';
 
 interface Props {
-  deviceType: GlobalDeviceTypeData | null;
-  categories: GlobalDeviceCategoryData[];
+  deviceType: DeviceTypeData | null;
+  categories: DeviceCategoryData[];
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -67,8 +67,8 @@ export default function GlobalDeviceTypeModal({ deviceType, categories, onClose,
       };
       if (isEdit) body.status = status;
       const res = isEdit
-        ? await updateGlobalDeviceType(deviceType!.id, body)
-        : await createGlobalDeviceType(body);
+        ? await updateDeviceType(deviceType!.id, body)
+        : await createDeviceType(body);
       if (res.success) { toast.success(isEdit ? 'Device type updated' : 'Device type created'); onSuccess(); }
       else toast.error(res.message || 'Save failed');
     } catch { toast.error('Save failed'); }

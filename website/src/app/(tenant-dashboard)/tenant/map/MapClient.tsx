@@ -274,7 +274,7 @@ export default function MapClient() {
 
   const filteredDeviceTypes = useMemo(() => {
     if (!categoryFilter) return deviceTypes;
-    return deviceTypes.filter((dt) => String(dt.attributes.tenantDeviceCategoryId) === categoryFilter);
+    return deviceTypes.filter((dt) => String(dt.attributes.deviceCategoryId) === categoryFilter);
   }, [deviceTypes, categoryFilter]);
 
   const handleCategoryChange = useCallback((val: string) => {
@@ -884,7 +884,7 @@ export default function MapClient() {
                 <select className={styles.filterSelect} value={categoryFilter} onChange={(e) => handleCategoryChange(e.target.value)}>
                   <option value="">All Categories</option>
                   {categories.map((c) => (
-                    <option key={c.id} value={String(c.attributes.numericId)}>{c.attributes.name}</option>
+                    <option key={c.id} value={c.id}>{c.attributes.name}</option>
                   ))}
                 </select>
               </div>
