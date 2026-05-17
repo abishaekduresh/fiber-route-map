@@ -22,6 +22,7 @@ const ICON_TYPE_LABELS: Record<IconType, string> = {
   route_point:    'Route Point',
   customer_end:   'Customer End',
   flag:           'Flag',
+  others:         'Others',
 };
 
 const PER_PAGE = 10;
@@ -167,16 +168,17 @@ export default function IconsClient() {
             <p>No icons found</p>
           </div>
         ) : (
+          <div className={styles.tableScroll}>
           <table className={styles.userTable}>
             <thead>
               <tr>
                 <th>Code</th>
                 <th>Name</th>
-                <th>Type</th>
+                <th className={styles.mobileHidden}>Type</th>
                 <th>Icon</th>
-                <th>Size</th>
+                <th className={styles.mobileHidden}>Size</th>
                 <th>Status</th>
-                <th>Created</th>
+                <th className={styles.mobileHidden}>Created</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
@@ -191,7 +193,7 @@ export default function IconsClient() {
                       </code>
                     </td>
                     <td style={{ fontWeight: 500 }}>{a.name}</td>
-                    <td>
+                    <td className={styles.mobileHidden}>
                       <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
                         {ICON_TYPE_LABELS[a.type] ?? a.type}
                       </span>
@@ -209,11 +211,11 @@ export default function IconsClient() {
                         <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontFamily: 'ui-monospace, monospace' }}>{a.iconType}</span>
                       )}
                     </td>
-                    <td style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
+                    <td className={styles.mobileHidden} style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
                       {a.width} × {a.height}
                     </td>
                     <td>{statusBadge(a.status)}</td>
-                    <td style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>
+                    <td className={styles.mobileHidden} style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>
                       {new Date(w.meta.createdAt).toLocaleDateString()}
                     </td>
                     <td>
@@ -246,6 +248,7 @@ export default function IconsClient() {
               })}
             </tbody>
           </table>
+          </div>
         )}
 
         {/* Pagination */}

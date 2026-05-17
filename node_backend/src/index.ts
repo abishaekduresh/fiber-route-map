@@ -564,7 +564,7 @@ const ensureIconsTable = async () => {
         t.string('uuid', 36).notNullable().unique();
         t.string('code', 100).notNullable().unique();
         t.string('name', 255).notNullable();
-        t.enum('type', ['active_device', 'passive_device', 'power_device', 'junction', 'fiber_terminal', 'splitter', 'coupler', 'route_point', 'customer_end', 'flag']).notNullable();
+        t.enum('type', ['active_device', 'passive_device', 'power_device', 'junction', 'fiber_terminal', 'splitter', 'coupler', 'route_point', 'customer_end', 'flag', 'others']).notNullable();
         t.enum('iconType', ['svg', 'png', 'webp']).notNullable().defaultTo('svg');
         t.specificType('svgTemplate', 'LONGTEXT').nullable();
         t.string('iconUrl', 512).nullable();
@@ -1141,16 +1141,16 @@ const startServer = async () => {
     // Ensure route_point_templates tables exist (v1.64.0)
     await ensureRoutePointTemplateTables();
 
-    // Patch: update icons.type enum with route_point + customer_end (v1.61.0)
+    // Patch: update icons.type enum with route_point + customer_end + others (v1.61.0 / v1.70.0)
     try {
       await db.raw(`
         ALTER TABLE icons
         MODIFY COLUMN type ENUM(
           'active_device','passive_device','power_device',
-          'junction','fiber_terminal','splitter','coupler','route_point','customer_end','flag'
+          'junction','fiber_terminal','splitter','coupler','route_point','customer_end','flag','others'
         ) NOT NULL
       `);
-      logger.info('Auto-migration: icons.type enum updated with route_point and customer_end');
+      logger.info('Auto-migration: icons.type enum updated with route_point, customer_end and others');
     } catch (err: any) {
       logger.warn('Auto-migration for icons.type enum skipped or failed', { error: err.message });
     }

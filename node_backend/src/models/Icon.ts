@@ -8,7 +8,8 @@ export type IconType =
   | 'coupler'
   | 'route_point'
   | 'customer_end'
-  | 'flag';
+  | 'flag'
+  | 'others';
 
 export type IconFileType = 'svg' | 'png' | 'webp';
 

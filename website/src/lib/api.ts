@@ -1281,7 +1281,7 @@ export async function deleteUserSetting(key: string): Promise<ApiResponse> {
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
-export type IconType = 'active_device' | 'passive_device' | 'power_device' | 'junction' | 'fiber_terminal' | 'splitter' | 'coupler' | 'route_point' | 'customer_end' | 'flag';
+export type IconType = 'active_device' | 'passive_device' | 'power_device' | 'junction' | 'fiber_terminal' | 'splitter' | 'coupler' | 'route_point' | 'customer_end' | 'flag' | 'others';
 export type IconFileType = 'svg' | 'png' | 'webp';
 export type IconStatus = 'active' | 'inactive' | 'deleted';
 

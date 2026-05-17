@@ -16,6 +16,7 @@ const ICON_TYPES: { value: IconType; label: string }[] = [
   { value: 'route_point',    label: 'Route Point' },
   { value: 'customer_end',   label: 'Customer End' },
   { value: 'flag',           label: 'Flag' },
+  { value: 'others',         label: 'Others' },
 ];
 
 interface FormState {
