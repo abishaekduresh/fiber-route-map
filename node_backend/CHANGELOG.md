@@ -5,6 +5,13 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.72.0] - 2026-05-17
+
+### Changed
+- **LeafletMap** (`LeafletMap.tsx`): Added `FlyToPoint` internal component — fires `map.flyTo(position, zoom, { duration: 0.6 })` whenever `flyToPosition` prop changes. Added `flyToPosition?: [number, number] | null` and `onEditPointClick?: (idx: number) => void` to `LeafletMapProps`. `EditLayer` point-handle markers now call `onPointClick(i)` on click, enabling the main map to open the per-point modal.
+
+> No API or database changes in this version. All changes are frontend-only.
+
 ## [1.71.0] - 2026-05-17
 
 ### Fixed

@@ -2,6 +2,24 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.72.0] - 2026-05-17
+
+### Added
+- **Compact points list in Edit Route panel** (`/tenant/map`): Replaced the crammed inline expandable point editor with a scannable compact list. Each row shows a drag handle, a role-coloured numbered chip (green = start, blue = mid, pink = end), the point name and a meta line (template code · lat,lon), and hover-revealed action buttons (Move Up, Move Down, Duplicate, Delete). Active row has a left accent bar tinted to the point role. A dashed "+ Add point" row at the bottom appends a new point near the last one and auto-opens the modal.
+- **Point Modal** (`PointModal.tsx`, `PointModal.module.css`): Dedicated 820px centred modal for per-point editing, replacing all inline form fields.
+  - **Header**: role-tinted 44px icon box, breadcrumb `R55 › Point 3 of 4`, point name + uppercase role badge, prev/next navigation arrows (disabled at ends), close button.
+  - **Left column**: display-only Point Role indicator (segmented control showing start/mid/end), Point Name input (required), 2-column Route Point Template card grid (icon + name + code per card, "No template" deselect card), dynamic RPT-flag-driven fields (same 27 fields as before), GPS Latitude + Longitude mono inputs + Pick button, Description textarea.
+  - **Right column**: green "All required fields are set" / amber "Fill name and GPS" validation banner, MiniMap (dark OSM tiles, CSS crosshair pin with pulsing ring animation, live coordinate readout overlay), Photos placeholder section, sequence metadata footer.
+  - **Footer**: inline Delete confirmation (`Delete Point → Delete / Cancel`), auto-saving drafts indicator with pulsing green dot, Cancel and Save Point (disabled until name + GPS are set).
+- **MiniMap component** (`MiniMap.tsx`): Dynamically imported (SSR-safe) dark-tile Leaflet mini-map that auto-recenters when coordinates change. Rendered inside the modal's right column.
+- **Map pin → modal click**: Clicking any edit-mode point handle on the main Leaflet map now opens the Point Modal for that point and flies the map to its coordinates (`FlyToPoint` component added to LeafletMap).
+- **Point reordering / duplicate**: Move Up, Move Down, and Duplicate actions in the compact list; all backed by snapshotted undo.
+
+### Changed
+- **`onEditMapClick` / `onInsertEditPoint`** now auto-open the Point Modal for the newly added/inserted point.
+- **`EditSnapshot` type** extended with `ptTypes: string[]` so undo restores explicit point-type overrides alongside coordinates, templates, and field data.
+- **LeafletMap**: added `flyToPosition?: [number, number] | null` prop (`FlyToPoint` component) and `onEditPointClick?: (idx: number) => void` prop (wired to point-handle click events in `EditLayer`).
+
 ## [1.71.0] - 2026-05-17
 
 ### Fixed

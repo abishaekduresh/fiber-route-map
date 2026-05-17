@@ -2,6 +2,26 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
+## [1.72.0] - 2026-05-17
+
+### Added
+- **Compact points list** (`MapClient.tsx`, `map.module.css`): Replaces the inline expandable rows in Edit Route panel. Each row: drag handle + role-coloured chip (28px) + name/meta line (template code · lat,lon) + hover action buttons (↑ ↓ ⧉ 🗑). Active row gets a left role-colour accent bar. Dashed "+ Add point" row appends and opens the modal.
+- **`PointModal.tsx` + `PointModal.module.css`**: Full-screen centred overlay (820px, `border-radius: 16px`, `slideUp` + `fadeIn` entry animations, `backdrop-filter: blur(6px)`).
+  - Header: role-tinted icon box + breadcrumb + title + prev/next arrows + close.
+  - Left col: role indicator, point name, template grid (2-col cards), dynamic RPT fields, GPS row (lat/lng mono + Pick button), description.
+  - Right col: validation banner, MiniMap with crosshair pin + pulsing ring + coords overlay, photos placeholder, metadata.
+  - Footer: inline delete confirm, auto-save dot, Cancel + Save Point.
+- **`MiniMap.tsx`**: SSR-safe dynamically imported dark-tile Leaflet mini-map with `useMap` `setView` recentering.
+- **Point reorder / duplicate**: `swapEditPoints`, `duplicateEditPoint`, `addEditPointNearLast` handlers.
+- **`openModalForPoint`**: clicking a compact list row or a map point handle opens the modal and fires `flyToPosition`.
+- **`editPointTypes[]`** state: stores per-point role overrides; included in undo snapshots.
+- **`editRouteCode`** state: populates the `R55 ›` breadcrumb in the modal.
+
+### Changed
+- `onEditMapClick` / `onInsertEditPoint` auto-open the modal for newly added points.
+- `EditSnapshot` type gains `ptTypes: string[]`.
+- LeafletMap now receives `flyToPosition` and `onEditPointClick` props.
+
 ## [1.71.0] - 2026-05-17
 
 ### Fixed
