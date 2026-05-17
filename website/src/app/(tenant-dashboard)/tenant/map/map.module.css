@@ -1022,6 +1022,191 @@
   }
 }
 
+/* ── Compact points list (edit mode) ────────────────────────── */
+.compactList {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #1c2430;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 0.25rem;
+}
+
+.compactListHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.6rem;
+  background: #0a0d12;
+  border-bottom: 1px solid #1c2430;
+}
+
+.compactListTitle {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #6b7689;
+}
+
+.compactListCount {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  background: #1c2430;
+  border: 1px solid #222b38;
+  border-radius: 99px;
+  color: #9aa6b8;
+  font-family: ui-monospace, monospace;
+}
+
+.compactListScroll {
+  max-height: 260px;
+  overflow-y: auto;
+}
+.compactListScroll::-webkit-scrollbar { width: 3px; }
+.compactListScroll::-webkit-scrollbar-thumb { background: #222b38; border-radius: 99px; }
+
+/* ── Compact row ─────────────────────────────────────────────── */
+.compactRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 8px;
+  border-bottom: 1px solid #1c2430;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.1s;
+  background: transparent;
+}
+.compactRow:last-child { border-bottom: none; }
+.compactRow:hover { background: #151b24; }
+
+.compactRowActive {
+  background: #151b24 !important;
+}
+.compactRowActive::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--row-role-color, #3b82f6);
+}
+
+.compactDrag {
+  color: #2d3848;
+  cursor: grab;
+  font-size: 0.875rem;
+  line-height: 1;
+  flex-shrink: 0;
+  padding: 0 1px;
+  transition: color 0.1s;
+}
+.compactRow:hover .compactDrag { color: #6b7689; }
+
+.compactChip {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  border: 2px solid rgba(255,255,255,0.18);
+}
+
+.compactInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.compactName {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #e6edf6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compactRolePill {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.compactMeta {
+  font-size: 0.675rem;
+  color: #6b7689;
+  font-family: ui-monospace, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  gap: 6px;
+}
+
+.compactMetaSep { color: #2d3848; }
+
+/* Action buttons — revealed on row hover */
+.compactActions {
+  display: none;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.compactRow:hover .compactActions { display: flex; }
+
+.compactActBtn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #6b7689;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+  padding: 0;
+}
+.compactActBtn:hover { background: #1c2430; color: #e6edf6; border-color: #222b38; }
+.compactActBtn:disabled { opacity: 0.25; cursor: not-allowed; }
+.compactActBtnDanger:hover { background: rgba(239,68,68,0.1); color: #ef4444; border-color: rgba(239,68,68,0.25); }
+
+/* ── Add-point dashed row ────────────────────────────────────── */
+.compactAddRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  border-top: 1px dashed #1c2430;
+  color: #6b7689;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s;
+  background: transparent;
+}
+.compactAddRow:hover { color: #3b82f6; background: rgba(59,130,246,0.04); }
+
 /* ── Mobile ──────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .wrapper {

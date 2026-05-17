@@ -14,7 +14,18 @@ import type { MapMarker, RoutePolyline, RoutePointIcon } from './LeafletMap';
 import MapSettingsPanel, { MapSettings, DEFAULT_MAP_SETTINGS } from '@/components/tenant-map/MapSettingsPanel';
 import DrawSearchableSelect, { DSOption } from './DrawSearchableSelect';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import PointModal, { PointDraft } from './PointModal';
 import styles from './map.module.css';
+
+// ── Role colours (compact list) ───────────────────────────────────────────────
+const ROLE_COLORS: Record<string, { bg: string; chip: string; text: string }> = {
+  start:    { bg: '#10b981', chip: 'rgba(16,185,129,0.15)',   text: '#10b981' },
+  middle:   { bg: '#3b82f6', chip: 'rgba(59,130,246,0.15)',   text: '#3b82f6' },
+  end:      { bg: '#ec4899', chip: 'rgba(236,72,153,0.15)',   text: '#ec4899' },
+  junction: { bg: '#a78bfa', chip: 'rgba(167,139,250,0.15)', text: '#a78bfa' },
+  pole:     { bg: '#f59e0b', chip: 'rgba(245,158,11,0.15)',   text: '#f59e0b' },
+  device:   { bg: '#6b7280', chip: 'rgba(107,114,128,0.15)', text: '#9aa6b8' },
+};
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -140,15 +151,20 @@ export default function MapClient() {
   const [editParentUuid, setEditParentUuid]               = useState('');
   const [editDescription, setEditDescription]             = useState('');
   const [editStatus, setEditStatus]                       = useState('active');
+  const [editRouteCode, setEditRouteCode]                 = useState('');
+  const [editPointTypes, setEditPointTypes]               = useState<string[]>([]);
   const [isSavingEdit, setIsSavingEdit]                   = useState(false);
   const [saveEditError, setSaveEditError]                 = useState('');
   const [pendingDeleteIdx, setPendingDeleteIdx]           = useState<number | null>(null);
+  const [modalPointIdx, setModalPointIdx]                 = useState<number | null>(null);
+  const [flyToPosition, setFlyToPosition]                 = useState<[number, number] | null>(null);
 
   type EditSnapshot = {
     points:    [number, number][];
     templates: string[];
     fieldData: Record<string, string>[];
     expanded:  boolean[];
+    ptTypes:   string[];
   };
   const [editHistory, setEditHistory] = useState<EditSnapshot[]>([]);
 
@@ -292,7 +308,7 @@ export default function MapClient() {
                 lng:            p.longitude,
                 pointType:      p.pointType,
                 sequenceNumber: p.sequenceNumber,
-                iconFileType: widget?.attributes.iconType ?? (rptAttrs?.iconFileType ?? (dtAttrs?.iconFileType ?? null)),
+                iconFileType: (widget?.attributes.iconType ?? (rptAttrs?.iconFileType ?? (dtAttrs?.iconFileType ?? null))) as ('svg' | 'png' | 'webp' | null),
                 iconSvg:      widget?.attributes.svgTemplate ?? (rptAttrs?.iconSvgTemplate ?? (dtAttrs?.iconSvgTemplate ?? null)),
                 iconUrl:      widget?.attributes.iconUrl ?? (rptAttrs?.iconUrl ?? (dtAttrs?.iconUrl ?? null)),
                 iconWidth:    widget?.attributes.width ?? null,
@@ -383,6 +399,7 @@ export default function MapClient() {
       return fd;
     }));
     setEditPointExpanded(pts.map(() => false));
+    setEditPointTypes(pts.map((p: any, idx: number) => p.pointType || getPointType(idx, pts.length)));
     setEditName(r.attributes.name);
     setEditType(r.attributes.type);
     setEditColor(r.attributes.routeColor || '#3b82f6');
@@ -390,8 +407,11 @@ export default function MapClient() {
     setEditParentUuid(r.attributes.parentRouteUuid || '');
     setEditDescription(r.attributes.description || '');
     setEditStatus(r.attributes.status || 'active');
+    setEditRouteCode(r.attributes.code || '');
     setSaveEditError('');
     setEditHistory([]);
+    setModalPointIdx(null);
+    setFlyToPosition(null);
     setDrawMode(false);
     setEditMode(true);
   }, []);
@@ -399,12 +419,16 @@ export default function MapClient() {
   const cancelEdit = useCallback(() => {
     setEditMode(false);
     setEditRouteId('');
+    setEditRouteCode('');
     setEditPoints([]);
     setEditPointTemplates([]);
     setEditPointFieldData([]);
     setEditPointExpanded([]);
+    setEditPointTypes([]);
     setSaveEditError('');
     setEditHistory([]);
+    setModalPointIdx(null);
+    setFlyToPosition(null);
   }, []);
 
   const handleDeleteRoute = useCallback(async (routeId: string) => {
@@ -419,10 +443,12 @@ export default function MapClient() {
   const _etRef  = useRef(editPointTemplates);
   const _efdRef = useRef(editPointFieldData);
   const _eexRef = useRef(editPointExpanded);
-  useEffect(() => { _epRef.current  = editPoints; },        [editPoints]);
-  useEffect(() => { _etRef.current  = editPointTemplates; },[editPointTemplates]);
-  useEffect(() => { _efdRef.current = editPointFieldData; },[editPointFieldData]);
+  const _eptRef = useRef(editPointTypes);
+  useEffect(() => { _epRef.current  = editPoints; },         [editPoints]);
+  useEffect(() => { _etRef.current  = editPointTemplates; }, [editPointTemplates]);
+  useEffect(() => { _efdRef.current = editPointFieldData; }, [editPointFieldData]);
   useEffect(() => { _eexRef.current = editPointExpanded; },  [editPointExpanded]);
+  useEffect(() => { _eptRef.current = editPointTypes; },     [editPointTypes]);
 
   const pushEditSnapshot = useCallback(() => {
     setEditHistory((h) => [...h, {
@@ -430,15 +456,20 @@ export default function MapClient() {
       templates: [..._etRef.current],
       fieldData: _efdRef.current.map((fd) => ({ ...fd })),
       expanded:  [..._eexRef.current],
+      ptTypes:   [..._eptRef.current],
     }]);
   }, []);
 
   const onEditMapClick = useCallback((lat: number, lng: number) => {
     pushEditSnapshot();
+    const newIdx = _epRef.current.length;
     setEditPoints((prev) => [...prev, [lat, lng]]);
     setEditPointTemplates((prev) => [...prev, '']);
     setEditPointFieldData((prev) => [...prev, {}]);
-    setEditPointExpanded((prev) => [...prev.map(() => false), true]);
+    setEditPointExpanded((prev) => [...prev.map(() => false), false]);
+    setEditPointTypes((prev) => [...prev, 'middle']);
+    setModalPointIdx(newIdx);
+    setFlyToPosition([lat, lng]);
   }, [pushEditSnapshot]);
 
   const onEditPointMove = useCallback((idx: number, lat: number, lng: number) => {
@@ -447,6 +478,7 @@ export default function MapClient() {
 
   const onInsertEditPoint = useCallback((afterIdx: number, lat: number, lng: number) => {
     pushEditSnapshot();
+    const newIdx = afterIdx + 1;
     setEditPoints((prev) => [
       ...prev.slice(0, afterIdx + 1),
       [lat, lng] as [number, number],
@@ -456,9 +488,12 @@ export default function MapClient() {
     setEditPointFieldData((prev) => [...prev.slice(0, afterIdx + 1), {}, ...prev.slice(afterIdx + 1)]);
     setEditPointExpanded((prev) => [
       ...prev.slice(0, afterIdx + 1).map(() => false),
-      true,
+      false,
       ...prev.slice(afterIdx + 1).map(() => false),
     ]);
+    setEditPointTypes((prev) => [...prev.slice(0, afterIdx + 1), 'middle', ...prev.slice(afterIdx + 1)]);
+    setModalPointIdx(newIdx);
+    setFlyToPosition([lat, lng]);
   }, [pushEditSnapshot]);
 
   const deleteEditPoint = useCallback((idx: number) => {
@@ -466,6 +501,8 @@ export default function MapClient() {
     setEditPointTemplates((prev) => prev.filter((_, i) => i !== idx));
     setEditPointFieldData((prev) => prev.filter((_, i) => i !== idx));
     setEditPointExpanded((prev) => prev.filter((_, i) => i !== idx));
+    setEditPointTypes((prev) => prev.filter((_, i) => i !== idx));
+    setModalPointIdx(null);
   }, []);
 
   const undoEditPoint = useCallback(() => {
@@ -476,8 +513,50 @@ export default function MapClient() {
       setEditPointTemplates(snap.templates);
       setEditPointFieldData(snap.fieldData);
       setEditPointExpanded(snap.expanded);
+      setEditPointTypes(snap.ptTypes);
       return h.slice(0, -1);
     });
+  }, []);
+
+  // ── Point reorder / duplicate (compact list actions) ─────────────────────
+  const swapEditPoints = useCallback((i: number, j: number) => {
+    pushEditSnapshot();
+    const swap = <T,>(arr: T[]) => arr.map((v, k) => k === i ? arr[j] : k === j ? arr[i] : v);
+    setEditPoints((p) => swap(p));
+    setEditPointTemplates((p) => swap(p));
+    setEditPointFieldData((p) => swap(p));
+    setEditPointExpanded((p) => swap(p));
+    setEditPointTypes((p) => swap(p));
+  }, [pushEditSnapshot]);
+
+  const duplicateEditPoint = useCallback((idx: number) => {
+    pushEditSnapshot();
+    setEditPoints((p) => [...p.slice(0, idx + 1), [...p[idx]] as [number, number], ...p.slice(idx + 1)]);
+    setEditPointTemplates((p) => [...p.slice(0, idx + 1), p[idx], ...p.slice(idx + 1)]);
+    setEditPointFieldData((p) => [...p.slice(0, idx + 1), { ...p[idx] }, ...p.slice(idx + 1)]);
+    setEditPointExpanded((p) => [...p.slice(0, idx + 1), false, ...p.slice(idx + 1)]);
+    setEditPointTypes((p) => [...p.slice(0, idx + 1), p[idx] ?? 'middle', ...p.slice(idx + 1)]);
+  }, [pushEditSnapshot]);
+
+  const addEditPointNearLast = useCallback(() => {
+    const last = _epRef.current[_epRef.current.length - 1] ?? center;
+    const lat = last[0] + 0.0005;
+    const lng = last[1] + 0.0005;
+    pushEditSnapshot();
+    const newIdx = _epRef.current.length;
+    setEditPoints((p) => [...p, [lat, lng]]);
+    setEditPointTemplates((p) => [...p, '']);
+    setEditPointFieldData((p) => [...p, {}]);
+    setEditPointExpanded((p) => [...p, false]);
+    setEditPointTypes((p) => [...p, 'middle']);
+    setModalPointIdx(newIdx);
+    setFlyToPosition([lat, lng]);
+  }, [pushEditSnapshot, center]);
+
+  const openModalForPoint = useCallback((idx: number) => {
+    setModalPointIdx(idx);
+    const pt = _epRef.current[idx];
+    if (pt) setFlyToPosition([...pt] as [number, number]);
   }, []);
 
   const setEditPointTemplate = useCallback((idx: number, val: string) => {
@@ -488,6 +567,25 @@ export default function MapClient() {
 
   const setEditPointFieldValue = useCallback((idx: number, key: string, val: string) => {
     setEditPointFieldData((prev) => prev.map((fd, i) => i === idx ? { ...fd, [key]: val } : fd));
+  }, []);
+
+  const handleModalSave = useCallback((draft: PointDraft) => {
+    if (modalPointIdx === null) return;
+    const i = modalPointIdx;
+    setEditPoints((p) => p.map((pt, k) => k === i ? [draft.latitude, draft.longitude] as [number, number] : pt));
+    setEditPointTemplates((p) => p.map((t, k) => k === i ? draft.routePointTemplateUuid : t));
+    setEditPointFieldData((p) => p.map((fd, k) => k === i ? { ...draft.fieldData, pointName: draft.pointName } : fd));
+    setModalPointIdx(null);
+  }, [modalPointIdx]);
+
+  const handleModalNavigate = useCallback((delta: -1 | 1) => {
+    setModalPointIdx((prev) => {
+      if (prev === null) return null;
+      const next = prev + delta;
+      const pt = _epRef.current[next];
+      if (pt) setFlyToPosition([...pt] as [number, number]);
+      return next;
+    });
   }, []);
 
   const saveEdit = useCallback(async () => {
@@ -502,7 +600,7 @@ export default function MapClient() {
           sequenceNumber:         i + 1,
           latitude:               pt[0],
           longitude:              pt[1],
-          pointType:              getPointType(i, editPoints.length),
+          pointType:              editPointTypes[i] || getPointType(i, editPoints.length),
           routePointTemplateUuid: editPointTemplates[i] || null,
           fieldData:              Object.keys(fd).length > 0 ? fd : null,
           pointName:              fd.pointName        || null,
@@ -524,10 +622,14 @@ export default function MapClient() {
       if (!res.success) { setSaveEditError((res as any).message || 'Failed to save.'); return; }
       setEditMode(false);
       setEditRouteId('');
+      setEditRouteCode('');
       setEditPoints([]);
       setEditPointTemplates([]);
       setEditPointFieldData([]);
       setEditPointExpanded([]);
+      setEditPointTypes([]);
+      setModalPointIdx(null);
+      setFlyToPosition(null);
       await loadApiData();
     } catch {
       setSaveEditError('Failed to save.');
@@ -1004,7 +1106,9 @@ export default function MapClient() {
             onEditMapClick={onEditMapClick}
             onEditPointMove={onEditPointMove}
             onInsertEditPoint={onInsertEditPoint}
+            onEditPointClick={openModalForPoint}
             focusPoints={focusRoutePoints}
+            flyToPosition={flyToPosition}
           />
 
           {/* ── Edit mode panel ─────────────────────────────────────────── */}
@@ -1072,68 +1176,95 @@ export default function MapClient() {
                 <textarea className={styles.drawTextarea} rows={2} value={editDescription} onChange={(e) => setEditDescription(e.target.value)} />
               </div>
 
+              {/* ── Compact points list ────────────────────────────── */}
               {editPoints.length > 0 && (
-                <div className={styles.drawPointsList}>
-                  <div className={styles.drawPointsHeader}>
-                    <span>Points</span>
-                    <span className={styles.drawPointsCount}>{editPoints.length}</span>
+                <div className={styles.compactList}>
+                  <div className={styles.compactListHeader}>
+                    <span className={styles.compactListTitle}>Points</span>
+                    <span className={styles.compactListCount}>{editPoints.length}</span>
                     {editHistory.length > 0 && (
-                      <button className={styles.drawUndoInlineBtn} onClick={undoEditPoint} title="Undo last added point">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <button className={styles.drawUndoInlineBtn} onClick={undoEditPoint} title="Undo">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                           <path d="M3 7v6h6" /><path d="M3 13C5.33 9.33 8.5 7 12 7c4.42 0 8 3.58 8 8" />
                         </svg>
                         Undo
                       </button>
                     )}
                   </div>
-                  <div className={styles.drawPointsScroll}>
+
+                  <div className={styles.compactListScroll}>
                     {editPoints.map((pt, i) => {
-                      const ptType     = getPointType(i, editPoints.length);
-                      const isExpanded = editPointExpanded[i] ?? false;
-                      const fd         = editPointFieldData[i] ?? {};
-                      const rpt        = editPointTemplates[i] ? routePointTemplates.find((t) => t.id === editPointTemplates[i]) : null;
-                      const hasData    = !!(editPointTemplates[i] || Object.values(fd).some(Boolean));
-                      const rptAttrs   = rpt?.attributes;
+                      const ptType = editPointTypes[i] || getPointType(i, editPoints.length);
+                      const fd     = editPointFieldData[i] ?? {};
+                      const rpt    = editPointTemplates[i] ? routePointTemplates.find((t) => t.id === editPointTemplates[i]) : null;
+                      const rc     = ROLE_COLORS[ptType] ?? ROLE_COLORS.middle;
+                      const isActive = modalPointIdx === i;
 
                       return (
-                        <div key={i} className={styles.drawPointRow} data-type={ptType}>
-                          {/* Always-visible row header */}
-                          <div className={styles.drawPointMeta}>
-                            <span className={styles.drawSeq}>{i + 1}</span>
-                            <span className={`${styles.drawPtType} ${styles[`ptType_${ptType}`]}`}>{ptType}</span>
-                            {fd.pointName ? (
-                              <span className={styles.drawPointLabel}>{fd.pointName}</span>
-                            ) : (
-                              <span className={styles.drawCoords}>{pt[0].toFixed(4)}, {pt[1].toFixed(4)}</span>
-                            )}
-                            {/* Inline RPT icon preview when collapsed */}
-                            {!isExpanded && rptAttrs && rptAttrs.iconSvgTemplate && (
-                              <span className={styles.drawPointInlineIcon}>
-                                <span dangerouslySetInnerHTML={{ __html: fitSvgInline(rptAttrs.iconSvgTemplate) }} style={{ display: 'flex', width: 14, height: 14 }} />
+                        <div
+                          key={i}
+                          className={`${styles.compactRow} ${isActive ? styles.compactRowActive : ''}`}
+                          style={{ '--row-role-color': rc.bg } as React.CSSProperties}
+                          onClick={() => openModalForPoint(i)}
+                        >
+                          {/* Drag handle */}
+                          <span className={styles.compactDrag} onClick={(e) => e.stopPropagation()}>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+                            </svg>
+                          </span>
+
+                          {/* Role chip */}
+                          <span className={styles.compactChip} style={{ background: rc.bg }}>{i + 1}</span>
+
+                          {/* Name + meta */}
+                          <div className={styles.compactInfo}>
+                            <div className={styles.compactName}>
+                              <span>{fd.pointName || `Point ${i + 1}`}</span>
+                              <span className={styles.compactRolePill}
+                                style={{ background: rc.chip, color: rc.text }}>
+                                {ptType}
                               </span>
-                            )}
-                            {!isExpanded && rptAttrs && !rptAttrs.iconSvgTemplate && rptAttrs.iconUrl && (
-                              <span className={styles.drawPointInlineIcon}>
-                                <img src={rptAttrs.iconUrl} alt="" style={{ width: 14, height: 14, objectFit: 'contain' }} />
-                              </span>
-                            )}
-                            {hasData && !isExpanded && <span className={styles.drawPointDataDot} title="Has data" />}
-                            <button className={styles.drawPointExpandBtn} onClick={() => toggleEditPointExpanded(i)} title={isExpanded ? 'Collapse' : 'Expand'}>
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transition: 'transform 0.15s', transform: isExpanded ? 'rotate(180deg)' : 'none' }}>
-                                <polyline points="6 9 12 15 18 9" />
+                            </div>
+                            <div className={styles.compactMeta}>
+                              {rpt && <><span>{rpt.attributes.code}</span><span className={styles.compactMetaSep}>·</span></>}
+                              <span>{pt[0].toFixed(4)}, {pt[1].toFixed(4)}</span>
+                            </div>
+                          </div>
+
+                          {/* Action buttons */}
+                          <div className={styles.compactActions} onClick={(e) => e.stopPropagation()}>
+                            <button className={styles.compactActBtn} title="Move up"
+                              disabled={i === 0} onClick={() => swapEditPoints(i, i - 1)}>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="18 15 12 9 6 15" /></svg>
+                            </button>
+                            <button className={styles.compactActBtn} title="Move down"
+                              disabled={i === editPoints.length - 1} onClick={() => swapEditPoints(i, i + 1)}>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9" /></svg>
+                            </button>
+                            <button className={styles.compactActBtn} title="Duplicate" onClick={() => duplicateEditPoint(i)}>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
                               </svg>
                             </button>
-                            <button className={styles.drawPointDeleteBtn} onClick={() => setPendingDeleteIdx(i)} title="Remove point">
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                <path d="M18 6L6 18M6 6l12 12" />
+                            <button className={`${styles.compactActBtn} ${styles.compactActBtnDanger}`} title="Delete"
+                              onClick={() => setPendingDeleteIdx(i)}>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
                               </svg>
                             </button>
                           </div>
-                          {/* Expandable details */}
-                          {isExpanded && renderPointDetails(i, pt, editPointTemplates, editPointFieldData, setEditPointTemplate, setEditPointFieldValue)}
                         </div>
                       );
                     })}
+                  </div>
+
+                  {/* Add point row */}
+                  <div className={styles.compactAddRow} onClick={addEditPointNearLast}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    Add point
                   </div>
                 </div>
               )}
@@ -1290,6 +1421,35 @@ export default function MapClient() {
           )}
         </div>
       </div>
+
+      {/* ── Point modal ────────────────────────────────────────────────── */}
+      {editMode && modalPointIdx !== null && editPoints[modalPointIdx] && (() => {
+        const i  = modalPointIdx;
+        const pt = editPoints[i];
+        const fd = editPointFieldData[i] ?? {};
+        const draft: PointDraft = {
+          latitude:               pt[0],
+          longitude:              pt[1],
+          pointType:              editPointTypes[i] || getPointType(i, editPoints.length),
+          pointName:              fd.pointName ?? '',
+          routePointTemplateUuid: editPointTemplates[i] ?? '',
+          fieldData:              { ...fd },
+        };
+        return (
+          <PointModal
+            draft={draft}
+            pointIndex={i}
+            totalPoints={editPoints.length}
+            routeCode={editRouteCode}
+            templates={routePointTemplates}
+            rptFields={RPT_FIELDS}
+            onSave={handleModalSave}
+            onDelete={() => { deleteEditPoint(i); }}
+            onClose={() => setModalPointIdx(null)}
+            onNavigate={handleModalNavigate}
+          />
+        );
+      })()}
 
       {/* Settings panel */}
       <MapSettingsPanel

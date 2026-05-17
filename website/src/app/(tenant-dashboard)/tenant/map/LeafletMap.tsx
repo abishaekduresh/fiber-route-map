@@ -184,6 +184,15 @@ function FocusRoute({ points }: { points: [number, number][] }) {
   return null;
 }
 
+function FlyToPoint({ position }: { position: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo(position, Math.max(map.getZoom(), 15), { duration: 0.6 });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [position[0], position[1], map]);
+  return null;
+}
+
 export interface MapMarker {
   id: string;
   lat: number;
@@ -428,7 +437,7 @@ function RouteWidgetMarkers({ routePoints }: { routePoints: RoutePointIcon[] }) 
 }
 
 function EditLayer({
-  points, color, thickness, onMapClick, onPointMove, onInsertPoint,
+  points, color, thickness, onMapClick, onPointMove, onInsertPoint, onPointClick,
 }: {
   points: [number, number][];
   color: string;
@@ -436,6 +445,7 @@ function EditLayer({
   onMapClick: (lat: number, lng: number) => void;
   onPointMove: (idx: number, lat: number, lng: number) => void;
   onInsertPoint: (afterIdx: number, lat: number, lng: number) => void;
+  onPointClick?: (idx: number) => void;
 }) {
   const map = useMap();
   useEffect(() => {
@@ -498,6 +508,10 @@ function EditLayer({
             icon={icon}
             draggable
             eventHandlers={{
+              click(e) {
+                (e as any).originalEvent?.stopPropagation();
+                onPointClick?.(i);
+              },
               dragend(e) {
                 const { lat, lng } = (e.target as L.Marker).getLatLng();
                 onPointMove(i, lat, lng);
@@ -570,10 +584,12 @@ interface LeafletMapProps {
   onEditMapClick?: (lat: number, lng: number) => void;
   onEditPointMove?: (idx: number, lat: number, lng: number) => void;
   onInsertEditPoint?: (afterIdx: number, lat: number, lng: number) => void;
+  onEditPointClick?: (idx: number) => void;
   focusPoints?: [number, number][] | null;
+  flyToPosition?: [number, number] | null;
 }
 
-export default function LeafletMap({ layer, markers, center, zoom, showScaleBar = true, scaleUnit = 'metric', userLocation, drawMode, drawPoints = [], onMapClick, routes = [], onEditRoute, canEditRoutes, onDeleteRoute, canDeleteRoutes, editMode, editRouteId, editPoints = [], editRouteColor = '#3b82f6', editRouteThickness = 2, onEditMapClick, onEditPointMove, onInsertEditPoint, focusPoints }: LeafletMapProps) {
+export default function LeafletMap({ layer, markers, center, zoom, showScaleBar = true, scaleUnit = 'metric', userLocation, drawMode, drawPoints = [], onMapClick, routes = [], onEditRoute, canEditRoutes, onDeleteRoute, canDeleteRoutes, editMode, editRouteId, editPoints = [], editRouteColor = '#3b82f6', editRouteThickness = 2, onEditMapClick, onEditPointMove, onInsertEditPoint, onEditPointClick, focusPoints, flyToPosition }: LeafletMapProps) {
   const tile = TILE_LAYERS[layer] ?? TILE_LAYERS.street;
 
   return (
@@ -586,6 +602,7 @@ export default function LeafletMap({ layer, markers, center, zoom, showScaleBar 
       <TileLayer url={tile.url} attribution={tile.attribution} />
       <RecenterControl center={center} zoom={zoom} disabled={!!focusPoints} />
       {focusPoints && focusPoints.length >= 2 && <FocusRoute points={focusPoints} />}
+      {flyToPosition && <FlyToPoint position={flyToPosition} />}
       <CompassControl />
       {userLocation && <UserLocationMarker location={userLocation} />}
       {showScaleBar && (
@@ -650,6 +667,7 @@ export default function LeafletMap({ layer, markers, center, zoom, showScaleBar 
           onMapClick={onEditMapClick}
           onPointMove={onEditPointMove}
           onInsertPoint={onInsertEditPoint}
+          onPointClick={onEditPointClick}
         />
       )}
       {/* Draw mode */}
