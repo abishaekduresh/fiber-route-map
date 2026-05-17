@@ -495,11 +495,12 @@ function EditLayer({
         const isFirst = i === 0;
         const isLast  = i === points.length - 1;
         const dot     = isFirst ? '#10b981' : isLast ? '#ef4444' : color;
+        const size = 22;
         const icon = L.divIcon({
           className: '',
-          html: `<div style="width:14px;height:14px;border-radius:50%;background:${dot};border:2.5px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,0.45);cursor:grab;"></div>`,
-          iconSize:   [14, 14],
-          iconAnchor: [7, 7],
+          html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${dot};border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.5);cursor:grab;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;font-family:ui-monospace,monospace;line-height:1;user-select:none;">${i + 1}</div>`,
+          iconSize:   [size, size],
+          iconAnchor: [size / 2, size / 2],
         });
         return (
           <Marker

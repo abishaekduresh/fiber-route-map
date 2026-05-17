@@ -2,6 +2,19 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.73.0] - 2026-05-18
+
+### Fixed
+- **Save/Cancel buttons hidden in Edit Route panel** (`/tenant/map`): Draw panel now uses `top`+`bottom` anchoring instead of `max-height` so the footer is always visible above the Leaflet attribution bar.
+- **pointType stale on add/remove** (`/tenant/map`): Introduced `resolvePointType()` (module-level pure function) that always derives `start`/`end` from current index/total, only trusting stored custom types (`junction`, `pole`, `device`) for middle positions. Applied at all render, modal-draft, and save-payload sites.
+- **Duplicate "Point Name" field in PointModal** (`/tenant/map`): RPT dynamic fields now skip `pointName` (always rendered by the dedicated top-level input). Top-level Point Name input syncs to both `local.pointName` and `fieldData.pointName`.
+- **Save Point button not enabling** (`/tenant/map`): Validation correctly checks `local.pointName` (top-level field) which is now properly synced.
+- **Move up/down and duplicate buttons removed** from compact point rows (per UX requirement).
+- **Route Point Template selector** in PointModal replaced with a portal-based searchable dropdown — icon + name + code, search by name or code, `position: fixed` so it is never clipped by `formCol` overflow.
+- **Light theme compatibility** added for PointModal and compact points list / draw panel in `map.module.css`.
+- **Edit-mode point markers** now display sequence numbers (1, 2, 3…) instead of plain dots.
+- **Mid chip sequence number** in PointModal role picker now shows the actual point number instead of a hardcoded `2`.
+
 ## [1.72.0] - 2026-05-17
 
 ### Added

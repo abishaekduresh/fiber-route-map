@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
+import { createPortal } from 'react-dom';
 import { RoutePointTemplateData } from '@/lib/api';
 import styles from './PointModal.module.css';
 
@@ -55,6 +56,141 @@ const ROLE_OPTIONS = [
 function fitSvg(svg: string) {
   return svg.replace(/<svg([^>]*)>/i, (_, a) =>
     `<svg${a.replace(/\s+(width|height)="[^"]*"/gi, '')} style="width:100%;height:100%">`);
+}
+
+// ── RPT searchable select (portal-based to avoid overflow clipping) ───────────
+
+interface RptSelectProps {
+  value: string;
+  templates: RoutePointTemplateData[];
+  onChange: (uuid: string) => void;
+}
+
+function RptSearchSelect({ value, templates, onChange }: RptSelectProps) {
+  const [open, setOpen]   = useState(false);
+  const [query, setQuery] = useState('');
+  const triggerRef        = useRef<HTMLButtonElement>(null);
+  const dropdownRef       = useRef<HTMLDivElement>(null);
+  const searchRef         = useRef<HTMLInputElement>(null);
+
+  const selected = value ? templates.find(t => t.id === value) : null;
+
+  const filtered = templates.filter(t =>
+    !query || t.attributes.name.toLowerCase().includes(query.toLowerCase()) ||
+    t.attributes.code.toLowerCase().includes(query.toLowerCase())
+  );
+
+  // Dropdown rect relative to viewport (fixed positioning)
+  const [rect, setRect] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  const openDropdown = useCallback(() => {
+    if (!triggerRef.current) return;
+    const r = triggerRef.current.getBoundingClientRect();
+    setRect({ top: r.bottom + 4, left: r.left, width: r.width });
+    setOpen(true);
+  }, []);
+
+  useEffect(() => {
+    if (open) setTimeout(() => searchRef.current?.focus(), 20);
+  }, [open]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        triggerRef.current && !triggerRef.current.contains(e.target as Node) &&
+        dropdownRef.current && !dropdownRef.current.contains(e.target as Node)
+      ) { setOpen(false); setQuery(''); }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') { setOpen(false); setQuery(''); } };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
+
+  const select = (uuid: string) => { onChange(uuid); setOpen(false); setQuery(''); };
+
+  const renderIcon = (t: RoutePointTemplateData, size = 18) => {
+    const a = t.attributes;
+    if (a.iconSvgTemplate) return (
+      <span dangerouslySetInnerHTML={{ __html: fitSvg(a.iconSvgTemplate) }}
+        style={{ display: 'flex', width: size, height: size, flexShrink: 0 }} />
+    );
+    if (a.iconUrl) return <img src={a.iconUrl} alt="" style={{ width: size, height: size, objectFit: 'contain', flexShrink: 0 }} />;
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#6b7689" strokeWidth="1.5" style={{ flexShrink: 0 }}>
+        <circle cx="12" cy="12" r="9" />
+      </svg>
+    );
+  };
+
+  const dropdown = open && rect ? createPortal(
+    <div ref={dropdownRef} className={styles.rptDropdown} style={{ top: rect.top, left: rect.left, width: rect.width }}>
+      {/* Search */}
+      <div className={styles.rptSearch}>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={styles.rptSearchIcon}>
+          <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input ref={searchRef} className={styles.rptSearchInput} type="text"
+          placeholder="Search templates…" value={query} onChange={e => setQuery(e.target.value)} />
+      </div>
+      {/* None option */}
+      <div className={styles.rptOptionList}>
+        <button className={`${styles.rptOption} ${!value ? styles.rptOptionActive : ''}`} onClick={() => select('')}>
+          <span className={styles.rptOptionIcon}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <circle cx="12" cy="12" r="9" strokeDasharray="3 2" />
+            </svg>
+          </span>
+          <span className={styles.rptOptionInfo}>
+            <span className={styles.rptOptionName}>No template</span>
+          </span>
+          {!value && <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.rptCheck}><path d="M20 6L9 17l-5-5" /></svg>}
+        </button>
+        {filtered.map(t => (
+          <button key={t.id} className={`${styles.rptOption} ${value === t.id ? styles.rptOptionActive : ''}`} onClick={() => select(t.id)}>
+            <span className={styles.rptOptionIcon}>{renderIcon(t)}</span>
+            <span className={styles.rptOptionInfo}>
+              <span className={styles.rptOptionName}>{t.attributes.name}</span>
+              <span className={styles.rptOptionCode}>{t.attributes.code}</span>
+            </span>
+            {value === t.id && <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={styles.rptCheck}><path d="M20 6L9 17l-5-5" /></svg>}
+          </button>
+        ))}
+        {filtered.length === 0 && (
+          <div className={styles.rptEmpty}>No results for "{query}"</div>
+        )}
+      </div>
+    </div>,
+    document.body
+  ) : null;
+
+  return (
+    <>
+      <button ref={triggerRef} type="button"
+        className={`${styles.rptTrigger} ${open ? styles.rptTriggerOpen : ''}`}
+        onClick={() => open ? (setOpen(false), setQuery('')) : openDropdown()}
+      >
+        {selected ? (
+          <span className={styles.rptTriggerSelected}>
+            <span className={styles.rptTriggerIcon}>{renderIcon(selected, 16)}</span>
+            <span className={styles.rptTriggerName}>{selected.attributes.name}</span>
+            <span className={styles.rptTriggerCode}>{selected.attributes.code}</span>
+          </span>
+        ) : (
+          <span className={styles.rptTriggerPlaceholder}>No template</span>
+        )}
+        <svg className={`${styles.rptChevron} ${open ? styles.rptChevronUp : ''}`}
+          width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      {dropdown}
+    </>
+  );
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -136,12 +272,13 @@ export default function PointModal({
                 {ROLE_OPTIONS.map(role => {
                   const rcc = ROLE_COLORS[role.value];
                   const active = local.pointType === role.value;
+                  const chipNum = role.value === 'start' ? 1 : role.value === 'end' ? totalPoints : num;
                   return (
                     <div key={role.value} className={`${styles.roleBtn} ${active ? styles.roleBtnActive : ''}`}
                       style={active ? { borderColor: rcc.ring, background: rcc.chip, color: rcc.text } : {}}>
                       <span className={styles.roleChip}
                         style={active ? { background: rcc.bg, color: '#fff' } : {}}>
-                        {role.seq}
+                        {chipNum}
                       </span>
                       {role.label}
                     </div>
@@ -155,52 +292,27 @@ export default function PointModal({
             <div className={styles.field}>
               <label className={styles.fieldLabel}>Point Name <span className={styles.req}>*</span></label>
               <input className={styles.input} placeholder="e.g. Junction Box A"
-                value={local.pointName} onChange={e => set('pointName', e.target.value)} />
+                value={local.pointName}
+                onChange={e => {
+                  const v = e.target.value;
+                  setLocal(p => ({ ...p, pointName: v, fieldData: { ...p.fieldData, pointName: v } }));
+                }}
+              />
             </div>
 
-            {/* Template grid */}
+            {/* Template searchable select */}
             <div className={styles.field}>
               <label className={styles.fieldLabel}>Route Point Template</label>
-              <div className={styles.templateGrid}>
-                {/* "None" card */}
-                <button
-                  className={`${styles.noTemplate} ${!local.routePointTemplateUuid ? styles.noTemplateActive : ''}`}
-                  onClick={() => changeTemplate('')}
-                >
-                  No template
-                </button>
-
-                {templates.map(t => {
-                  const a = t.attributes;
-                  const active = local.routePointTemplateUuid === t.id;
-                  return (
-                    <button key={t.id}
-                      className={`${styles.templateCard} ${active ? styles.templateCardActive : ''}`}
-                      onClick={() => changeTemplate(t.id)}
-                    >
-                      <div className={styles.templateIconBox}>
-                        {a.iconSvgTemplate
-                          ? <span dangerouslySetInnerHTML={{ __html: fitSvg(a.iconSvgTemplate) }}
-                              style={{ display: 'flex', width: 20, height: 20 }} />
-                          : a.iconUrl
-                            ? <img src={a.iconUrl} alt="" style={{ width: 20, height: 20, objectFit: 'contain' }} />
-                            : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7689" strokeWidth="1.5">
-                                <circle cx="12" cy="12" r="9" />
-                              </svg>
-                        }
-                      </div>
-                      <div className={styles.templateInfo}>
-                        <span className={styles.templateName}>{a.name}</span>
-                        <span className={styles.templateCode}>{a.code}</span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+              <RptSearchSelect
+                value={local.routePointTemplateUuid}
+                templates={templates}
+                onChange={changeTemplate}
+              />
             </div>
 
             {/* Dynamic RPT fields */}
             {selectedRpt && rptFields.map(({ flag, key, label, type, placeholder }) => {
+              if (key === 'pointName') return null; // always handled by the top-level Point Name field
               if (!selectedRpt.attributes[flag]) return null;
               return (
                 <div key={key} className={styles.field}>
@@ -237,14 +349,6 @@ export default function PointModal({
                     onChange={e => set('longitude', parseFloat(e.target.value) || 0)}
                   />
                 </div>
-                <button className={styles.pickBtn} title="Click on the map to pick coordinates">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="3" />
-                    <line x1="12" y1="1" x2="12" y2="5" /><line x1="12" y1="19" x2="12" y2="23" />
-                    <line x1="1"  y1="12" x2="5"  y2="12" /><line x1="19" y1="12" x2="23" y2="12" />
-                  </svg>
-                  Pick
-                </button>
               </div>
             </div>
 
@@ -273,7 +377,11 @@ export default function PointModal({
               </div>
               {isValid
                 ? 'All required fields are set'
-                : 'Fill point name and GPS to enable save'
+                : local.pointName.trim() === '' && (local.latitude === 0 && local.longitude === 0)
+                  ? 'Fill point name and GPS to enable save'
+                  : local.pointName.trim() === ''
+                    ? 'Point name is required'
+                    : 'GPS coordinates are required'
               }
             </div>
 

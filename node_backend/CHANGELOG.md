@@ -5,6 +5,11 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.73.0] - 2026-05-18
+
+### Changed
+- No API or database changes. All fixes are frontend-only (PointModal UX, point type resolution, draw panel footer, light theme, searchable RPT dropdown).
+
 ## [1.72.0] - 2026-05-17
 
 ### Changed

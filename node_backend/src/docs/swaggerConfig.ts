@@ -10,7 +10,7 @@ const options: swaggerJSDoc.Options = {
     openapi: '3.0.0',
     info: {
       title: 'Fiber Route Map API',
-      version: '1.72.0',
+      version: '1.73.0',
       description: 'The authoritative backend REST API for the Fiber Route Map system.',
       contact: {
         name: 'API Support',

@@ -4,7 +4,7 @@ The authoritative backend REST API for the Fiber Route Map system, replicated in
 Built using [Express](https://expressjs.com/) and [TypeScript](https://www.typescriptlang.org/), leveraging [Knex.js](https://knexjs.org/) for database interaction.
 
 ## Version
-**Current Version:** 1.72.0 — No API/DB changes; frontend-only UX redesign for Edit Route point management (compact list, PointModal overlay, MiniMap, flyTo integration)
+**Current Version:** 1.73.0 — No API/DB changes; frontend-only fixes (pinned footer, pointType resolution, RPT searchable dropdown, light theme, map marker sequence numbers)
 
 ## Interactive Documentation
 The API is fully documented using Swagger/OpenAPI 3.0.

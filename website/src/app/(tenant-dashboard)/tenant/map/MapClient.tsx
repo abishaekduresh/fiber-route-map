@@ -84,6 +84,13 @@ const RPT_FIELDS: Array<{
 
 const LeafletMap = dynamic(() => import('./LeafletMap'), { ssr: false });
 
+// Always derive start/end from position; only trust stored type for custom middle roles
+function resolvePointType(i: number, total: number, stored: string | undefined): string {
+  if (i === 0) return 'start';
+  if (i === total - 1) return 'end';
+  return (stored && stored !== 'start' && stored !== 'end') ? stored : 'middle';
+}
+
 type LayerKey = 'street' | 'terrain' | 'dark';
 type GeoStatus = 'idle' | 'requesting' | 'granted' | 'denied' | 'unsupported';
 
@@ -399,7 +406,11 @@ export default function MapClient() {
       return fd;
     }));
     setEditPointExpanded(pts.map(() => false));
-    setEditPointTypes(pts.map((p: any, idx: number) => p.pointType || getPointType(idx, pts.length)));
+    // Store only custom middle types (junction/pole/device); start/end always resolved dynamically
+    setEditPointTypes(pts.map((p: any) => {
+      const t = p.pointType;
+      return (t && t !== 'start' && t !== 'end') ? t : 'middle';
+    }));
     setEditName(r.attributes.name);
     setEditType(r.attributes.type);
     setEditColor(r.attributes.routeColor || '#3b82f6');
@@ -600,7 +611,7 @@ export default function MapClient() {
           sequenceNumber:         i + 1,
           latitude:               pt[0],
           longitude:              pt[1],
-          pointType:              editPointTypes[i] || getPointType(i, editPoints.length),
+          pointType:              resolvePointType(i, editPoints.length, editPointTypes[i]),
           routePointTemplateUuid: editPointTemplates[i] || null,
           fieldData:              Object.keys(fd).length > 0 ? fd : null,
           pointName:              fd.pointName        || null,
@@ -1114,6 +1125,7 @@ export default function MapClient() {
           {/* ── Edit mode panel ─────────────────────────────────────────── */}
           {editMode && (
             <div className={styles.drawPanel}>
+              <div className={styles.drawPanelBody}>
               <div className={styles.drawPanelHeader}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -1194,7 +1206,7 @@ export default function MapClient() {
 
                   <div className={styles.compactListScroll}>
                     {editPoints.map((pt, i) => {
-                      const ptType = editPointTypes[i] || getPointType(i, editPoints.length);
+                      const ptType = resolvePointType(i, editPoints.length, editPointTypes[i]);
                       const fd     = editPointFieldData[i] ?? {};
                       const rpt    = editPointTemplates[i] ? routePointTemplates.find((t) => t.id === editPointTemplates[i]) : null;
                       const rc     = ROLE_COLORS[ptType] ?? ROLE_COLORS.middle;
@@ -1234,19 +1246,6 @@ export default function MapClient() {
 
                           {/* Action buttons */}
                           <div className={styles.compactActions} onClick={(e) => e.stopPropagation()}>
-                            <button className={styles.compactActBtn} title="Move up"
-                              disabled={i === 0} onClick={() => swapEditPoints(i, i - 1)}>
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="18 15 12 9 6 15" /></svg>
-                            </button>
-                            <button className={styles.compactActBtn} title="Move down"
-                              disabled={i === editPoints.length - 1} onClick={() => swapEditPoints(i, i + 1)}>
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9" /></svg>
-                            </button>
-                            <button className={styles.compactActBtn} title="Duplicate" onClick={() => duplicateEditPoint(i)}>
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-                              </svg>
-                            </button>
                             <button className={`${styles.compactActBtn} ${styles.compactActBtnDanger}`} title="Delete"
                               onClick={() => setPendingDeleteIdx(i)}>
                               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1269,12 +1268,15 @@ export default function MapClient() {
                 </div>
               )}
 
-              {saveEditError && <p className={styles.drawError}>{saveEditError}</p>}
-              <div className={styles.drawActions}>
-                <button className={styles.drawUndoBtn} onClick={cancelEdit}>Cancel</button>
-                <button className={styles.drawSaveBtn} onClick={saveEdit} disabled={isSavingEdit || editPoints.length < 2}>
-                  {isSavingEdit ? 'Saving…' : 'Save Changes'}
-                </button>
+              </div>{/* end drawPanelBody */}
+              <div className={styles.drawPanelFooter}>
+                {saveEditError && <p className={styles.drawError}>{saveEditError}</p>}
+                <div className={styles.drawActions}>
+                  <button className={styles.drawUndoBtn} onClick={cancelEdit}>Cancel</button>
+                  <button className={styles.drawSaveBtn} onClick={saveEdit} disabled={isSavingEdit || editPoints.length < 2}>
+                    {isSavingEdit ? 'Saving…' : 'Save Changes'}
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -1282,6 +1284,7 @@ export default function MapClient() {
           {/* ── Draw mode save panel ────────────────────────────────────── */}
           {drawMode && (
             <div className={styles.drawPanel}>
+              <div className={styles.drawPanelBody}>
               <div className={styles.drawPanelHeader}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M3 17L21 17M3 7l6 4 6-4 6 4" />
@@ -1408,14 +1411,17 @@ export default function MapClient() {
                 </div>
               )}
 
-              {saveError && <p className={styles.drawError}>{saveError}</p>}
-              <div className={styles.drawActions}>
-                <button className={styles.drawUndoBtn} onClick={undoLastPoint} disabled={drawPoints.length === 0}>
-                  Undo
-                </button>
-                <button className={styles.drawSaveBtn} onClick={saveRoute} disabled={isSaving || drawPoints.length < 2}>
-                  {isSaving ? 'Saving…' : 'Save Route'}
-                </button>
+              </div>{/* end drawPanelBody */}
+              <div className={styles.drawPanelFooter}>
+                {saveError && <p className={styles.drawError}>{saveError}</p>}
+                <div className={styles.drawActions}>
+                  <button className={styles.drawUndoBtn} onClick={undoLastPoint} disabled={drawPoints.length === 0}>
+                    Undo
+                  </button>
+                  <button className={styles.drawSaveBtn} onClick={saveRoute} disabled={isSaving || drawPoints.length < 2}>
+                    {isSaving ? 'Saving…' : 'Save Route'}
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -1430,7 +1436,7 @@ export default function MapClient() {
         const draft: PointDraft = {
           latitude:               pt[0],
           longitude:              pt[1],
-          pointType:              editPointTypes[i] || getPointType(i, editPoints.length),
+          pointType:              resolvePointType(i, editPoints.length, editPointTypes[i]),
           pointName:              fd.pointName ?? '',
           routePointTemplateUuid: editPointTemplates[i] ?? '',
           fieldData:              { ...fd },

@@ -2,6 +2,19 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
+## [1.73.0] - 2026-05-18
+
+### Fixed
+- **Save/Cancel footer pinned** in Edit Route & Draw Route panels: panel uses `bottom: 2.5rem` anchoring so buttons are always visible above the Leaflet attribution bar.
+- **`resolvePointType()` module-level function**: replaces the in-component version that Turbopack couldn't resolve; always derives `start`/`end` from current index/total; used in compact list render, PointModal draft, and `saveEdit` payload.
+- **Duplicate Point Name field removed** from RPT dynamic fields in PointModal; top-level input now syncs to both `local.pointName` and `fieldData.pointName`.
+- **Save Point validation** now correctly enables when point name is filled (single source of truth).
+- **Move up/down and duplicate** action buttons removed from compact point rows.
+- **Route Point Template** searchable dropdown (portal-based, `position: fixed`, icon + name + code, search by name/code).
+- **Light theme** support for PointModal, compact list, and draw panel.
+- **Edit-mode map markers** show sequence numbers (1-N) inside the coloured circle.
+- **Mid role chip** in PointModal shows actual point number (not hardcoded `2`).
+
 ## [1.72.0] - 2026-05-17
 
 ### Added
