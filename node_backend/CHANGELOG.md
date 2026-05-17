@@ -5,6 +5,23 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.70.0] - 2026-05-17
+
+### Added
+- **`GET /api/tenant/route-point-templates`** (`tenantRoutePointTemplateRoutes.ts`): New tenant-auth protected read-only endpoint. Returns all active global route point templates with their full 36-flag set plus joined icon fields (`iconSvgTemplate`, `iconUrl`, `iconFileType`, `iconName`, `iconCode`), device type name/code, and `status`. Used by the map panel to build the RPT selector and render dynamic per-point form fields.
+- **`routePointTemplateUuid` field in `CreateRoutePointDTO` / `TenantRoutePoint`**: New nullable `VARCHAR(36)` storing which Route Point Template was applied to a route point.
+- **`fieldData` field in `CreateRoutePointDTO` / `TenantRoutePoint`**: New nullable `JSON` column storing the collected template-driven field values as a `Record<string, string>` (e.g. `{ modelNumber: "CRS-1016", macAddress: "AA:BB:CC:DD:EE:FF" }`).
+- **`upsertPoints` persists new fields** (`TenantRouteRepository`): `routePointTemplateUuid` stored as-is; `fieldData` JSON-stringified on write, parsed back on read.
+- **`transformPoint` exposes new fields** (`TenantRouteController`): Both `routePointTemplateUuid` and `fieldData` (parsed from JSON string) included in every route point response.
+
+### DB Migration Required
+Run the following SQL on your database before deploying this version:
+```sql
+ALTER TABLE `tenant_route_points`
+  ADD COLUMN `routePointTemplateUuid` VARCHAR(36) NULL DEFAULT NULL AFTER `deviceTypeUuid`,
+  ADD COLUMN `fieldData` JSON NULL DEFAULT NULL AFTER `remarks`;
+```
+
 ## [1.69.0] - 2026-05-17
 ### Added
 - **Device type icon joined in RPT API** (`RoutePointTemplateRepository`): Added `LEFT JOIN icons as dt_icons ON device_types.iconId = dt_icons.id` — exposes `deviceTypeIconSvgTemplate`, `deviceTypeIconUrl`, `deviceTypeIconFileType`, `deviceTypeIconName` in every RPT response.

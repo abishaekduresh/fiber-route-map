@@ -3,14 +3,18 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { getDeviceCategories, getDeviceTypes, getUserSettings, getTenantRoutes, getTenantRoute, createTenantRoute, updateTenantRoute, deleteTenantRoute, getTenantIcons, IconData, DeviceCategoryData, DeviceTypeData } from '@/lib/api';
+import {
+  getTenantDeviceCategories, getTenantDeviceTypes, getUserSettings,
+  getTenantRoutes, getTenantRoute, createTenantRoute, updateTenantRoute, deleteTenantRoute,
+  getTenantIcons, getTenantRoutePointTemplates,
+  IconData, DeviceCategoryData, DeviceTypeData, RoutePointTemplateData,
+} from '@/lib/api';
 import { useTenantAuth } from '@/components/providers/TenantAuthContext';
 import type { MapMarker, RoutePolyline, RoutePointIcon } from './LeafletMap';
 import MapSettingsPanel, { MapSettings, DEFAULT_MAP_SETTINGS } from '@/components/tenant-map/MapSettingsPanel';
 import DrawSearchableSelect, { DSOption } from './DrawSearchableSelect';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import styles from './map.module.css';
-import dsStyles from './drawSelect.module.css';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -21,13 +25,50 @@ function fitSvgInline(svg: string): string {
 }
 
 const ROUTE_TYPE_OPTIONS: DSOption[] = [
-  { value: 'fiber_route',       label: 'Fiber Route' },
-  { value: 'coaxial_route',     label: 'Coaxial Route' },
-  { value: 'backbone_route',    label: 'Backbone Route' },
-  { value: 'distribution_route',label: 'Distribution Route' },
-  { value: 'drop_route',        label: 'Drop Route' },
-  { value: 'underground_duct',  label: 'Underground Duct' },
-  { value: 'pole_to_pole',      label: 'Pole to Pole' },
+  { value: 'fiber_route',        label: 'Fiber Route' },
+  { value: 'coaxial_route',      label: 'Coaxial Route' },
+  { value: 'backbone_route',     label: 'Backbone Route' },
+  { value: 'distribution_route', label: 'Distribution Route' },
+  { value: 'drop_route',         label: 'Drop Route' },
+  { value: 'underground_duct',   label: 'Underground Duct' },
+  { value: 'pole_to_pole',       label: 'Pole to Pole' },
+];
+
+// Fields driven by RPT flags — maps flag → storage key → display label
+const RPT_FIELDS: Array<{
+  flag:         keyof RoutePointTemplateData['attributes'];
+  key:          string;
+  label:        string;
+  type?:        'text' | 'password' | 'number';
+  placeholder?: string;
+}> = [
+  { flag: 'isPointNameRequired',   key: 'pointName',    label: 'Point Name',          placeholder: 'e.g. Junction Box A' },
+  { flag: 'isDescriptionRequired', key: 'description',  label: 'Description',         placeholder: 'Brief description…' },
+  { flag: 'isRemarksRequired',     key: 'remarks',      label: 'Remarks',             placeholder: 'Any remarks…' },
+  { flag: 'isModelNumberRequired', key: 'modelNumber',  label: 'Model Number',        placeholder: 'e.g. CRS-1016' },
+  { flag: 'isSerialNumberRequired',key: 'serialNumber', label: 'Serial Number',       placeholder: 'e.g. SN-123456' },
+  { flag: 'isAssetTagRequired',    key: 'assetTag',     label: 'Asset Tag',           placeholder: 'e.g. AST-001' },
+  { flag: 'isMacAddressRequired',  key: 'macAddress',   label: 'MAC Address',         placeholder: 'e.g. AA:BB:CC:DD:EE:FF' },
+  { flag: 'isIpv4AddressRequired', key: 'ipv4',         label: 'IPv4 Address',        placeholder: 'e.g. 192.168.1.1' },
+  { flag: 'isIpv6AddressRequired', key: 'ipv6',         label: 'IPv6 Address',        placeholder: 'e.g. fe80::1' },
+  { flag: 'isSubnetRequired',      key: 'subnet',       label: 'Subnet',              placeholder: 'e.g. 255.255.255.0' },
+  { flag: 'isGatewayRequired',     key: 'gateway',      label: 'Gateway',             placeholder: 'e.g. 192.168.1.254' },
+  { flag: 'isVlanRequired',        key: 'vlan',         label: 'VLAN',                placeholder: 'e.g. 100' },
+  { flag: 'isUsernameRequired',    key: 'username',     label: 'Username',            placeholder: 'Device username' },
+  { flag: 'isPasswordRequired',    key: 'password',     label: 'Password',            type: 'password', placeholder: 'Device password' },
+  { flag: 'isSnmpRequired',        key: 'snmp',         label: 'SNMP Community',      placeholder: 'e.g. public' },
+  { flag: 'isPoleNumberRequired',  key: 'poleNumber',   label: 'Pole Number',         placeholder: 'e.g. P-042' },
+  { flag: 'isLandmarkRequired',    key: 'landmark',     label: 'Landmark',            placeholder: 'Nearest landmark' },
+  { flag: 'isAddressRequired',     key: 'address',      label: 'Address',             placeholder: 'Full address…' },
+  { flag: 'isHeightRequired',      key: 'height',       label: 'Height (m)',          type: 'number', placeholder: 'e.g. 6' },
+  { flag: 'isRackNumberRequired',  key: 'rackNumber',   label: 'Rack Number',         placeholder: 'e.g. R-01' },
+  { flag: 'isPortRequired',        key: 'port',         label: 'Port',                placeholder: 'e.g. 8080' },
+  { flag: 'isPowerSourceRequired', key: 'powerSource',  label: 'Power Source',        placeholder: 'e.g. Grid/Solar' },
+  { flag: 'isElectricityRequired', key: 'electricity',  label: 'Electricity',         placeholder: 'e.g. Yes/No' },
+  { flag: 'isSignalInputRequired', key: 'signalInput',  label: 'Signal Input (dBm)',  type: 'number', placeholder: 'e.g. -25.5' },
+  { flag: 'isSignalOutputRequired',key: 'signalOutput', label: 'Signal Output (dBm)', type: 'number', placeholder: 'e.g. -10.0' },
+  { flag: 'isAttenuationRequired', key: 'attenuation',  label: 'Attenuation (dB)',    type: 'number', placeholder: 'e.g. 3.5' },
+  { flag: 'isFiberCoreRequired',   key: 'fiberCore',    label: 'Fiber Core',          placeholder: 'e.g. 12' },
 ];
 
 const LeafletMap = dynamic(() => import('./LeafletMap'), { ssr: false });
@@ -41,17 +82,16 @@ const LAYER_OPTIONS: { value: LayerKey; label: string }[] = [
   { value: 'dark', label: 'Dark' },
 ];
 
-
 function parseSettings(raw: { key: string; value: string }[]): MapSettings {
   const m: Record<string, string> = {};
   raw.forEach((r) => { m[r.key] = r.value; });
   return {
-    defaultLayer: (m['map.defaultLayer'] as LayerKey) ?? DEFAULT_MAP_SETTINGS.defaultLayer,
-    defaultZoom:  Number(m['map.defaultZoom'])  || DEFAULT_MAP_SETTINGS.defaultZoom,
-    showScaleBar: m['map.showScaleBar'] !== undefined ? m['map.showScaleBar'] === 'true' : DEFAULT_MAP_SETTINGS.showScaleBar,
-    scaleUnit:    (m['map.scaleUnit'] as 'metric' | 'imperial') ?? DEFAULT_MAP_SETTINGS.scaleUnit,
-    autoCenterGPS: m['map.autoCenterGPS'] !== undefined ? m['map.autoCenterGPS'] === 'true' : DEFAULT_MAP_SETTINGS.autoCenterGPS,
-    filtersOpenByDefault: m['map.filtersOpenByDefault'] !== undefined ? m['map.filtersOpenByDefault'] === 'true' : DEFAULT_MAP_SETTINGS.filtersOpenByDefault,
+    defaultLayer:        (m['map.defaultLayer'] as LayerKey) ?? DEFAULT_MAP_SETTINGS.defaultLayer,
+    defaultZoom:         Number(m['map.defaultZoom']) || DEFAULT_MAP_SETTINGS.defaultZoom,
+    showScaleBar:        m['map.showScaleBar'] !== undefined ? m['map.showScaleBar'] === 'true' : DEFAULT_MAP_SETTINGS.showScaleBar,
+    scaleUnit:           (m['map.scaleUnit'] as 'metric' | 'imperial') ?? DEFAULT_MAP_SETTINGS.scaleUnit,
+    autoCenterGPS:       m['map.autoCenterGPS'] !== undefined ? m['map.autoCenterGPS'] === 'true' : DEFAULT_MAP_SETTINGS.autoCenterGPS,
+    filtersOpenByDefault:m['map.filtersOpenByDefault'] !== undefined ? m['map.filtersOpenByDefault'] === 'true' : DEFAULT_MAP_SETTINGS.filtersOpenByDefault,
   };
 }
 
@@ -69,45 +109,47 @@ export default function MapClient() {
   }, [hasPermission, router]);
 
   // ── Draw mode ────────────────────────────────────────────────────────────
-  const [drawMode, setDrawMode]             = useState(false);
-  const [drawPoints, setDrawPoints]         = useState<[number, number][]>([]);
-  const [drawPointIcons, setDrawPointIcons]               = useState<string[]>([]);
-  const [drawPointDeviceTypes, setDrawPointDeviceTypes]   = useState<string[]>([]);
-  const [drawPointNames, setDrawPointNames]               = useState<string[]>([]);
-  const [drawPointDescriptions, setDrawPointDescriptions] = useState<string[]>([]);
+  const [drawMode, setDrawMode]                           = useState(false);
+  const [drawPoints, setDrawPoints]                       = useState<[number, number][]>([]);
+  const [drawPointTemplates, setDrawPointTemplates]       = useState<string[]>([]);
+  const [drawPointFieldData, setDrawPointFieldData]       = useState<Record<string, string>[]>([]);
   const [drawPointExpanded, setDrawPointExpanded]         = useState<boolean[]>([]);
-  const [routes, setRoutes]                 = useState<RoutePolyline[]>([]);
-  const [availableIcons, setAvailableIcons] = useState<IconData[]>([]);
-  const [drawName, setDrawName]             = useState('');
-  const [drawType, setDrawType]             = useState('fiber_route');
-  const [drawColor, setDrawColor]           = useState('#3b82f6');
-  const [drawThickness, setDrawThickness]   = useState(2);
-  const [drawParentUuid, setDrawParentUuid] = useState('');
-  const [drawDescription, setDrawDescription] = useState('');
-  const [isSaving, setIsSaving]             = useState(false);
-  const [saveError, setSaveError]           = useState('');
+  const [routes, setRoutes]                               = useState<RoutePolyline[]>([]);
+  const [availableIcons, setAvailableIcons]               = useState<IconData[]>([]);
+  const [routePointTemplates, setRoutePointTemplates]     = useState<RoutePointTemplateData[]>([]);
+  const [drawName, setDrawName]                           = useState('');
+  const [drawType, setDrawType]                           = useState('fiber_route');
+  const [drawColor, setDrawColor]                         = useState('#3b82f6');
+  const [drawThickness, setDrawThickness]                 = useState(2);
+  const [drawParentUuid, setDrawParentUuid]               = useState('');
+  const [drawDescription, setDrawDescription]             = useState('');
+  const [isSaving, setIsSaving]                           = useState(false);
+  const [saveError, setSaveError]                         = useState('');
 
   // ── Edit mode ────────────────────────────────────────────────────────────
-  const [editMode, setEditMode]               = useState(false);
-  const [editRouteId, setEditRouteId]         = useState('');
-  const [editPoints, setEditPoints]           = useState<[number, number][]>([]);
-  const [editPointIcons, setEditPointIcons]               = useState<string[]>([]);
-  const [editPointDeviceTypes, setEditPointDeviceTypes]   = useState<string[]>([]);
-  const [editPointNames, setEditPointNames]               = useState<string[]>([]);
-  const [editPointDescriptions, setEditPointDescriptions] = useState<string[]>([]);
+  const [editMode, setEditMode]                           = useState(false);
+  const [editRouteId, setEditRouteId]                     = useState('');
+  const [editPoints, setEditPoints]                       = useState<[number, number][]>([]);
+  const [editPointTemplates, setEditPointTemplates]       = useState<string[]>([]);
+  const [editPointFieldData, setEditPointFieldData]       = useState<Record<string, string>[]>([]);
   const [editPointExpanded, setEditPointExpanded]         = useState<boolean[]>([]);
-  const [editName, setEditName]               = useState('');
-  const [editType, setEditType]               = useState('fiber_route');
-  const [editColor, setEditColor]             = useState('#3b82f6');
-  const [editThickness, setEditThickness]     = useState(2);
-  const [editParentUuid, setEditParentUuid]   = useState('');
-  const [editDescription, setEditDescription] = useState('');
-  const [editStatus, setEditStatus]           = useState('active');
-  const [isSavingEdit, setIsSavingEdit]       = useState(false);
-  const [saveEditError, setSaveEditError]     = useState('');
-  const [pendingDeleteIdx, setPendingDeleteIdx] = useState<number | null>(null);
+  const [editName, setEditName]                           = useState('');
+  const [editType, setEditType]                           = useState('fiber_route');
+  const [editColor, setEditColor]                         = useState('#3b82f6');
+  const [editThickness, setEditThickness]                 = useState(2);
+  const [editParentUuid, setEditParentUuid]               = useState('');
+  const [editDescription, setEditDescription]             = useState('');
+  const [editStatus, setEditStatus]                       = useState('active');
+  const [isSavingEdit, setIsSavingEdit]                   = useState(false);
+  const [saveEditError, setSaveEditError]                 = useState('');
+  const [pendingDeleteIdx, setPendingDeleteIdx]           = useState<number | null>(null);
 
-  type EditSnapshot = { points: [number,number][]; icons: string[]; deviceTypes: string[]; names: string[]; descriptions: string[]; expanded: boolean[] };
+  type EditSnapshot = {
+    points:    [number, number][];
+    templates: string[];
+    fieldData: Record<string, string>[];
+    expanded:  boolean[];
+  };
   const [editHistory, setEditHistory] = useState<EditSnapshot[]>([]);
 
   const [geoStatus, setGeoStatus]       = useState<GeoStatus>('idle');
@@ -118,7 +160,6 @@ export default function MapClient() {
   const [mapSettings, setMapSettings]   = useState<MapSettings>(DEFAULT_MAP_SETTINGS);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
-  // Active layer/zoom can diverge from saved defaults after user interacts
   const [layer, setLayer]               = useState<LayerKey>(DEFAULT_MAP_SETTINGS.defaultLayer);
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -189,22 +230,28 @@ export default function MapClient() {
 
   // ── API data ─────────────────────────────────────────────────────────────
   const loadApiData = useCallback(async () => {
-    const [catRes, dtRes, routeRes, iconRes] = await Promise.all([
-      getDeviceCategories({ limit: -1 }),
-      getDeviceTypes({ limit: -1 }),
+    const [catRes, dtRes, rptRes, routeRes, iconRes] = await Promise.all([
+      getTenantDeviceCategories(),
+      getTenantDeviceTypes(),
+      getTenantRoutePointTemplates(),
       getTenantRoutes({ limit: -1 }),
       getTenantIcons(),
     ]);
+
     if (catRes.success && Array.isArray(catRes.data)) setCategories(catRes.data);
 
-    // Build uuid→deviceType lookup for icon fallback
     const deviceTypeMap = new Map<string, DeviceTypeData>();
     if (dtRes.success && Array.isArray(dtRes.data)) {
       dtRes.data.forEach((dt: DeviceTypeData) => deviceTypeMap.set(dt.id, dt));
       setDeviceTypes(dtRes.data);
     }
 
-    // Build uuid→icon lookup for icon resolution
+    const rptMap = new Map<string, RoutePointTemplateData>();
+    if (rptRes.success && Array.isArray(rptRes.data)) {
+      rptRes.data.forEach((t: RoutePointTemplateData) => rptMap.set(t.id, t));
+      setRoutePointTemplates(rptRes.data);
+    }
+
     const iconMap = new Map<string, IconData>();
     if (iconRes.success && Array.isArray(iconRes.data)) {
       iconRes.data.forEach((w: IconData) => iconMap.set(w.id, w));
@@ -234,23 +281,26 @@ export default function MapClient() {
             updatedAt:       r.meta.updatedAt,
             points:          pts.map((p) => [p.latitude, p.longitude] as [number, number]),
             routePoints: pts.map((p): RoutePointIcon => {
-              const widget  = p.pointIcon      ? iconMap.get(p.pointIcon)             : undefined;
-              const devType = p.deviceTypeUuid ? deviceTypeMap.get(p.deviceTypeUuid)  : undefined;
+              // Icon resolution priority: explicit icon > RPT icon > device type icon
+              const widget  = p.pointIcon               ? iconMap.get(p.pointIcon)                    : undefined;
+              const rpt     = p.routePointTemplateUuid  ? rptMap.get(p.routePointTemplateUuid)         : undefined;
+              const devType = p.deviceTypeUuid          ? deviceTypeMap.get(p.deviceTypeUuid)          : undefined;
               const dtAttrs = devType?.attributes;
+              const rptAttrs = rpt?.attributes;
               return {
                 lat:            p.latitude,
                 lng:            p.longitude,
                 pointType:      p.pointType,
                 sequenceNumber: p.sequenceNumber,
-                iconFileType: widget?.attributes.iconType ?? (dtAttrs?.iconFileType ?? null),
-                iconSvg:      widget?.attributes.svgTemplate ?? (dtAttrs?.iconSvgTemplate ?? null),
-                iconUrl:      widget?.attributes.iconUrl ?? (dtAttrs?.iconUrl ?? null),
+                iconFileType: widget?.attributes.iconType ?? (rptAttrs?.iconFileType ?? (dtAttrs?.iconFileType ?? null)),
+                iconSvg:      widget?.attributes.svgTemplate ?? (rptAttrs?.iconSvgTemplate ?? (dtAttrs?.iconSvgTemplate ?? null)),
+                iconUrl:      widget?.attributes.iconUrl ?? (rptAttrs?.iconUrl ?? (dtAttrs?.iconUrl ?? null)),
                 iconWidth:    widget?.attributes.width ?? null,
                 iconHeight:   widget?.attributes.height ?? null,
-                iconName:     widget?.attributes.name ?? null,
+                iconName:     widget?.attributes.name ?? (rptAttrs?.iconName ?? null),
                 deviceTypeName:   dtAttrs?.name ?? null,
-                pointName:        p.pointName        ?? null,
-                pointDescription: p.pointDescription ?? null,
+                pointName:        p.fieldData?.pointName ?? p.pointName ?? null,
+                pointDescription: p.fieldData?.description ?? p.pointDescription ?? null,
               };
             }),
           };
@@ -265,11 +315,7 @@ export default function MapClient() {
   const refreshMap = useCallback(async () => {
     if (isRefreshing) return;
     setIsRefreshing(true);
-    try {
-      await loadApiData();
-    } finally {
-      setIsRefreshing(false);
-    }
+    try { await loadApiData(); } finally { setIsRefreshing(false); }
   }, [isRefreshing, loadApiData]);
 
   const filteredDeviceTypes = useMemo(() => {
@@ -285,12 +331,8 @@ export default function MapClient() {
 
   const filteredRoutes = useMemo(() => {
     let result = routes;
-    if (statusFilter !== 'all') {
-      result = result.filter((r) => r.status === statusFilter);
-    }
-    if (selectedRouteId) {
-      result = result.filter((r) => r.id === selectedRouteId);
-    }
+    if (statusFilter !== 'all') result = result.filter((r) => r.status === statusFilter);
+    if (selectedRouteId)        result = result.filter((r) => r.id === selectedRouteId);
     return result;
   }, [routes, statusFilter, selectedRouteId]);
 
@@ -309,43 +351,21 @@ export default function MapClient() {
   const activeCount   = 0;
   const inactiveCount = 0;
 
-  // ── Searchable select option arrays ─────────────────────────────────────
-  // Parent route list always uses all routes (not the filtered subset)
+  // ── Searchable select option arrays ──────────────────────────────────────
   const parentRouteOptions = useMemo<DSOption[]>(() => [
     { value: '', label: 'None (No parent)' },
     ...routes.map((r) => ({ value: r.id, label: `[${r.code}] ${r.label}` })),
   ], [routes]);
 
-  const deviceTypeOptions = useMemo<DSOption[]>(() => [
-    { value: '', label: 'No device type (optional)' },
-    ...deviceTypes.map((dt) => ({
-      value: dt.id,
-      label: `[${dt.attributes.code}] ${dt.attributes.name}`,
+  const rptOptions = useMemo<DSOption[]>(() => [
+    { value: '', label: 'No template (optional)' },
+    ...routePointTemplates.map((t) => ({
+      value: t.id,
+      label: `[${t.attributes.code}] ${t.attributes.name}`,
     })),
-  ], [deviceTypes]);
+  ], [routePointTemplates]);
 
-  const iconOptions = useMemo<DSOption[]>(() => [
-    { value: '', label: 'No icon' },
-    ...availableIcons.filter((w) => w.attributes.type === 'route_point').map((w) => ({
-      value: w.id,
-      label: `[${w.attributes.code}] ${w.attributes.name}`,
-      renderOption: () => (
-        <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
-          <span className={dsStyles.iconPreview}>
-            {w.attributes.iconType === 'svg'
-              ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(w.attributes.svgTemplate || '') }} style={{ display: 'flex', width: 22, height: 22 }} />
-              : <img src={w.attributes.iconUrl || ''} alt={w.attributes.name} />
-            }
-          </span>
-          <span className={dsStyles.iconMeta}>
-            <span className={dsStyles.iconName}>{w.attributes.name}</span>
-            <span className={dsStyles.iconCode}>{w.attributes.code}</span>
-          </span>
-        </span>
-      ),
-    })),
-  ], [availableIcons]);
-
+  // ── Edit mode handlers ───────────────────────────────────────────────────
   const handleEditRoute = useCallback(async (routeId: string) => {
     const res = await getTenantRoute(routeId);
     if (!res.success || !res.data) return;
@@ -353,11 +373,16 @@ export default function MapClient() {
     const pts: any[] = r.attributes.points ?? [];
     setEditRouteId(routeId);
     setEditPoints(pts.map((p: any) => [Number(p.latitude), Number(p.longitude)] as [number, number]));
-    setEditPointIcons(pts.map((p: any) => p.pointIcon || ''));
-    setEditPointDeviceTypes(pts.map((p: any) => p.deviceTypeUuid || ''));
-    setEditPointNames(pts.map((p: any) => p.pointName || ''));
-    setEditPointDescriptions(pts.map((p: any) => p.pointDescription || ''));
-    setEditPointExpanded(pts.map(() => false)); // all collapsed on load
+    setEditPointTemplates(pts.map((p: any) => p.routePointTemplateUuid || ''));
+    setEditPointFieldData(pts.map((p: any) => {
+      const fd: Record<string, string> = p.fieldData ? { ...p.fieldData } : {};
+      // Backward compat: seed from legacy columns if fieldData is empty
+      if (!fd.pointName && p.pointName)           fd.pointName   = p.pointName;
+      if (!fd.description && p.pointDescription)  fd.description = p.pointDescription;
+      if (!fd.remarks && p.remarks)               fd.remarks     = p.remarks;
+      return fd;
+    }));
+    setEditPointExpanded(pts.map(() => false));
     setEditName(r.attributes.name);
     setEditType(r.attributes.type);
     setEditColor(r.attributes.routeColor || '#3b82f6');
@@ -375,10 +400,8 @@ export default function MapClient() {
     setEditMode(false);
     setEditRouteId('');
     setEditPoints([]);
-    setEditPointIcons([]);
-    setEditPointDeviceTypes([]);
-    setEditPointNames([]);
-    setEditPointDescriptions([]);
+    setEditPointTemplates([]);
+    setEditPointFieldData([]);
     setEditPointExpanded([]);
     setSaveEditError('');
     setEditHistory([]);
@@ -392,39 +415,30 @@ export default function MapClient() {
   }, [loadApiData]);
 
   // Refs that always mirror current edit-point arrays — used for snapshot capture
-  const _epRef   = useRef(editPoints);
-  const _eiRef   = useRef(editPointIcons);
-  const _edtRef  = useRef(editPointDeviceTypes);
-  const _enRef   = useRef(editPointNames);
-  const _edRef   = useRef(editPointDescriptions);
-  useEffect(() => { _epRef.current  = editPoints; },            [editPoints]);
-  useEffect(() => { _eiRef.current  = editPointIcons; },        [editPointIcons]);
-  useEffect(() => { _edtRef.current = editPointDeviceTypes; },  [editPointDeviceTypes]);
-  useEffect(() => { _enRef.current  = editPointNames; },        [editPointNames]);
-  useEffect(() => { _edRef.current  = editPointDescriptions; }, [editPointDescriptions]);
-
+  const _epRef  = useRef(editPoints);
+  const _etRef  = useRef(editPointTemplates);
+  const _efdRef = useRef(editPointFieldData);
   const _eexRef = useRef(editPointExpanded);
-  useEffect(() => { _eexRef.current = editPointExpanded; }, [editPointExpanded]);
+  useEffect(() => { _epRef.current  = editPoints; },        [editPoints]);
+  useEffect(() => { _etRef.current  = editPointTemplates; },[editPointTemplates]);
+  useEffect(() => { _efdRef.current = editPointFieldData; },[editPointFieldData]);
+  useEffect(() => { _eexRef.current = editPointExpanded; },  [editPointExpanded]);
 
   const pushEditSnapshot = useCallback(() => {
     setEditHistory((h) => [...h, {
-      points:       [..._epRef.current],
-      icons:        [..._eiRef.current],
-      deviceTypes:  [..._edtRef.current],
-      names:        [..._enRef.current],
-      descriptions: [..._edRef.current],
-      expanded:     [..._eexRef.current],
+      points:    [..._epRef.current],
+      templates: [..._etRef.current],
+      fieldData: _efdRef.current.map((fd) => ({ ...fd })),
+      expanded:  [..._eexRef.current],
     }]);
   }, []);
 
   const onEditMapClick = useCallback((lat: number, lng: number) => {
     pushEditSnapshot();
     setEditPoints((prev) => [...prev, [lat, lng]]);
-    setEditPointIcons((prev) => [...prev, '']);
-    setEditPointDeviceTypes((prev) => [...prev, '']);
-    setEditPointNames((prev) => [...prev, '']);
-    setEditPointDescriptions((prev) => [...prev, '']);
-    setEditPointExpanded((prev) => [...prev.map(() => false), true]); // collapse all, expand new
+    setEditPointTemplates((prev) => [...prev, '']);
+    setEditPointFieldData((prev) => [...prev, {}]);
+    setEditPointExpanded((prev) => [...prev.map(() => false), true]);
   }, [pushEditSnapshot]);
 
   const onEditPointMove = useCallback((idx: number, lat: number, lng: number) => {
@@ -438,23 +452,19 @@ export default function MapClient() {
       [lat, lng] as [number, number],
       ...prev.slice(afterIdx + 1),
     ]);
-    setEditPointIcons((prev) => [...prev.slice(0, afterIdx + 1), '', ...prev.slice(afterIdx + 1)]);
-    setEditPointDeviceTypes((prev) => [...prev.slice(0, afterIdx + 1), '', ...prev.slice(afterIdx + 1)]);
-    setEditPointNames((prev) => [...prev.slice(0, afterIdx + 1), '', ...prev.slice(afterIdx + 1)]);
-    setEditPointDescriptions((prev) => [...prev.slice(0, afterIdx + 1), '', ...prev.slice(afterIdx + 1)]);
+    setEditPointTemplates((prev) => [...prev.slice(0, afterIdx + 1), '', ...prev.slice(afterIdx + 1)]);
+    setEditPointFieldData((prev) => [...prev.slice(0, afterIdx + 1), {}, ...prev.slice(afterIdx + 1)]);
     setEditPointExpanded((prev) => [
       ...prev.slice(0, afterIdx + 1).map(() => false),
-      true, // new inserted point expanded
+      true,
       ...prev.slice(afterIdx + 1).map(() => false),
     ]);
   }, [pushEditSnapshot]);
 
   const deleteEditPoint = useCallback((idx: number) => {
     setEditPoints((prev) => prev.filter((_, i) => i !== idx));
-    setEditPointIcons((prev) => prev.filter((_, i) => i !== idx));
-    setEditPointDeviceTypes((prev) => prev.filter((_, i) => i !== idx));
-    setEditPointNames((prev) => prev.filter((_, i) => i !== idx));
-    setEditPointDescriptions((prev) => prev.filter((_, i) => i !== idx));
+    setEditPointTemplates((prev) => prev.filter((_, i) => i !== idx));
+    setEditPointFieldData((prev) => prev.filter((_, i) => i !== idx));
     setEditPointExpanded((prev) => prev.filter((_, i) => i !== idx));
   }, []);
 
@@ -463,29 +473,21 @@ export default function MapClient() {
       if (h.length === 0) return h;
       const snap = h[h.length - 1];
       setEditPoints(snap.points);
-      setEditPointIcons(snap.icons);
-      setEditPointDeviceTypes(snap.deviceTypes);
-      setEditPointNames(snap.names);
-      setEditPointDescriptions(snap.descriptions);
+      setEditPointTemplates(snap.templates);
+      setEditPointFieldData(snap.fieldData);
       setEditPointExpanded(snap.expanded);
       return h.slice(0, -1);
     });
   }, []);
 
-  const setEditPointIcon = useCallback((idx: number, val: string) => {
-    setEditPointIcons((prev) => prev.map((w, i) => i === idx ? val : w));
+  const setEditPointTemplate = useCallback((idx: number, val: string) => {
+    setEditPointTemplates((prev) => prev.map((v, i) => i === idx ? val : v));
+    // Clear field data when template changes
+    setEditPointFieldData((prev) => prev.map((v, i) => i === idx ? {} : v));
   }, []);
 
-  const setEditPointDeviceType = useCallback((idx: number, val: string) => {
-    setEditPointDeviceTypes((prev) => prev.map((v, i) => i === idx ? val : v));
-  }, []);
-
-  const setEditPointName = useCallback((idx: number, val: string) => {
-    setEditPointNames((prev) => prev.map((v, i) => i === idx ? val : v));
-  }, []);
-
-  const setEditPointDescription = useCallback((idx: number, val: string) => {
-    setEditPointDescriptions((prev) => prev.map((v, i) => i === idx ? val : v));
+  const setEditPointFieldValue = useCallback((idx: number, key: string, val: string) => {
+    setEditPointFieldData((prev) => prev.map((fd, i) => i === idx ? { ...fd, [key]: val } : fd));
   }, []);
 
   const saveEdit = useCallback(async () => {
@@ -494,16 +496,20 @@ export default function MapClient() {
     setIsSavingEdit(true);
     setSaveEditError('');
     try {
-      const points = editPoints.map((pt, i) => ({
-        sequenceNumber:   i + 1,
-        latitude:         pt[0],
-        longitude:        pt[1],
-        pointType:        getPointType(i, editPoints.length),
-        pointIcon:        editPointIcons[i]         || null,
-        deviceTypeUuid:   editPointDeviceTypes[i]  || null,
-        pointName:        editPointNames[i]        || null,
-        pointDescription: editPointDescriptions[i] || null,
-      }));
+      const points = editPoints.map((pt, i) => {
+        const fd = editPointFieldData[i] ?? {};
+        return {
+          sequenceNumber:         i + 1,
+          latitude:               pt[0],
+          longitude:              pt[1],
+          pointType:              getPointType(i, editPoints.length),
+          routePointTemplateUuid: editPointTemplates[i] || null,
+          fieldData:              Object.keys(fd).length > 0 ? fd : null,
+          pointName:              fd.pointName        || null,
+          pointDescription:       fd.description      || null,
+          remarks:                fd.remarks           || null,
+        };
+      });
       const payload: Record<string, any> = {
         name:            editName.trim(),
         type:            editType,
@@ -519,10 +525,8 @@ export default function MapClient() {
       setEditMode(false);
       setEditRouteId('');
       setEditPoints([]);
-      setEditPointIcons([]);
-      setEditPointDeviceTypes([]);
-      setEditPointNames([]);
-      setEditPointDescriptions([]);
+      setEditPointTemplates([]);
+      setEditPointFieldData([]);
       setEditPointExpanded([]);
       await loadApiData();
     } catch {
@@ -530,31 +534,26 @@ export default function MapClient() {
     } finally {
       setIsSavingEdit(false);
     }
-  }, [editName, editType, editColor, editThickness, editStatus, editParentUuid, editDescription, editPoints, editPointIcons, editPointDeviceTypes, editPointNames, editPointDescriptions, editRouteId, loadApiData]);
+  }, [editName, editType, editColor, editThickness, editStatus, editParentUuid, editDescription, editPoints, editPointTemplates, editPointFieldData, editRouteId, loadApiData]);
 
+  // ── Draw mode handlers ───────────────────────────────────────────────────
   const handleMapClick = useCallback((lat: number, lng: number) => {
     setDrawPoints((prev) => [...prev, [lat, lng]]);
-    setDrawPointIcons((prev) => [...prev, '']);
-    setDrawPointDeviceTypes((prev) => [...prev, '']);
-    setDrawPointNames((prev) => [...prev, '']);
-    setDrawPointDescriptions((prev) => [...prev, '']);
-    setDrawPointExpanded((prev) => [...prev.map(() => false), true]); // collapse all, expand new
+    setDrawPointTemplates((prev) => [...prev, '']);
+    setDrawPointFieldData((prev) => [...prev, {}]);
+    setDrawPointExpanded((prev) => [...prev.map(() => false), true]);
   }, []);
 
   const startDraw = useCallback(() => {
     setEditMode(false);
     setEditRouteId('');
     setEditPoints([]);
-    setEditPointIcons([]);
-    setEditPointDeviceTypes([]);
-    setEditPointNames([]);
-    setEditPointDescriptions([]);
+    setEditPointTemplates([]);
+    setEditPointFieldData([]);
     setDrawMode(true);
     setDrawPoints([]);
-    setDrawPointIcons([]);
-    setDrawPointDeviceTypes([]);
-    setDrawPointNames([]);
-    setDrawPointDescriptions([]);
+    setDrawPointTemplates([]);
+    setDrawPointFieldData([]);
     setDrawPointExpanded([]);
     setDrawName('');
     setDrawType('fiber_route');
@@ -568,37 +567,27 @@ export default function MapClient() {
   const cancelDraw = useCallback(() => {
     setDrawMode(false);
     setDrawPoints([]);
-    setDrawPointIcons([]);
-    setDrawPointDeviceTypes([]);
-    setDrawPointNames([]);
-    setDrawPointDescriptions([]);
+    setDrawPointTemplates([]);
+    setDrawPointFieldData([]);
     setDrawPointExpanded([]);
     setSaveError('');
   }, []);
 
   const undoLastPoint = useCallback(() => {
     setDrawPoints((prev) => prev.slice(0, -1));
-    setDrawPointIcons((prev) => prev.slice(0, -1));
-    setDrawPointDeviceTypes((prev) => prev.slice(0, -1));
-    setDrawPointNames((prev) => prev.slice(0, -1));
-    setDrawPointDescriptions((prev) => prev.slice(0, -1));
+    setDrawPointTemplates((prev) => prev.slice(0, -1));
+    setDrawPointFieldData((prev) => prev.slice(0, -1));
     setDrawPointExpanded((prev) => prev.slice(0, -1));
   }, []);
 
-  const setPointIcon = useCallback((idx: number, val: string) => {
-    setDrawPointIcons((prev) => prev.map((w, i) => i === idx ? val : w));
+  const setPointTemplate = useCallback((idx: number, val: string) => {
+    setDrawPointTemplates((prev) => prev.map((v, i) => i === idx ? val : v));
+    // Clear field data when template changes
+    setDrawPointFieldData((prev) => prev.map((fd, i) => i === idx ? {} : fd));
   }, []);
 
-  const setPointDeviceType = useCallback((idx: number, val: string) => {
-    setDrawPointDeviceTypes((prev) => prev.map((v, i) => i === idx ? val : v));
-  }, []);
-
-  const setPointName = useCallback((idx: number, val: string) => {
-    setDrawPointNames((prev) => prev.map((v, i) => i === idx ? val : v));
-  }, []);
-
-  const setPointDescription = useCallback((idx: number, val: string) => {
-    setDrawPointDescriptions((prev) => prev.map((v, i) => i === idx ? val : v));
+  const setPointFieldValue = useCallback((idx: number, key: string, val: string) => {
+    setDrawPointFieldData((prev) => prev.map((fd, i) => i === idx ? { ...fd, [key]: val } : fd));
   }, []);
 
   const toggleDrawPointExpanded = useCallback((idx: number) => {
@@ -619,16 +608,20 @@ export default function MapClient() {
     setIsSaving(true);
     setSaveError('');
     try {
-      const points = drawPoints.map((pt, i) => ({
-        sequenceNumber:   i + 1,
-        latitude:         pt[0],
-        longitude:        pt[1],
-        pointType:        getPointType(i, drawPoints.length),
-        pointIcon:        drawPointIcons[i]         || null,
-        deviceTypeUuid:   drawPointDeviceTypes[i]  || null,
-        pointName:        drawPointNames[i]        || null,
-        pointDescription: drawPointDescriptions[i] || null,
-      }));
+      const points = drawPoints.map((pt, i) => {
+        const fd = drawPointFieldData[i] ?? {};
+        return {
+          sequenceNumber:         i + 1,
+          latitude:               pt[0],
+          longitude:              pt[1],
+          pointType:              getPointType(i, drawPoints.length),
+          routePointTemplateUuid: drawPointTemplates[i] || null,
+          fieldData:              Object.keys(fd).length > 0 ? fd : null,
+          pointName:              fd.pointName        || null,
+          pointDescription:       fd.description      || null,
+          remarks:                fd.remarks           || null,
+        };
+      });
       const payload: Record<string, any> = {
         name:          drawName.trim(),
         type:          drawType,
@@ -636,17 +629,15 @@ export default function MapClient() {
         lineThickness: drawThickness,
         points,
       };
-      if (drawParentUuid)      payload.parentRouteUuid = drawParentUuid;
-      if (drawDescription.trim()) payload.description  = drawDescription.trim();
+      if (drawParentUuid)         payload.parentRouteUuid = drawParentUuid;
+      if (drawDescription.trim()) payload.description     = drawDescription.trim();
 
       const res = await createTenantRoute(payload);
       if (!res.success) { setSaveError((res as any).message || 'Failed to save route.'); return; }
       setDrawMode(false);
       setDrawPoints([]);
-      setDrawPointIcons([]);
-      setDrawPointDeviceTypes([]);
-      setDrawPointNames([]);
-      setDrawPointDescriptions([]);
+      setDrawPointTemplates([]);
+      setDrawPointFieldData([]);
       setDrawPointExpanded([]);
       await loadApiData();
     } catch {
@@ -654,7 +645,7 @@ export default function MapClient() {
     } finally {
       setIsSaving(false);
     }
-  }, [drawName, drawType, drawColor, drawThickness, drawParentUuid, drawDescription, drawPoints, drawPointIcons, drawPointDeviceTypes, drawPointNames, drawPointDescriptions, loadApiData]);
+  }, [drawName, drawType, drawColor, drawThickness, drawParentUuid, drawDescription, drawPoints, drawPointTemplates, drawPointFieldData, loadApiData]);
 
   // ── Permission screens ───────────────────────────────────────────────────
   if (geoStatus === 'idle' || geoStatus === 'requesting') {
@@ -691,7 +682,7 @@ export default function MapClient() {
           <h2 className={styles.geoTitle}>Location Access Denied</h2>
           <p className={styles.geoDesc}>Location permission was denied. To use the Network Map you must allow location access.</p>
           <ol className={styles.geoSteps}>
-            <li>Click the <strong>lock / info icon</strong> in your browser's address bar.</li>
+            <li>Click the <strong>lock / info icon</strong> in your browser&apos;s address bar.</li>
             <li>Set <strong>Location</strong> to <strong>Allow</strong>.</li>
             <li>Reload this page.</li>
           </ol>
@@ -728,6 +719,85 @@ export default function MapClient() {
 
   // ── Main map UI (geoStatus === 'granted') ────────────────────────────────
   const effectiveZoom = settingsLoaded ? mapSettings.defaultZoom : DEFAULT_MAP_SETTINGS.defaultZoom;
+
+  // Helper to render per-point expanded details (shared between draw/edit)
+  const renderPointDetails = (
+    i: number,
+    pt: [number, number],
+    templates: string[],
+    fieldDataArr: Record<string, string>[],
+    setTemplate: (idx: number, val: string) => void,
+    setFieldValue: (idx: number, key: string, val: string) => void,
+  ) => {
+    const rpt      = templates[i] ? routePointTemplates.find((t) => t.id === templates[i]) : null;
+    const fd       = fieldDataArr[i] ?? {};
+    const rptAttrs = rpt?.attributes;
+
+    return (
+      <div className={styles.drawPointDetails}>
+        {/* Route Point Template selector */}
+        <div className={styles.drawPointField}>
+          <span className={styles.drawPointFieldLabel}>Route Point Template</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <DrawSearchableSelect
+                options={rptOptions}
+                value={templates[i] ?? ''}
+                onChange={(val) => setTemplate(i, val)}
+                placeholder="Select template…"
+                searchPlaceholder="Search templates…"
+              />
+            </div>
+            {rptAttrs && (rptAttrs.iconSvgTemplate || rptAttrs.iconUrl) && (
+              <span className={styles.drawPointIconPreview}>
+                {rptAttrs.iconSvgTemplate
+                  ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(rptAttrs.iconSvgTemplate) }} style={{ display: 'flex', width: 22, height: 22 }} />
+                  : <img src={rptAttrs.iconUrl || ''} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Dynamic fields based on selected RPT flags */}
+        {rptAttrs && RPT_FIELDS.map(({ flag, key, label, type, placeholder }) => {
+          if (!rptAttrs[flag]) return null;
+          return (
+            <div key={key} className={styles.drawPointField}>
+              <span className={styles.drawPointFieldLabel}>{label}</span>
+              <input
+                type={type ?? 'text'}
+                className={styles.drawInput}
+                placeholder={placeholder}
+                value={fd[key] ?? ''}
+                onChange={(e) => setFieldValue(i, key, e.target.value)}
+              />
+            </div>
+          );
+        })}
+
+        {/* GPS location — always shown as read-only if flag enabled */}
+        {rptAttrs?.isGpsLocationRequired && (
+          <div className={styles.drawPointField}>
+            <span className={styles.drawPointFieldLabel}>GPS Location</span>
+            <div className={styles.drawPointCoordRow} style={{ marginTop: 0 }}>
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+              </svg>
+              {pt[0].toFixed(5)}, {pt[1].toFixed(5)}
+            </div>
+          </div>
+        )}
+
+        {/* Coordinates footer */}
+        <div className={styles.drawPointCoordRow}>
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+          </svg>
+          {pt[0].toFixed(5)}, {pt[1].toFixed(5)}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className={`${styles.wrapper} ${isFullscreen ? styles.wrapperFullscreen : ''}`} ref={wrapperRef}>
@@ -841,15 +911,9 @@ export default function MapClient() {
                     onClick={() => setShowRoutes((o) => !o)}
                   >
                     {showRoutes ? (
-                      <>
-                        <span className={styles.routeToggleDot} />
-                        Visible
-                      </>
+                      <><span className={styles.routeToggleDot} />Visible</>
                     ) : (
-                      <>
-                        <span className={styles.routeToggleDot} />
-                        Hidden
-                      </>
+                      <><span className={styles.routeToggleDot} />Hidden</>
                     )}
                   </button>
                 </div>
@@ -942,7 +1006,8 @@ export default function MapClient() {
             onInsertEditPoint={onInsertEditPoint}
             focusPoints={focusRoutePoints}
           />
-          {/* Edit mode panel */}
+
+          {/* ── Edit mode panel ─────────────────────────────────────────── */}
           {editMode && (
             <div className={styles.drawPanel}>
               <div className={styles.drawPanelHeader}>
@@ -1023,35 +1088,33 @@ export default function MapClient() {
                   </div>
                   <div className={styles.drawPointsScroll}>
                     {editPoints.map((pt, i) => {
-                      const ptType = getPointType(i, editPoints.length);
+                      const ptType     = getPointType(i, editPoints.length);
                       const isExpanded = editPointExpanded[i] ?? false;
-                      const hasData = !!(editPointIcons[i] || editPointDeviceTypes[i] || editPointNames[i]);
-                      const w = editPointIcons[i] ? availableIcons.find(x => x.id === editPointIcons[i]) : null;
-                      const dt = editPointDeviceTypes[i] ? deviceTypes.find(x => x.id === editPointDeviceTypes[i]) : null;
+                      const fd         = editPointFieldData[i] ?? {};
+                      const rpt        = editPointTemplates[i] ? routePointTemplates.find((t) => t.id === editPointTemplates[i]) : null;
+                      const hasData    = !!(editPointTemplates[i] || Object.values(fd).some(Boolean));
+                      const rptAttrs   = rpt?.attributes;
+
                       return (
                         <div key={i} className={styles.drawPointRow} data-type={ptType}>
                           {/* Always-visible row header */}
                           <div className={styles.drawPointMeta}>
                             <span className={styles.drawSeq}>{i + 1}</span>
                             <span className={`${styles.drawPtType} ${styles[`ptType_${ptType}`]}`}>{ptType}</span>
-                            {editPointNames[i] ? (
-                              <span className={styles.drawPointLabel}>{editPointNames[i]}</span>
+                            {fd.pointName ? (
+                              <span className={styles.drawPointLabel}>{fd.pointName}</span>
                             ) : (
                               <span className={styles.drawCoords}>{pt[0].toFixed(4)}, {pt[1].toFixed(4)}</span>
                             )}
-                            {/* Inline icon/dt previews when collapsed */}
-                            {!isExpanded && w && (
+                            {/* Inline RPT icon preview when collapsed */}
+                            {!isExpanded && rptAttrs && rptAttrs.iconSvgTemplate && (
                               <span className={styles.drawPointInlineIcon}>
-                                {w.attributes.iconType === 'svg'
-                                  ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(w.attributes.svgTemplate || '') }} style={{ display: 'flex', width: 14, height: 14 }} />
-                                  : <img src={w.attributes.iconUrl || ''} alt="" style={{ width: 14, height: 14, objectFit: 'contain' }} />}
+                                <span dangerouslySetInnerHTML={{ __html: fitSvgInline(rptAttrs.iconSvgTemplate) }} style={{ display: 'flex', width: 14, height: 14 }} />
                               </span>
                             )}
-                            {!isExpanded && !w && dt && dt.attributes.iconFileType && (
+                            {!isExpanded && rptAttrs && !rptAttrs.iconSvgTemplate && rptAttrs.iconUrl && (
                               <span className={styles.drawPointInlineIcon}>
-                                {dt.attributes.iconFileType === 'svg'
-                                  ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(dt.attributes.iconSvgTemplate || '') }} style={{ display: 'flex', width: 14, height: 14 }} />
-                                  : <img src={dt.attributes.iconUrl || ''} alt="" style={{ width: 14, height: 14, objectFit: 'contain' }} />}
+                                <img src={rptAttrs.iconUrl} alt="" style={{ width: 14, height: 14, objectFit: 'contain' }} />
                               </span>
                             )}
                             {hasData && !isExpanded && <span className={styles.drawPointDataDot} title="Has data" />}
@@ -1067,52 +1130,7 @@ export default function MapClient() {
                             </button>
                           </div>
                           {/* Expandable details */}
-                          {isExpanded && (
-                            <div className={styles.drawPointDetails}>
-                              <div className={styles.drawPointField}>
-                                <span className={styles.drawPointFieldLabel}>Icon</span>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                  <div style={{ flex: 1, minWidth: 0 }}>
-                                    <DrawSearchableSelect options={iconOptions} value={editPointIcons[i] ?? ''} onChange={(val) => setEditPointIcon(i, val)} placeholder="No icon" searchPlaceholder="Search icons…" />
-                                  </div>
-                                  {w && (
-                                    <span className={styles.drawPointIconPreview}>
-                                      {w.attributes.iconType === 'svg'
-                                        ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(w.attributes.svgTemplate || '') }} style={{ display: 'flex', width: 22, height: 22 }} />
-                                        : <img src={w.attributes.iconUrl || ''} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              <div className={styles.drawPointField}>
-                                <span className={styles.drawPointFieldLabel}>Device Type</span>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                  <div style={{ flex: 1, minWidth: 0 }}>
-                                    <DrawSearchableSelect options={deviceTypeOptions} value={editPointDeviceTypes[i] ?? ''} onChange={(val) => setEditPointDeviceType(i, val)} placeholder="No device type" searchPlaceholder="Search types…" />
-                                  </div>
-                                  {dt && dt.attributes.iconFileType && (
-                                    <span className={styles.drawPointIconPreview}>
-                                      {dt.attributes.iconFileType === 'svg'
-                                        ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(dt.attributes.iconSvgTemplate || '') }} style={{ display: 'flex', width: 22, height: 22 }} />
-                                        : <img src={dt.attributes.iconUrl || ''} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              <div className={styles.drawPointField}>
-                                <span className={styles.drawPointFieldLabel}>Point Name</span>
-                                <input type="text" className={styles.drawInput} placeholder="e.g. Junction Box A" value={editPointNames[i] ?? ''} onChange={(e) => setEditPointName(i, e.target.value)} />
-                              </div>
-                              <div className={styles.drawPointField}>
-                                <span className={styles.drawPointFieldLabel}>Note</span>
-                                <input type="text" className={styles.drawInput} placeholder="Optional note…" value={editPointDescriptions[i] ?? ''} onChange={(e) => setEditPointDescription(i, e.target.value)} />
-                              </div>
-                              <div className={styles.drawPointCoordRow}>
-                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                                {pt[0].toFixed(5)}, {pt[1].toFixed(5)}
-                              </div>
-                            </div>
-                          )}
+                          {isExpanded && renderPointDetails(i, pt, editPointTemplates, editPointFieldData, setEditPointTemplate, setEditPointFieldValue)}
                         </div>
                       );
                     })}
@@ -1130,7 +1148,7 @@ export default function MapClient() {
             </div>
           )}
 
-          {/* Draw mode save panel */}
+          {/* ── Draw mode save panel ────────────────────────────────────── */}
           {drawMode && (
             <div className={styles.drawPanel}>
               <div className={styles.drawPanelHeader}>
@@ -1142,7 +1160,6 @@ export default function MapClient() {
               </div>
               <p className={styles.drawHint}>Click on the map to place route points.</p>
 
-              {/* Route Name */}
               <div className={styles.drawField}>
                 <label>Route Name <span className={styles.req}>*</span></label>
                 <input
@@ -1154,7 +1171,6 @@ export default function MapClient() {
                 />
               </div>
 
-              {/* Route Type */}
               <div className={styles.drawField}>
                 <label>Type <span className={styles.req}>*</span></label>
                 <DrawSearchableSelect
@@ -1165,7 +1181,6 @@ export default function MapClient() {
                 />
               </div>
 
-              {/* Parent Route */}
               <div className={styles.drawField}>
                 <label>Parent Route</label>
                 <DrawSearchableSelect
@@ -1177,7 +1192,6 @@ export default function MapClient() {
                 />
               </div>
 
-              {/* Color + Thickness */}
               <div className={styles.drawFieldRow}>
                 <div className={styles.drawField} style={{ flex: 1 }}>
                   <label>Color <span className={styles.req}>*</span></label>
@@ -1198,7 +1212,6 @@ export default function MapClient() {
                 </div>
               </div>
 
-              {/* Description */}
               <div className={styles.drawField}>
                 <label>Description <span className={styles.opt}>(optional)</span></label>
                 <textarea
@@ -1219,35 +1232,33 @@ export default function MapClient() {
                   </div>
                   <div className={styles.drawPointsScroll}>
                     {drawPoints.map((pt, i) => {
-                      const ptType = getPointType(i, drawPoints.length);
+                      const ptType     = getPointType(i, drawPoints.length);
                       const isExpanded = drawPointExpanded[i] ?? false;
-                      const hasData = !!(drawPointIcons[i] || drawPointDeviceTypes[i] || drawPointNames[i]);
-                      const w = drawPointIcons[i] ? availableIcons.find(x => x.id === drawPointIcons[i]) : null;
-                      const dt = drawPointDeviceTypes[i] ? deviceTypes.find(x => x.id === drawPointDeviceTypes[i]) : null;
+                      const fd         = drawPointFieldData[i] ?? {};
+                      const rpt        = drawPointTemplates[i] ? routePointTemplates.find((t) => t.id === drawPointTemplates[i]) : null;
+                      const hasData    = !!(drawPointTemplates[i] || Object.values(fd).some(Boolean));
+                      const rptAttrs   = rpt?.attributes;
+
                       return (
                         <div key={i} className={styles.drawPointRow} data-type={ptType}>
                           {/* Always-visible row header */}
                           <div className={styles.drawPointMeta}>
                             <span className={styles.drawSeq}>{i + 1}</span>
                             <span className={`${styles.drawPtType} ${styles[`ptType_${ptType}`]}`}>{ptType}</span>
-                            {drawPointNames[i] ? (
-                              <span className={styles.drawPointLabel}>{drawPointNames[i]}</span>
+                            {fd.pointName ? (
+                              <span className={styles.drawPointLabel}>{fd.pointName}</span>
                             ) : (
                               <span className={styles.drawCoords}>{pt[0].toFixed(4)}, {pt[1].toFixed(4)}</span>
                             )}
-                            {/* Inline icon/dt previews when collapsed */}
-                            {!isExpanded && w && (
+                            {/* Inline RPT icon preview when collapsed */}
+                            {!isExpanded && rptAttrs && rptAttrs.iconSvgTemplate && (
                               <span className={styles.drawPointInlineIcon}>
-                                {w.attributes.iconType === 'svg'
-                                  ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(w.attributes.svgTemplate || '') }} style={{ display: 'flex', width: 14, height: 14 }} />
-                                  : <img src={w.attributes.iconUrl || ''} alt="" style={{ width: 14, height: 14, objectFit: 'contain' }} />}
+                                <span dangerouslySetInnerHTML={{ __html: fitSvgInline(rptAttrs.iconSvgTemplate) }} style={{ display: 'flex', width: 14, height: 14 }} />
                               </span>
                             )}
-                            {!isExpanded && !w && dt && dt.attributes.iconFileType && (
+                            {!isExpanded && rptAttrs && !rptAttrs.iconSvgTemplate && rptAttrs.iconUrl && (
                               <span className={styles.drawPointInlineIcon}>
-                                {dt.attributes.iconFileType === 'svg'
-                                  ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(dt.attributes.iconSvgTemplate || '') }} style={{ display: 'flex', width: 14, height: 14 }} />
-                                  : <img src={dt.attributes.iconUrl || ''} alt="" style={{ width: 14, height: 14, objectFit: 'contain' }} />}
+                                <img src={rptAttrs.iconUrl} alt="" style={{ width: 14, height: 14, objectFit: 'contain' }} />
                               </span>
                             )}
                             {hasData && !isExpanded && <span className={styles.drawPointDataDot} title="Has data" />}
@@ -1258,52 +1269,7 @@ export default function MapClient() {
                             </button>
                           </div>
                           {/* Expandable details */}
-                          {isExpanded && (
-                            <div className={styles.drawPointDetails}>
-                              <div className={styles.drawPointField}>
-                                <span className={styles.drawPointFieldLabel}>Icon</span>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                  <div style={{ flex: 1, minWidth: 0 }}>
-                                    <DrawSearchableSelect options={iconOptions} value={drawPointIcons[i] ?? ''} onChange={(val) => setPointIcon(i, val)} placeholder="No icon" searchPlaceholder="Search icons…" />
-                                  </div>
-                                  {w && (
-                                    <span className={styles.drawPointIconPreview}>
-                                      {w.attributes.iconType === 'svg'
-                                        ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(w.attributes.svgTemplate || '') }} style={{ display: 'flex', width: 22, height: 22 }} />
-                                        : <img src={w.attributes.iconUrl || ''} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              <div className={styles.drawPointField}>
-                                <span className={styles.drawPointFieldLabel}>Device Type</span>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                  <div style={{ flex: 1, minWidth: 0 }}>
-                                    <DrawSearchableSelect options={deviceTypeOptions} value={drawPointDeviceTypes[i] ?? ''} onChange={(val) => setPointDeviceType(i, val)} placeholder="No device type" searchPlaceholder="Search types…" />
-                                  </div>
-                                  {dt && dt.attributes.iconFileType && (
-                                    <span className={styles.drawPointIconPreview}>
-                                      {dt.attributes.iconFileType === 'svg'
-                                        ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(dt.attributes.iconSvgTemplate || '') }} style={{ display: 'flex', width: 22, height: 22 }} />
-                                        : <img src={dt.attributes.iconUrl || ''} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              <div className={styles.drawPointField}>
-                                <span className={styles.drawPointFieldLabel}>Point Name</span>
-                                <input type="text" className={styles.drawInput} placeholder="e.g. Junction Box A" value={drawPointNames[i] ?? ''} onChange={(e) => setPointName(i, e.target.value)} />
-                              </div>
-                              <div className={styles.drawPointField}>
-                                <span className={styles.drawPointFieldLabel}>Note</span>
-                                <input type="text" className={styles.drawInput} placeholder="Optional note…" value={drawPointDescriptions[i] ?? ''} onChange={(e) => setPointDescription(i, e.target.value)} />
-                              </div>
-                              <div className={styles.drawPointCoordRow}>
-                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                                {pt[0].toFixed(5)}, {pt[1].toFixed(5)}
-                              </div>
-                            </div>
-                          )}
+                          {isExpanded && renderPointDetails(i, pt, drawPointTemplates, drawPointFieldData, setPointTemplate, setPointFieldValue)}
                         </div>
                       );
                     })}
@@ -1343,7 +1309,6 @@ export default function MapClient() {
         onConfirm={() => { if (pendingDeleteIdx !== null) { deleteEditPoint(pendingDeleteIdx); setPendingDeleteIdx(null); } }}
         onCancel={() => setPendingDeleteIdx(null)}
       />
-
     </div>
   );
 }

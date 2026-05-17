@@ -2,6 +2,27 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
+## [1.70.0] - 2026-05-17
+
+### Added
+- **Route Point Template selector in draw/edit panel** (`/tenant/map`): Each point in the Draw Route and Edit Route panels now shows a single **Route Point Template** dropdown instead of separate Icon and Device Type pickers.
+  - After selecting a template, the panel dynamically renders only the form fields whose flags are enabled (Point Name, Description, Remarks, Model Number, Serial Number, Asset Tag, MAC Address, IPv4/IPv6, Subnet, Gateway, VLAN, Username, Password, SNMP, Pole Number, Landmark, Address, Height, Rack Number, Port, Power Source, Electricity, Signal In/Out, Attenuation, Fiber Core).
+  - GPS Location flag shows the point's map-captured lat/lng as a read-only field.
+  - Selecting a different template clears all previously entered field values.
+- **Inline RPT icon preview** in collapsed point rows: if the selected template has an icon, it appears as a small 14×14 thumbnail beside the point row header (same position as the old icon/device-type previews).
+- **`getTenantRoutePointTemplates()`** added to `api.ts` — calls `GET /api/tenant/route-point-templates` using the tenant auth token.
+- **`RPT_FIELDS` constant** in `MapClient.tsx`: defines the 27 text/number/password inputs driven by RPT flags, in display order, keeping the component data-driven with no per-flag hardcoding.
+- **Backward compat load**: when entering edit mode on an older route point (no RPT), `pointName`, `pointDescription`, and `remarks` DB values are seeded into `fieldData` so they remain visible in the form.
+
+### Changed
+- **Icon and Device Type pickers removed** from route point expanded rows in both draw and edit modes.
+- **`drawPointIcons` / `editPointIcons`** state arrays removed; `drawPointDeviceTypes` / `editPointDeviceTypes` replaced by `drawPointTemplates` / `editPointTemplates`.
+- **`drawPointNames` / `drawPointDescriptions` / `editPointNames` / `editPointDescriptions`** state arrays removed — field values now live in the generic `drawPointFieldData` / `editPointFieldData` (`Record<string,string>[]`) arrays.
+- **`EditSnapshot` type** updated: removed `icons`, `names`, `descriptions`; added `templates` and `fieldData`.
+- **`loadApiData`** now fetches `getTenantRoutePointTemplates()` in the parallel batch and builds an RPT UUID → template map for icon resolution on existing route points.
+- **Route point icon resolution** updated: priority order is explicit widget icon → RPT icon → device type icon (legacy).
+- **`saveRoute` and `saveEdit` payloads** now send `routePointTemplateUuid` + `fieldData` per point; `pointName`/`pointDescription`/`remarks` are still populated from `fieldData` keys for backward compat with the map display layer.
+
 ## [1.69.0] - 2026-05-17
 ### Added
 - **Icon column in Route Point Templates table**: Shows a 28×28 icon badge — device type's icon when `isDevice=true`, RPT's own icon when `isDevice=false`, "—" if none.

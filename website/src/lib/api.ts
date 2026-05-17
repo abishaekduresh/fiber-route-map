@@ -1610,5 +1610,16 @@ export async function getTenantIcons(): Promise<ApiResponse<IconData[]>> {
   return apiFetch('/api/tenant/icons');
 }
 
+export async function getTenantDeviceCategories(): Promise<ApiResponse<DeviceCategoryData[]>> {
+  return apiFetch('/api/tenant/device-categories');
+}
+
+export async function getTenantDeviceTypes(): Promise<ApiResponse<DeviceTypeData[]>> {
+  return apiFetch('/api/tenant/device-types');
+}
+
+export async function getTenantRoutePointTemplates(): Promise<ApiResponse<RoutePointTemplateData[]>> {
+  return apiFetch('/api/tenant/route-point-templates');
+}
 
 export { apiFetch };

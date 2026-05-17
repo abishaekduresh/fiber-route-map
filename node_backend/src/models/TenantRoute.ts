@@ -75,6 +75,8 @@ export interface TenantRoutePoint {
   pointType: RoutePointType;
   pointIcon: string | null;
   deviceTypeUuid: string | null;
+  routePointTemplateUuid: string | null;
+  fieldData: Record<string, string> | null;
   pointName: string | null;
   pointDescription: string | null;
   remarks: string | null;
@@ -91,6 +93,8 @@ export interface CreateRoutePointDTO {
   pointType: RoutePointType;
   pointIcon?: string | null;
   deviceTypeUuid?: string | null;
+  routePointTemplateUuid?: string | null;
+  fieldData?: Record<string, string> | null;
   pointName?: string | null;
   pointDescription?: string | null;
   remarks?: string | null;
