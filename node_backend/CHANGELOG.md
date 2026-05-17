@@ -5,6 +5,30 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.68.0] - 2026-05-17
+### Added
+- **`numericId` in DeviceType API responses**: `DeviceTypeController.transform()` now exposes `attributes.numericId` — required for correct select option matching in Route Point Template modal.
+- **`SearchableSelect` frontend component**: Reusable searchable dropdown with live text filter, icon previews per option, hover highlight, and checkmark on selected item.
+- **Auto-cleanup of duplicate permissions on startup** (`index.ts`): Deletes all permissions with `resource IN ('device_category', 'device_type')` (old singular form) and their `role_permissions` rows before re-seeding the correct plural forms.
+
+### Changed
+- **`ROUTE_PERMISSIONS` in `SetupService.ts`**: Corrected `device_category` → `device_categories` and `device_type` → `device_types` — stops `syncPermissions()` from recreating stale duplicate permissions.
+- **Route Point Template Swagger** (`route_point_templates.doc.ts`): Fully rewritten with all 36 field flags in GET example, POST schema, and PUT schema; removed old 3-flag schema.
+
+### Fixed
+- **Icon and Device Type selection in RPT modal**: Both dropdowns now use `numericId` as option values, matching the numeric FK stored in the template. Previously used UUID, causing permanent "No selection" state.
+- **Device Type icon fields missing from `DeviceTypeData` type** (`api.ts`): Added `iconId`, `iconName`, `iconCode`, `iconFileType`, `iconSvgTemplate`, `iconUrl` to the TypeScript interface.
+
+## [1.67.0] - 2026-05-17
+### Added
+- **36 dynamic field flags on `route_point_templates`**: All 36 flags (previously on `device_types`) migrated to this table across 10 groups — Basic Information, Identification, Networking, Authentication, GIS/Location, Device Installation, Media/Files, Optical/Signal, Monitoring, Customer & Topology.
+- **`isDevice` flag on `route_point_templates`**: Boolean flag indicating whether this template represents a physical device (enables device mapping in the field).
+- **Auto-migration** (`index.ts`): Drops 3 obsolete columns (`isOwnerNameRequired`, `isContactNumberRequired`, `isElectricityAvailable`); batch-adds 33 new flag columns to `route_point_templates` via idempotent `hasColumn` checks.
+
+### Changed
+- **`device_types` API simplified**: All 36 flag fields removed from `DeviceType` model, `DeviceTypeRepository` (create/update), and `DeviceTypeController` (transform/parseBody). DB columns intentionally left in place. Version bumped to `1.67.0`.
+- **`RoutePointTemplateController`**: `transform()` emits all 36 flags + `isDevice`; `parseBody()` coerces all 37 booleans. Version bumped to `1.67.0`.
+
 ## [1.66.0] - 2026-05-17
 ### Added
 - **36 dynamic field flags on `device_types`**: Expanded from 5 flags to 36 booleans across 10 logical groups:

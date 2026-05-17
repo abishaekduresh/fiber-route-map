@@ -64,16 +64,58 @@ export class RoutePointTemplateRepository {
       name: data.name,
       iconId:       data.iconId       ?? null,
       deviceTypeId: data.deviceTypeId ?? null,
-      isDevice:                data.isDevice                ? 1 : 0,
-      isPointNameRequired:     data.isPointNameRequired     ? 1 : 0,
-      isPoleNumberRequired:    data.isPoleNumberRequired     ? 1 : 0,
-      isLandmarkRequired:      data.isLandmarkRequired      ? 1 : 0,
-      isAddressRequired:       data.isAddressRequired       ? 1 : 0,
-      isPhotoRequired:         data.isPhotoRequired         ? 1 : 0,
-      isHeightRequired:        data.isHeightRequired        ? 1 : 0,
-      isOwnerNameRequired:     data.isOwnerNameRequired     ? 1 : 0,
-      isContactNumberRequired: data.isContactNumberRequired ? 1 : 0,
-      isElectricityAvailable:  data.isElectricityAvailable  ? 1 : 0,
+      // Classification flag
+      isDevice:                    data.isDevice                    ? 1 : 0,
+      // Basic Information
+      isPointNameRequired:         data.isPointNameRequired         ? 1 : 0,
+      isDescriptionRequired:       data.isDescriptionRequired       ? 1 : 0,
+      isRemarksRequired:           data.isRemarksRequired           ? 1 : 0,
+      // Identification
+      isModelNumberRequired:       data.isModelNumberRequired       ? 1 : 0,
+      isSerialNumberRequired:      data.isSerialNumberRequired      ? 1 : 0,
+      isAssetTagRequired:          data.isAssetTagRequired          ? 1 : 0,
+      // Networking
+      isMacAddressRequired:        data.isMacAddressRequired        ? 1 : 0,
+      isIpv4AddressRequired:       data.isIpv4AddressRequired       ? 1 : 0,
+      isIpv6AddressRequired:       data.isIpv6AddressRequired       ? 1 : 0,
+      isSubnetRequired:            data.isSubnetRequired            ? 1 : 0,
+      isGatewayRequired:           data.isGatewayRequired           ? 1 : 0,
+      isVlanRequired:              data.isVlanRequired              ? 1 : 0,
+      // Authentication
+      isUsernameRequired:          data.isUsernameRequired          ? 1 : 0,
+      isPasswordRequired:          data.isPasswordRequired          ? 1 : 0,
+      isSnmpRequired:              data.isSnmpRequired              ? 1 : 0,
+      // GIS / Location
+      isGpsLocationRequired:       data.isGpsLocationRequired       ? 1 : 0,
+      isPoleNumberRequired:        data.isPoleNumberRequired        ? 1 : 0,
+      isLandmarkRequired:          data.isLandmarkRequired          ? 1 : 0,
+      isAddressRequired:           data.isAddressRequired           ? 1 : 0,
+      isHeightRequired:            data.isHeightRequired            ? 1 : 0,
+      // Device Installation
+      isRackNumberRequired:        data.isRackNumberRequired        ? 1 : 0,
+      isPortRequired:              data.isPortRequired              ? 1 : 0,
+      isPowerSourceRequired:       data.isPowerSourceRequired       ? 1 : 0,
+      isElectricityRequired:       data.isElectricityRequired       ? 1 : 0,
+      // Media / Files
+      isPhotoRequired:             data.isPhotoRequired             ? 1 : 0,
+      isDocumentRequired:          data.isDocumentRequired          ? 1 : 0,
+      // Optical / Signal
+      isSignalInputRequired:       data.isSignalInputRequired       ? 1 : 0,
+      isSignalOutputRequired:      data.isSignalOutputRequired      ? 1 : 0,
+      isAttenuationRequired:       data.isAttenuationRequired       ? 1 : 0,
+      isFiberCoreRequired:         data.isFiberCoreRequired         ? 1 : 0,
+      // Monitoring
+      isMonitoringEnabled:         data.isMonitoringEnabled         ? 1 : 0,
+      isSnmpMonitoringEnabled:     data.isSnmpMonitoringEnabled     ? 1 : 0,
+      isRealtimeStatusEnabled:     data.isRealtimeStatusEnabled     ? 1 : 0,
+      // Customer Mapping
+      isCustomerMappingRequired:   data.isCustomerMappingRequired   ? 1 : 0,
+      // Topology
+      supportsInputPorts:          data.supportsInputPorts          ? 1 : 0,
+      supportsOutputPorts:         data.supportsOutputPorts         ? 1 : 0,
+      supportsBidirectionalPorts:  data.supportsBidirectionalPorts  ? 1 : 0,
+      supportsSignalFlow:          data.supportsSignalFlow          ? 1 : 0,
+      supportsOpticalCalculation:  data.supportsOpticalCalculation  ? 1 : 0,
       description: data.description ?? null,
       status: 'active',
       createdAt: now, updatedAt: now,
@@ -84,9 +126,20 @@ export class RoutePointTemplateRepository {
 
   async update(uuid: string, data: UpdateRoutePointTemplateDTO): Promise<boolean> {
     const payload: any = { ...data, updatedAt: nowDb() };
-    const bools = ['isDevice','isPointNameRequired','isPoleNumberRequired','isLandmarkRequired',
-      'isAddressRequired','isPhotoRequired','isHeightRequired','isOwnerNameRequired',
-      'isContactNumberRequired','isElectricityAvailable'];
+    const bools = [
+      'isDevice',
+      'isPointNameRequired','isDescriptionRequired','isRemarksRequired',
+      'isModelNumberRequired','isSerialNumberRequired','isAssetTagRequired',
+      'isMacAddressRequired','isIpv4AddressRequired','isIpv6AddressRequired','isSubnetRequired','isGatewayRequired','isVlanRequired',
+      'isUsernameRequired','isPasswordRequired','isSnmpRequired',
+      'isGpsLocationRequired','isPoleNumberRequired','isLandmarkRequired','isAddressRequired','isHeightRequired',
+      'isRackNumberRequired','isPortRequired','isPowerSourceRequired','isElectricityRequired',
+      'isPhotoRequired','isDocumentRequired',
+      'isSignalInputRequired','isSignalOutputRequired','isAttenuationRequired','isFiberCoreRequired',
+      'isMonitoringEnabled','isSnmpMonitoringEnabled','isRealtimeStatusEnabled',
+      'isCustomerMappingRequired',
+      'supportsInputPorts','supportsOutputPorts','supportsBidirectionalPorts','supportsSignalFlow','supportsOpticalCalculation',
+    ];
     for (const k of bools) { if (k in payload) payload[k] = payload[k] ? 1 : 0; }
     const rows = await db(this.table).where({ uuid }).update(payload);
     return rows > 0;

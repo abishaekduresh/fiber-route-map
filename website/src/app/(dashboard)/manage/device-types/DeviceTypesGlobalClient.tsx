@@ -30,6 +30,8 @@ export default function DeviceTypesGlobalClient() {
   const [loading, setLoading]           = useState(true);
   const [modalOpen, setModalOpen]       = useState(false);
   const [selected, setSelected]         = useState<DeviceTypeData | null>(null);
+  const [viewOpen, setViewOpen]         = useState(false);
+  const [viewing, setViewing]           = useState<DeviceTypeData | null>(null);
   const [confirmOpen, setConfirmOpen]   = useState(false);
   const [pendingDelete, setPendingDelete] = useState<DeviceTypeData | null>(null);
   const [deleting, setDeleting]         = useState(false);
@@ -58,6 +60,7 @@ export default function DeviceTypesGlobalClient() {
 
   const openCreate = () => { setSelected(null); setModalOpen(true); };
   const openEdit   = (t: DeviceTypeData) => { setSelected(t); setModalOpen(true); };
+  const openView   = (t: DeviceTypeData) => { setViewing(t); setViewOpen(true); };
   const askDelete  = (t: DeviceTypeData) => { setPendingDelete(t); setConfirmOpen(true); };
   const handleDelete = async () => {
     if (!pendingDelete) return;
@@ -69,20 +72,6 @@ export default function DeviceTypesGlobalClient() {
     } catch { toast.error('Delete failed'); }
     finally { setDeleting(false); setConfirmOpen(false); setPendingDelete(null); }
   };
-
-  const ALL_FLAGS = [
-    'isPointNameRequired','isDescriptionRequired','isRemarksRequired',
-    'isModelNumberRequired','isSerialNumberRequired','isAssetTagRequired',
-    'isMacAddressRequired','isIpv4AddressRequired','isIpv6AddressRequired','isSubnetRequired','isGatewayRequired','isVlanRequired',
-    'isUsernameRequired','isPasswordRequired','isSnmpRequired',
-    'isGpsLocationRequired','isPoleNumberRequired','isLandmarkRequired','isAddressRequired','isHeightRequired',
-    'isRackNumberRequired','isPortRequired','isPowerSourceRequired','isElectricityRequired',
-    'isPhotoRequired','isDocumentRequired',
-    'isSignalInputRequired','isSignalOutputRequired','isAttenuationRequired','isFiberCoreRequired',
-    'isMonitoringEnabled','isSnmpMonitoringEnabled','isRealtimeStatusEnabled',
-    'isCustomerMappingRequired',
-    'supportsInputPorts','supportsOutputPorts','supportsBidirectionalPorts','supportsSignalFlow','supportsOpticalCalculation',
-  ] as const;
 
   const inputSt: React.CSSProperties = { padding: '0.45rem 0.7rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-bg-secondary)', color: 'var(--color-text-primary)', fontSize: '0.8rem' };
 
@@ -129,16 +118,16 @@ export default function DeviceTypesGlobalClient() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
           <thead>
             <tr style={{ background: 'var(--color-bg-glass)', borderBottom: '1px solid var(--color-border)' }}>
-              {['Code','Name','Category','Icon','Flags','Status','Created','Actions'].map(h => (
+              {['Code','Name','Category','Icon','Status','Created','Actions'].map(h => (
                 <th key={h} style={{ padding: '0.6rem 0.8rem', textAlign: 'left', fontWeight: 700, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={8} style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>Loading…</td></tr>
+              <tr><td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>Loading…</td></tr>
             ) : types.length === 0 ? (
-              <tr><td colSpan={8} style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>No device types found</td></tr>
+              <tr><td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>No device types found</td></tr>
             ) : types.map(t => (
               <tr key={t.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                 <td style={{ padding: '0.55rem 0.8rem' }}><span style={{ fontFamily: 'monospace', fontSize: '0.75rem', background: 'rgba(99,102,241,0.1)', color: '#818cf8', padding: '2px 6px', borderRadius: 4 }}>{t.attributes.code}</span></td>
@@ -152,19 +141,14 @@ export default function DeviceTypesGlobalClient() {
                     : <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.72rem' }}>—</span>}
                 </td>
                 <td style={{ padding: '0.55rem 0.8rem' }}>
-                  {(() => {
-                    const flagCount = ALL_FLAGS.filter(k => t.attributes[k as keyof typeof t.attributes]).length;
-                    return flagCount > 0
-                      ? <span style={{ padding: '1px 7px', borderRadius: 10, fontSize: '0.68rem', fontWeight: 700, background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>{flagCount} flag{flagCount !== 1 ? 's' : ''}</span>
-                      : <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.72rem' }}>—</span>;
-                  })()}
-                </td>
-                <td style={{ padding: '0.55rem 0.8rem' }}>
                   <span style={{ padding: '2px 8px', borderRadius: 10, fontSize: '0.7rem', fontWeight: 700, background: t.attributes.status === 'active' ? 'rgba(16,185,129,0.12)' : 'rgba(100,116,139,0.1)', color: t.attributes.status === 'active' ? '#10b981' : '#94a3b8' }}>{t.attributes.status}</span>
                 </td>
                 <td style={{ padding: '0.55rem 0.8rem', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>{new Date(t.meta.createdAt).toLocaleDateString()}</td>
                 <td style={{ padding: '0.55rem 0.8rem' }}>
                   <div style={{ display: 'flex', gap: '0.3rem' }}>
+                    <button onClick={() => openView(t)} title="View" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
                     {canUpdate && (
                       <button onClick={() => openEdit(t)} title="Edit" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -191,6 +175,60 @@ export default function DeviceTypesGlobalClient() {
           ))}
           <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} style={{ padding: '0.3rem 0.6rem', borderRadius: 4, border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-text-secondary)', cursor: page >= totalPages ? 'not-allowed' : 'pointer', opacity: page >= totalPages ? 0.4 : 1 }}>→</button>
           <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginLeft: '0.5rem' }}>{total} total</span>
+        </div>
+      )}
+
+      {viewOpen && viewing && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1rem' }} onClick={() => setViewOpen(false)}>
+          <div style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: 640, maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }} onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', borderBottom: '1px solid var(--color-border)', position: 'sticky', top: 0, background: 'var(--color-bg-secondary)', zIndex: 1 }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>{viewing.attributes.name}</h2>
+                <span style={{ fontFamily: 'monospace', fontSize: '0.72rem', background: 'rgba(99,102,241,0.1)', color: '#818cf8', padding: '1px 6px', borderRadius: 3 }}>{viewing.attributes.code}</span>
+              </div>
+              <button onClick={() => setViewOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* Meta row */}
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: 140 }}>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Category</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--color-text-primary)' }}>{viewing.attributes.categoryName ?? <span style={{ color: 'var(--color-text-secondary)' }}>—</span>}</div>
+                </div>
+                <div style={{ flex: 1, minWidth: 140 }}>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Icon</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    {viewing.attributes.iconFileType === 'svg' && viewing.attributes.iconSvgTemplate
+                      ? <span dangerouslySetInnerHTML={{ __html: fitSvgInline(viewing.attributes.iconSvgTemplate) }} style={{ display: 'inline-flex', width: 20, height: 20 }} />
+                      : viewing.attributes.iconUrl
+                      ? <img src={viewing.attributes.iconUrl} alt="" style={{ width: 20, height: 20, objectFit: 'contain' }} />
+                      : null}
+                    <span style={{ fontSize: '0.85rem', color: viewing.attributes.iconName ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>{viewing.attributes.iconName ?? '—'}</span>
+                  </div>
+                </div>
+                <div style={{ flex: 1, minWidth: 100 }}>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Status</div>
+                  <span style={{ padding: '2px 8px', borderRadius: 10, fontSize: '0.72rem', fontWeight: 700, background: viewing.attributes.status === 'active' ? 'rgba(16,185,129,0.12)' : 'rgba(100,116,139,0.1)', color: viewing.attributes.status === 'active' ? '#10b981' : '#94a3b8' }}>{viewing.attributes.status}</span>
+                </div>
+              </div>
+              {viewing.attributes.description && (
+                <div>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Description</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--color-text-primary)', lineHeight: 1.5 }}>{viewing.attributes.description}</div>
+                </div>
+              )}
+              {/* Footer actions */}
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', paddingTop: '0.5rem', borderTop: '1px solid var(--color-border)' }}>
+                {canUpdate && (
+                  <button onClick={() => { setViewOpen(false); openEdit(viewing); }} style={{ padding: '0.45rem 1rem', borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--color-primary)', color: '#fff', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer' }}>Edit</button>
+                )}
+                <button onClick={() => setViewOpen(false)} style={{ padding: '0.45rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-text-secondary)', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}>Close</button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

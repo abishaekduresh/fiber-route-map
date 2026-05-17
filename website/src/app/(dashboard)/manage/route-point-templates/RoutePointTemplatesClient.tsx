@@ -15,16 +15,19 @@ import styles from '@/app/(dashboard)/dashboard/dashboard.module.css';
 
 const PER_PAGE = 10;
 
-const FLAG_LABELS: { key: keyof RoutePointTemplateData['attributes']; label: string }[] = [
-  { key: 'isPoleNumberRequired',    label: 'Pole #' },
-  { key: 'isLandmarkRequired',      label: 'Landmark' },
-  { key: 'isAddressRequired',       label: 'Address' },
-  { key: 'isPhotoRequired',         label: 'Photo' },
-  { key: 'isHeightRequired',        label: 'Height' },
-  { key: 'isOwnerNameRequired',     label: 'Owner' },
-  { key: 'isContactNumberRequired', label: 'Contact' },
-  { key: 'isElectricityAvailable',  label: 'Elec.' },
-];
+const ALL_FLAGS = [
+  'isPointNameRequired','isDescriptionRequired','isRemarksRequired',
+  'isModelNumberRequired','isSerialNumberRequired','isAssetTagRequired',
+  'isMacAddressRequired','isIpv4AddressRequired','isIpv6AddressRequired','isSubnetRequired','isGatewayRequired','isVlanRequired',
+  'isUsernameRequired','isPasswordRequired','isSnmpRequired',
+  'isGpsLocationRequired','isPoleNumberRequired','isLandmarkRequired','isAddressRequired','isHeightRequired',
+  'isRackNumberRequired','isPortRequired','isPowerSourceRequired','isElectricityRequired',
+  'isPhotoRequired','isDocumentRequired',
+  'isSignalInputRequired','isSignalOutputRequired','isAttenuationRequired','isFiberCoreRequired',
+  'isMonitoringEnabled','isSnmpMonitoringEnabled','isRealtimeStatusEnabled',
+  'isCustomerMappingRequired',
+  'supportsInputPorts','supportsOutputPorts','supportsBidirectionalPorts','supportsSignalFlow','supportsOpticalCalculation',
+] as const;
 
 export default function RoutePointTemplatesClient() {
   const { hasPermission } = useAuth();
@@ -168,14 +171,12 @@ export default function RoutePointTemplatesClient() {
                         : <span className={styles.statusBadge} style={{ background: 'rgba(100,116,139,0.1)', color: '#94a3b8' }}>Passive</span>}
                     </td>
                     <td>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
-                        {a.isPointNameRequired && (
-                          <span className={styles.statusBadge} style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>Name</span>
-                        )}
-                        {FLAG_LABELS.filter(f => a[f.key]).map(f => (
-                          <span key={f.key} className={styles.statusBadge} style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>{f.label}</span>
-                        ))}
-                      </div>
+                      {(() => {
+                        const flagCount = ALL_FLAGS.filter(k => (a as any)[k]).length;
+                        return flagCount > 0
+                          ? <span className={styles.statusBadge} style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>{flagCount} flag{flagCount !== 1 ? 's' : ''}</span>
+                          : <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.72rem' }}>—</span>;
+                      })()}
                     </td>
                     <td>
                       <span className={`${styles.statusBadge} ${a.status === 'active' ? styles['status-active'] : styles['status-pending']}`}>

@@ -36,38 +36,68 @@
  *                   type: "route_point_template"
  *                   attributes:
  *                     code: "RPT0001"
- *                     name: "Electric Pole"
- *                     iconId: 1
- *                     iconName: "Pole Icon"
- *                     iconCode: "ICO0001"
- *                     iconFileType: "svg"
- *                     iconSvgTemplate: "<svg>…</svg>"
+ *                     name: "OLT Site"
+ *                     iconId: null
+ *                     iconName: null
+ *                     iconCode: null
+ *                     iconFileType: null
+ *                     iconSvgTemplate: null
  *                     iconUrl: null
- *                     deviceTypeId: 2
- *                     deviceTypeName: "Electric Pole Type"
- *                     deviceTypeCode: "DT0002"
+ *                     deviceTypeId: 1
+ *                     deviceTypeName: "OLT"
+ *                     deviceTypeCode: "DT0001"
  *                     isDevice: true
  *                     isPointNameRequired: true
- *                     isPoleNumberRequired: true
+ *                     isDescriptionRequired: false
+ *                     isRemarksRequired: false
+ *                     isModelNumberRequired: false
+ *                     isSerialNumberRequired: true
+ *                     isAssetTagRequired: false
+ *                     isMacAddressRequired: true
+ *                     isIpv4AddressRequired: true
+ *                     isIpv6AddressRequired: false
+ *                     isSubnetRequired: false
+ *                     isGatewayRequired: false
+ *                     isVlanRequired: false
+ *                     isUsernameRequired: false
+ *                     isPasswordRequired: false
+ *                     isSnmpRequired: false
+ *                     isGpsLocationRequired: false
+ *                     isPoleNumberRequired: false
  *                     isLandmarkRequired: false
  *                     isAddressRequired: false
+ *                     isHeightRequired: false
+ *                     isRackNumberRequired: true
+ *                     isPortRequired: false
+ *                     isPowerSourceRequired: false
+ *                     isElectricityRequired: false
  *                     isPhotoRequired: false
- *                     isHeightRequired: true
- *                     isOwnerNameRequired: false
- *                     isContactNumberRequired: false
- *                     isElectricityAvailable: true
- *                     description: "Standard electric utility pole"
+ *                     isDocumentRequired: false
+ *                     isSignalInputRequired: false
+ *                     isSignalOutputRequired: true
+ *                     isAttenuationRequired: false
+ *                     isFiberCoreRequired: false
+ *                     isMonitoringEnabled: false
+ *                     isSnmpMonitoringEnabled: false
+ *                     isRealtimeStatusEnabled: false
+ *                     isCustomerMappingRequired: false
+ *                     supportsInputPorts: false
+ *                     supportsOutputPorts: true
+ *                     supportsBidirectionalPorts: false
+ *                     supportsSignalFlow: true
+ *                     supportsOpticalCalculation: false
+ *                     description: "Optical Line Terminal site template"
  *                     status: "active"
  *                   meta:
- *                     createdAt: "2026-05-14T10:00:00.000Z"
- *                     updatedAt: "2026-05-14T10:00:00.000Z"
+ *                     createdAt: "2026-05-17T10:00:00.000Z"
+ *                     updatedAt: "2026-05-17T10:00:00.000Z"
  *               meta:
  *                 pagination: { total: 1, page: 1, limit: 10, totalPages: 1 }
  *   post:
  *     tags:
  *       - Route Point Templates
  *     summary: Create a route point template
- *     description: Requires `route_point_templates.create`.
+ *     description: Creates a new global route point template with optional icon, device type, and 36 dynamic field flags. Requires `route_point_templates.create`.
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -78,20 +108,50 @@
  *             type: object
  *             required: [name]
  *             properties:
- *               name: { type: string, example: "Electric Pole" }
+ *               name: { type: string, example: "OLT Site" }
  *               iconId: { type: integer, nullable: true }
  *               deviceTypeId: { type: integer, nullable: true }
- *               isDevice: { type: boolean, default: false }
- *               isPointNameRequired: { type: boolean, default: true }
- *               isPoleNumberRequired: { type: boolean, default: false }
- *               isLandmarkRequired: { type: boolean, default: false }
- *               isAddressRequired: { type: boolean, default: false }
- *               isPhotoRequired: { type: boolean, default: false }
- *               isHeightRequired: { type: boolean, default: false }
- *               isOwnerNameRequired: { type: boolean, default: false }
- *               isContactNumberRequired: { type: boolean, default: false }
- *               isElectricityAvailable: { type: boolean, default: false }
  *               description: { type: string, nullable: true }
+ *               isDevice: { type: boolean, default: false }
+ *               isPointNameRequired:       { type: boolean, default: true }
+ *               isDescriptionRequired:     { type: boolean, default: false }
+ *               isRemarksRequired:         { type: boolean, default: false }
+ *               isModelNumberRequired:     { type: boolean, default: false }
+ *               isSerialNumberRequired:    { type: boolean, default: false }
+ *               isAssetTagRequired:        { type: boolean, default: false }
+ *               isMacAddressRequired:      { type: boolean, default: false }
+ *               isIpv4AddressRequired:     { type: boolean, default: false }
+ *               isIpv6AddressRequired:     { type: boolean, default: false }
+ *               isSubnetRequired:          { type: boolean, default: false }
+ *               isGatewayRequired:         { type: boolean, default: false }
+ *               isVlanRequired:            { type: boolean, default: false }
+ *               isUsernameRequired:        { type: boolean, default: false }
+ *               isPasswordRequired:        { type: boolean, default: false }
+ *               isSnmpRequired:            { type: boolean, default: false }
+ *               isGpsLocationRequired:     { type: boolean, default: false }
+ *               isPoleNumberRequired:      { type: boolean, default: false }
+ *               isLandmarkRequired:        { type: boolean, default: false }
+ *               isAddressRequired:         { type: boolean, default: false }
+ *               isHeightRequired:          { type: boolean, default: false }
+ *               isRackNumberRequired:      { type: boolean, default: false }
+ *               isPortRequired:            { type: boolean, default: false }
+ *               isPowerSourceRequired:     { type: boolean, default: false }
+ *               isElectricityRequired:     { type: boolean, default: false }
+ *               isPhotoRequired:           { type: boolean, default: false }
+ *               isDocumentRequired:        { type: boolean, default: false }
+ *               isSignalInputRequired:     { type: boolean, default: false }
+ *               isSignalOutputRequired:    { type: boolean, default: false }
+ *               isAttenuationRequired:     { type: boolean, default: false }
+ *               isFiberCoreRequired:       { type: boolean, default: false }
+ *               isMonitoringEnabled:       { type: boolean, default: false }
+ *               isSnmpMonitoringEnabled:   { type: boolean, default: false }
+ *               isRealtimeStatusEnabled:   { type: boolean, default: false }
+ *               isCustomerMappingRequired: { type: boolean, default: false }
+ *               supportsInputPorts:           { type: boolean, default: false }
+ *               supportsOutputPorts:          { type: boolean, default: false }
+ *               supportsBidirectionalPorts:   { type: boolean, default: false }
+ *               supportsSignalFlow:           { type: boolean, default: false }
+ *               supportsOpticalCalculation:   { type: boolean, default: false }
  *     responses:
  *       201:
  *         description: Template created
@@ -119,6 +179,7 @@
  *     tags:
  *       - Route Point Templates
  *     summary: Update a route point template
+ *     description: Updates an existing route point template. All flag fields are optional. Requires `route_point_templates.update`.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -136,18 +197,48 @@
  *               name: { type: string }
  *               iconId: { type: integer, nullable: true }
  *               deviceTypeId: { type: integer, nullable: true }
- *               isDevice: { type: boolean }
- *               isPointNameRequired: { type: boolean }
- *               isPoleNumberRequired: { type: boolean }
- *               isLandmarkRequired: { type: boolean }
- *               isAddressRequired: { type: boolean }
- *               isPhotoRequired: { type: boolean }
- *               isHeightRequired: { type: boolean }
- *               isOwnerNameRequired: { type: boolean }
- *               isContactNumberRequired: { type: boolean }
- *               isElectricityAvailable: { type: boolean }
  *               description: { type: string, nullable: true }
  *               status: { type: string, enum: [active, inactive] }
+ *               isDevice: { type: boolean }
+ *               isPointNameRequired:       { type: boolean }
+ *               isDescriptionRequired:     { type: boolean }
+ *               isRemarksRequired:         { type: boolean }
+ *               isModelNumberRequired:     { type: boolean }
+ *               isSerialNumberRequired:    { type: boolean }
+ *               isAssetTagRequired:        { type: boolean }
+ *               isMacAddressRequired:      { type: boolean }
+ *               isIpv4AddressRequired:     { type: boolean }
+ *               isIpv6AddressRequired:     { type: boolean }
+ *               isSubnetRequired:          { type: boolean }
+ *               isGatewayRequired:         { type: boolean }
+ *               isVlanRequired:            { type: boolean }
+ *               isUsernameRequired:        { type: boolean }
+ *               isPasswordRequired:        { type: boolean }
+ *               isSnmpRequired:            { type: boolean }
+ *               isGpsLocationRequired:     { type: boolean }
+ *               isPoleNumberRequired:      { type: boolean }
+ *               isLandmarkRequired:        { type: boolean }
+ *               isAddressRequired:         { type: boolean }
+ *               isHeightRequired:          { type: boolean }
+ *               isRackNumberRequired:      { type: boolean }
+ *               isPortRequired:            { type: boolean }
+ *               isPowerSourceRequired:     { type: boolean }
+ *               isElectricityRequired:     { type: boolean }
+ *               isPhotoRequired:           { type: boolean }
+ *               isDocumentRequired:        { type: boolean }
+ *               isSignalInputRequired:     { type: boolean }
+ *               isSignalOutputRequired:    { type: boolean }
+ *               isAttenuationRequired:     { type: boolean }
+ *               isFiberCoreRequired:       { type: boolean }
+ *               isMonitoringEnabled:       { type: boolean }
+ *               isSnmpMonitoringEnabled:   { type: boolean }
+ *               isRealtimeStatusEnabled:   { type: boolean }
+ *               isCustomerMappingRequired: { type: boolean }
+ *               supportsInputPorts:           { type: boolean }
+ *               supportsOutputPorts:          { type: boolean }
+ *               supportsBidirectionalPorts:   { type: boolean }
+ *               supportsSignalFlow:           { type: boolean }
+ *               supportsOpticalCalculation:   { type: boolean }
  *     responses:
  *       200:
  *         description: Template updated
@@ -157,6 +248,7 @@
  *     tags:
  *       - Route Point Templates
  *     summary: Delete a route point template
+ *     description: Soft-deletes a route point template. Requires `route_point_templates.delete`.
  *     security:
  *       - bearerAuth: []
  *     parameters:

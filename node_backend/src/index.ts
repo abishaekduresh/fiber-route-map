@@ -845,6 +845,67 @@ const ensureRoutePointTemplateTables = async () => {
       logger.warn('Auto-migration for device_types flag columns skipped or failed', { error: err.message });
     }
 
+    // v1.67.0 — Patch route_point_templates: drop 3 obsolete columns, add 33 new flag columns
+    try {
+      // Drop old columns no longer in the 36
+      for (const col of ['isOwnerNameRequired', 'isContactNumberRequired', 'isElectricityAvailable']) {
+        const has = await db.schema.hasColumn('route_point_templates', col);
+        if (has) {
+          await db.schema.table('route_point_templates', (t: any) => { t.dropColumn(col); });
+          logger.info(`Auto-migration: route_point_templates dropped obsolete column ${col}`);
+        }
+      }
+
+      // Add all new flag columns that don't already exist
+      const rptNewCols = [
+        { name: 'isDescriptionRequired',     defaultTo: false },
+        { name: 'isRemarksRequired',         defaultTo: false },
+        { name: 'isModelNumberRequired',     defaultTo: false },
+        { name: 'isSerialNumberRequired',    defaultTo: false },
+        { name: 'isAssetTagRequired',        defaultTo: false },
+        { name: 'isMacAddressRequired',      defaultTo: false },
+        { name: 'isIpv4AddressRequired',     defaultTo: false },
+        { name: 'isIpv6AddressRequired',     defaultTo: false },
+        { name: 'isSubnetRequired',          defaultTo: false },
+        { name: 'isGatewayRequired',         defaultTo: false },
+        { name: 'isVlanRequired',            defaultTo: false },
+        { name: 'isUsernameRequired',        defaultTo: false },
+        { name: 'isPasswordRequired',        defaultTo: false },
+        { name: 'isSnmpRequired',            defaultTo: false },
+        { name: 'isGpsLocationRequired',     defaultTo: false },
+        { name: 'isRackNumberRequired',      defaultTo: false },
+        { name: 'isPortRequired',            defaultTo: false },
+        { name: 'isPowerSourceRequired',     defaultTo: false },
+        { name: 'isElectricityRequired',     defaultTo: false },
+        { name: 'isDocumentRequired',        defaultTo: false },
+        { name: 'isSignalInputRequired',     defaultTo: false },
+        { name: 'isSignalOutputRequired',    defaultTo: false },
+        { name: 'isAttenuationRequired',     defaultTo: false },
+        { name: 'isFiberCoreRequired',       defaultTo: false },
+        { name: 'isMonitoringEnabled',       defaultTo: false },
+        { name: 'isSnmpMonitoringEnabled',   defaultTo: false },
+        { name: 'isRealtimeStatusEnabled',   defaultTo: false },
+        { name: 'isCustomerMappingRequired', defaultTo: false },
+        { name: 'supportsInputPorts',           defaultTo: false },
+        { name: 'supportsOutputPorts',          defaultTo: false },
+        { name: 'supportsBidirectionalPorts',   defaultTo: false },
+        { name: 'supportsSignalFlow',           defaultTo: false },
+        { name: 'supportsOpticalCalculation',   defaultTo: false },
+      ];
+      const rptColChecks = await Promise.all(rptNewCols.map(c => db.schema.hasColumn('route_point_templates', c.name)));
+      const rptMissing = rptNewCols.filter((_, i) => !rptColChecks[i]);
+      if (rptMissing.length > 0) {
+        await db.schema.table('route_point_templates', (t: any) => {
+          for (const col of rptMissing) {
+            t.boolean(col.name).notNullable().defaultTo(col.defaultTo);
+          }
+        });
+        logger.info(`Auto-migration: added ${rptMissing.length} flag columns to route_point_templates`);
+      }
+    } catch (err: any) {
+      logger.warn('Auto-migration for route_point_templates flag columns skipped or failed', { error: err.message });
+    }
+
     const rptExists = await db.schema.hasTable('route_point_templates');
     if (!rptExists) {
       await db.schema.createTable('route_point_templates', (t: any) => {
@@ -945,6 +1006,23 @@ const ensureRoutePointTemplateTables = async () => {
           await db.raw('INSERT IGNORE INTO role_permissions (roleId, permissionId) VALUES (?, ?)', [superAdminRole.id, perm.id]);
         }
         logger.info('Auto-migration: route_point_templates permissions assigned to Super Admin role');
+      }
+    }
+
+    // Cleanup: remove duplicate old-format permissions (singular resource names seeded in v1.49/v1.50)
+    if (hasPermissions) {
+      try {
+        const oldPerms = await db('permissions')
+          .whereIn('resource', ['device_category', 'device_type'])
+          .select('id');
+        if (oldPerms.length > 0) {
+          const oldIds = oldPerms.map((p: any) => p.id);
+          await db('role_permissions').whereIn('permissionId', oldIds).delete();
+          await db('permissions').whereIn('id', oldIds).delete();
+          logger.info(`Auto-migration: removed ${oldPerms.length} old singular device_category/device_type permissions`);
+        }
+      } catch (err: any) {
+        logger.warn('Auto-migration: cleanup of old device permissions skipped', { error: err.message });
       }
     }
 

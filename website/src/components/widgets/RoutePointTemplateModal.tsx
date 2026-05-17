@@ -12,6 +12,7 @@ import {
   type DeviceTypeData,
 } from '@/lib/api';
 import styles from '@/app/(dashboard)/dashboard/dashboard.module.css';
+import SearchableSelect from './SearchableSelect';
 
 interface Props {
   template: RoutePointTemplateData | null;
@@ -19,61 +20,122 @@ interface Props {
   onSuccess: () => void;
 }
 
-interface FormState {
-  name:                    string;
-  description:             string;
-  iconId:                  number | null;
-  deviceTypeId:            number | null;
-  isDevice:                boolean;
-  isPointNameRequired:     boolean;
-  isPoleNumberRequired:    boolean;
-  isLandmarkRequired:      boolean;
-  isAddressRequired:       boolean;
-  isPhotoRequired:         boolean;
-  isHeightRequired:        boolean;
-  isOwnerNameRequired:     boolean;
-  isContactNumberRequired: boolean;
-  isElectricityAvailable:  boolean;
-  status:                  'active' | 'inactive';
-}
-
-const EMPTY: FormState = {
-  name:                    '',
-  description:             '',
-  iconId:                  null,
-  deviceTypeId:            null,
-  isDevice:                false,
-  isPointNameRequired:     true,
-  isPoleNumberRequired:    false,
-  isLandmarkRequired:      false,
-  isAddressRequired:       false,
-  isPhotoRequired:         false,
-  isHeightRequired:        false,
-  isOwnerNameRequired:     false,
-  isContactNumberRequired: false,
-  isElectricityAvailable:  false,
-  status:                  'active',
-};
-
-const BOOL_FIELDS: { key: keyof FormState; label: string; hint?: string }[] = [
-  { key: 'isDevice',                label: 'Is a Device', hint: 'Enables device mapping in the field' },
-  { key: 'isPointNameRequired',     label: 'Point Name Required' },
-  { key: 'isPoleNumberRequired',    label: 'Pole Number Required' },
-  { key: 'isLandmarkRequired',      label: 'Landmark Required' },
-  { key: 'isAddressRequired',       label: 'Address Required' },
-  { key: 'isPhotoRequired',         label: 'Photo Required' },
-  { key: 'isHeightRequired',        label: 'Height (m) Required' },
-  { key: 'isOwnerNameRequired',     label: 'Owner Name Required' },
-  { key: 'isContactNumberRequired', label: 'Contact Number Required' },
-  { key: 'isElectricityAvailable',  label: 'Electricity Available' },
+const FLAG_GROUPS: { label: string; flags: { label: string; key: string }[] }[] = [
+  { label: 'Basic Information', flags: [
+    { label: 'Point Name Required',  key: 'isPointNameRequired'  },
+    { label: 'Description Required', key: 'isDescriptionRequired' },
+    { label: 'Remarks Required',     key: 'isRemarksRequired'    },
+  ]},
+  { label: 'Identification', flags: [
+    { label: 'Model Number Required',  key: 'isModelNumberRequired'  },
+    { label: 'Serial Number Required', key: 'isSerialNumberRequired' },
+    { label: 'Asset Tag Required',     key: 'isAssetTagRequired'     },
+  ]},
+  { label: 'Networking', flags: [
+    { label: 'MAC Address Required',  key: 'isMacAddressRequired'  },
+    { label: 'IPv4 Address Required', key: 'isIpv4AddressRequired' },
+    { label: 'IPv6 Address Required', key: 'isIpv6AddressRequired' },
+    { label: 'Subnet Required',       key: 'isSubnetRequired'      },
+    { label: 'Gateway Required',      key: 'isGatewayRequired'     },
+    { label: 'VLAN Required',         key: 'isVlanRequired'        },
+  ]},
+  { label: 'Authentication', flags: [
+    { label: 'Username Required', key: 'isUsernameRequired' },
+    { label: 'Password Required', key: 'isPasswordRequired' },
+    { label: 'SNMP Required',     key: 'isSnmpRequired'     },
+  ]},
+  { label: 'GIS / Location', flags: [
+    { label: 'GPS Location Required', key: 'isGpsLocationRequired' },
+    { label: 'Pole Number Required',  key: 'isPoleNumberRequired'  },
+    { label: 'Landmark Required',     key: 'isLandmarkRequired'    },
+    { label: 'Address Required',      key: 'isAddressRequired'     },
+    { label: 'Height Required',       key: 'isHeightRequired'      },
+  ]},
+  { label: 'Device Installation', flags: [
+    { label: 'Rack Number Required',  key: 'isRackNumberRequired'  },
+    { label: 'Port Required',         key: 'isPortRequired'        },
+    { label: 'Power Source Required', key: 'isPowerSourceRequired' },
+    { label: 'Electricity Required',  key: 'isElectricityRequired' },
+  ]},
+  { label: 'Media / Files', flags: [
+    { label: 'Photo Required',    key: 'isPhotoRequired'    },
+    { label: 'Document Required', key: 'isDocumentRequired' },
+  ]},
+  { label: 'Optical / Signal', flags: [
+    { label: 'Signal Input Required',  key: 'isSignalInputRequired'  },
+    { label: 'Signal Output Required', key: 'isSignalOutputRequired' },
+    { label: 'Attenuation Required',   key: 'isAttenuationRequired'  },
+    { label: 'Fiber Core Required',    key: 'isFiberCoreRequired'    },
+  ]},
+  { label: 'Monitoring', flags: [
+    { label: 'Monitoring Enabled',      key: 'isMonitoringEnabled'     },
+    { label: 'SNMP Monitoring Enabled', key: 'isSnmpMonitoringEnabled' },
+    { label: 'Realtime Status Enabled', key: 'isRealtimeStatusEnabled' },
+  ]},
+  { label: 'Customer & Topology', flags: [
+    { label: 'Customer Mapping Required',    key: 'isCustomerMappingRequired'  },
+    { label: 'Supports Input Ports',         key: 'supportsInputPorts'         },
+    { label: 'Supports Output Ports',        key: 'supportsOutputPorts'        },
+    { label: 'Supports Bidirectional Ports', key: 'supportsBidirectionalPorts' },
+    { label: 'Supports Signal Flow',         key: 'supportsSignalFlow'         },
+    { label: 'Supports Optical Calculation', key: 'supportsOpticalCalculation' },
+  ]},
 ];
+
+const FLAG_DEFAULTS: Record<string, boolean> = {
+  isPointNameRequired:       true,
+  isDescriptionRequired:     false,
+  isRemarksRequired:         false,
+  isModelNumberRequired:     false,
+  isSerialNumberRequired:    false,
+  isAssetTagRequired:        false,
+  isMacAddressRequired:      false,
+  isIpv4AddressRequired:     false,
+  isIpv6AddressRequired:     false,
+  isSubnetRequired:          false,
+  isGatewayRequired:         false,
+  isVlanRequired:            false,
+  isUsernameRequired:        false,
+  isPasswordRequired:        false,
+  isSnmpRequired:            false,
+  isGpsLocationRequired:     false,
+  isPoleNumberRequired:      false,
+  isLandmarkRequired:        false,
+  isAddressRequired:         false,
+  isHeightRequired:          false,
+  isRackNumberRequired:      false,
+  isPortRequired:            false,
+  isPowerSourceRequired:     false,
+  isElectricityRequired:     false,
+  isPhotoRequired:           false,
+  isDocumentRequired:        false,
+  isSignalInputRequired:     false,
+  isSignalOutputRequired:    false,
+  isAttenuationRequired:     false,
+  isFiberCoreRequired:       false,
+  isMonitoringEnabled:       false,
+  isSnmpMonitoringEnabled:   false,
+  isRealtimeStatusEnabled:   false,
+  isCustomerMappingRequired: false,
+  supportsInputPorts:           false,
+  supportsOutputPorts:          false,
+  supportsBidirectionalPorts:   false,
+  supportsSignalFlow:           false,
+  supportsOpticalCalculation:   false,
+};
 
 export default function RoutePointTemplateModal({ template, onClose, onSuccess }: Props) {
   const isEdit = !!template;
-  const [form, setForm]           = useState<FormState>(EMPTY);
-  const [saving, setSaving]       = useState(false);
-  const [errors, setErrors]       = useState<Record<string, string>>({});
-  const [icons, setIcons]         = useState<IconData[]>([]);
+  const [name, setName]               = useState('');
+  const [description, setDescription] = useState('');
+  const [iconId, setIconId]           = useState<number | null>(null);
+  const [deviceTypeId, setDeviceTypeId] = useState<number | null>(null);
+  const [isDevice, setIsDevice]       = useState(false);
+  const [flags, setFlags]             = useState<Record<string, boolean>>({ ...FLAG_DEFAULTS });
+  const [status, setStatus]           = useState<'active' | 'inactive'>('active');
+  const [saving, setSaving]           = useState(false);
+  const [nameErr, setNameErr]         = useState('');
+  const [icons, setIcons]             = useState<IconData[]>([]);
   const [deviceTypes, setDeviceTypes] = useState<DeviceTypeData[]>([]);
 
   useEffect(() => {
@@ -84,61 +146,40 @@ export default function RoutePointTemplateModal({ template, onClose, onSuccess }
   useEffect(() => {
     if (template) {
       const a = template.attributes;
-      setForm({
-        name:                    a.name,
-        description:             a.description ?? '',
-        iconId:                  (a as any).iconId ?? null,
-        deviceTypeId:            (a as any).deviceTypeId ?? null,
-        isDevice:                a.isDevice,
-        isPointNameRequired:     a.isPointNameRequired,
-        isPoleNumberRequired:    a.isPoleNumberRequired,
-        isLandmarkRequired:      a.isLandmarkRequired,
-        isAddressRequired:       a.isAddressRequired,
-        isPhotoRequired:         a.isPhotoRequired,
-        isHeightRequired:        a.isHeightRequired,
-        isOwnerNameRequired:     a.isOwnerNameRequired,
-        isContactNumberRequired: a.isContactNumberRequired,
-        isElectricityAvailable:  a.isElectricityAvailable,
-        status:                  a.status === 'inactive' ? 'inactive' : 'active',
-      });
+      setName(a.name);
+      setDescription(a.description ?? '');
+      setIconId((a as any).iconId ?? null);
+      setDeviceTypeId((a as any).deviceTypeId ?? null);
+      setIsDevice(a.isDevice);
+      setStatus(a.status === 'inactive' ? 'inactive' : 'active');
+      const loaded: Record<string, boolean> = { ...FLAG_DEFAULTS };
+      for (const key of Object.keys(FLAG_DEFAULTS)) {
+        if (key in a) loaded[key] = Boolean((a as any)[key]);
+      }
+      setFlags(loaded);
     } else {
-      setForm(EMPTY);
+      setName(''); setDescription(''); setIconId(null); setDeviceTypeId(null);
+      setIsDevice(false); setStatus('active'); setFlags({ ...FLAG_DEFAULTS });
     }
-    setErrors({});
+    setNameErr('');
   }, [template]);
 
-  const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
-    setForm(prev => ({ ...prev, [key]: value }));
-
-  const validate = (): boolean => {
-    const e: Record<string, string> = {};
-    if (!form.name.trim()) e.name = 'Name is required';
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
+  const setFlag = (key: string, val: boolean) => setFlags(prev => ({ ...prev, [key]: val }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!name.trim()) { setNameErr('Name is required'); return; }
     setSaving(true);
     try {
       const body: Record<string, any> = {
-        name:                    form.name.trim(),
-        description:             form.description.trim() || null,
-        iconId:                  form.iconId,
-        deviceTypeId:            form.deviceTypeId,
-        isDevice:                form.isDevice,
-        isPointNameRequired:     form.isPointNameRequired,
-        isPoleNumberRequired:    form.isPoleNumberRequired,
-        isLandmarkRequired:      form.isLandmarkRequired,
-        isAddressRequired:       form.isAddressRequired,
-        isPhotoRequired:         form.isPhotoRequired,
-        isHeightRequired:        form.isHeightRequired,
-        isOwnerNameRequired:     form.isOwnerNameRequired,
-        isContactNumberRequired: form.isContactNumberRequired,
-        isElectricityAvailable:  form.isElectricityAvailable,
+        name:         name.trim(),
+        description:  description.trim() || null,
+        iconId,
+        deviceTypeId,
+        isDevice,
+        ...flags,
       };
-      if (isEdit) body.status = form.status;
+      if (isEdit) body.status = status;
 
       const res = isEdit
         ? await updateRoutePointTemplate(template!.id, body)
@@ -157,9 +198,11 @@ export default function RoutePointTemplateModal({ template, onClose, onSuccess }
     }
   };
 
+  const checkSt: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem', cursor: 'pointer' };
+
   return (
     <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className={styles.modal} style={{ maxWidth: 560 }}>
+      <div className={styles.modal} style={{ maxWidth: 640 }}>
         {/* Header */}
         <div className={styles.modalHeader}>
           <h3 className={styles.modalTitle}>
@@ -183,51 +226,64 @@ export default function RoutePointTemplateModal({ template, onClose, onSuccess }
                 <input
                   className={styles.input}
                   placeholder="e.g. Electric Pole, FAT Box, Tree"
-                  value={form.name}
-                  onChange={e => set('name', e.target.value)}
+                  value={name}
+                  onChange={e => { setName(e.target.value); setNameErr(''); }}
                 />
-                {errors.name && <span className={styles.errorText}>{errors.name}</span>}
+                {nameErr && <span className={styles.errorText}>{nameErr}</span>}
               </div>
 
-              {/* Icon */}
+              {/* Classification: Is Device */}
+              <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
+                <label className={styles.label}>Classification</label>
+                <label style={checkSt}>
+                  <input
+                    type="checkbox"
+                    checked={isDevice}
+                    onChange={e => { const v = e.target.checked; setIsDevice(v); if (v) setIconId(null); else setDeviceTypeId(null); }}
+                    style={{ width: 15, height: 15, accentColor: '#6366f1', cursor: 'pointer' }}
+                  />
+                  <span style={{ color: 'var(--color-text-primary)' }}>Is a Device</span>
+                  <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.72rem' }}>— Enables device mapping in the field</span>
+                </label>
+              </div>
+
+              {/* Icon — hidden when isDevice is true */}
+              {!isDevice && (
               <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
                 <label className={styles.label}>Icon <span style={{ fontWeight: 400, color: 'var(--color-text-secondary)' }}>(optional)</span></label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <select
-                    className={styles.select}
-                    style={{ flex: 1 }}
-                    value={form.iconId !== null ? String(form.iconId) : ''}
-                    onChange={e => set('iconId', e.target.value ? Number(e.target.value) : null)}
-                  >
-                    <option value="">— No icon —</option>
-                    {icons.map(ic => <option key={ic.id} value={String(ic.id)}>{ic.attributes.name} ({ic.attributes.code})</option>)}
-                  </select>
-                  {form.iconId && (() => {
-                    const ic = icons.find(x => String(x.id) === String(form.iconId));
-                    if (!ic) return null;
-                    return (
-                      <span style={{ width: 28, height: 28, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--color-border)', borderRadius: 4 }}>
-                        {ic.attributes.iconType === 'svg'
-                          ? <span dangerouslySetInnerHTML={{ __html: ic.attributes.svgTemplate?.replace(/<svg([^>]*)>/i, (_, a) => `<svg${a.replace(/\s+(width|height)="[^"]*"/gi, '')} style="width:100%;height:100%">`) || '' }} style={{ display: 'flex', width: 20, height: 20 }} />
-                          : <img src={ic.attributes.iconUrl || ''} alt="" style={{ width: 20, height: 20, objectFit: 'contain' }} />}
-                      </span>
-                    );
-                  })()}
-                </div>
+                <SearchableSelect
+                  placeholder="— No icon —"
+                  value={iconId !== null ? String(iconId) : ''}
+                  onChange={v => setIconId(v ? Number(v) : null)}
+                  options={icons.map(ic => ({
+                    value: String(ic.attributes.numericId),
+                    label: `${ic.attributes.name} (${ic.attributes.code})`,
+                    preview: ic.attributes.iconType === 'svg' && ic.attributes.svgTemplate
+                      ? <span dangerouslySetInnerHTML={{ __html: ic.attributes.svgTemplate.replace(/<svg([^>]*)>/i, (_, a) => `<svg${a.replace(/\s+(width|height)="[^"]*"/gi, '')} style="width:18px;height:18px">`) }} style={{ display: 'flex', width: 18, height: 18 }} />
+                      : ic.attributes.iconUrl ? <img src={ic.attributes.iconUrl} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} /> : undefined,
+                  }))}
+                />
               </div>
+              )}
 
-              {/* Device Type */}
+              {/* Device Type — only when isDevice is true */}
+              {isDevice && (
               <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
                 <label className={styles.label}>Device Type <span style={{ fontWeight: 400, color: 'var(--color-text-secondary)' }}>(optional)</span></label>
-                <select
-                  className={styles.select}
-                  value={form.deviceTypeId !== null ? String(form.deviceTypeId) : ''}
-                  onChange={e => set('deviceTypeId', e.target.value ? Number(e.target.value) : null)}
-                >
-                  <option value="">— No device type —</option>
-                  {deviceTypes.map(dt => <option key={dt.id} value={String(dt.id)}>{dt.attributes.name} ({dt.attributes.code})</option>)}
-                </select>
+                <SearchableSelect
+                  placeholder="— No device type —"
+                  value={deviceTypeId !== null ? String(deviceTypeId) : ''}
+                  onChange={v => setDeviceTypeId(v ? Number(v) : null)}
+                  options={deviceTypes.map(dt => ({
+                    value: String(dt.attributes.numericId),
+                    label: `${dt.attributes.name} (${dt.attributes.code})`,
+                    preview: dt.attributes.iconSvgTemplate
+                      ? <span dangerouslySetInnerHTML={{ __html: dt.attributes.iconSvgTemplate.replace(/<svg([^>]*)>/i, (_, a) => `<svg${a.replace(/\s+(width|height)="[^"]*"/gi, '')} style="width:18px;height:18px">`) }} style={{ display: 'flex', width: 18, height: 18 }} />
+                      : dt.attributes.iconUrl ? <img src={dt.attributes.iconUrl} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} /> : undefined,
+                  }))}
+                />
               </div>
+              )}
 
               {/* Description */}
               <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
@@ -236,27 +292,33 @@ export default function RoutePointTemplateModal({ template, onClose, onSuccess }
                   className={styles.input}
                   placeholder="Brief description of this template…"
                   rows={2}
-                  value={form.description}
-                  onChange={e => set('description', e.target.value)}
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
                   style={{ resize: 'vertical', minHeight: '3rem' }}
                 />
               </div>
 
-              {/* Boolean flags */}
+              {/* Field Flags */}
               <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
                 <label className={styles.label}>Field Flags</label>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.25rem' }}>
-                  {BOOL_FIELDS.map(({ key, label, hint }) => (
-                    <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.82rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={form[key] as boolean}
-                        onChange={e => set(key, e.target.checked)}
-                        style={{ width: 15, height: 15, accentColor: '#6366f1', cursor: 'pointer' }}
-                      />
-                      <span style={{ color: 'var(--color-text-primary)' }}>{label}</span>
-                      {hint && <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.72rem' }}>— {hint}</span>}
-                    </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.25rem' }}>
+                  {FLAG_GROUPS.map(group => (
+                    <div key={group.label} style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '0.6rem 0.8rem' }}>
+                      <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.45rem' }}>{group.label}</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem 1rem' }}>
+                        {group.flags.map(({ label, key }) => (
+                          <label key={key} style={checkSt}>
+                            <input
+                              type="checkbox"
+                              checked={flags[key] ?? false}
+                              onChange={e => setFlag(key, e.target.checked)}
+                              style={{ width: 15, height: 15, accentColor: '#6366f1', cursor: 'pointer' }}
+                            />
+                            <span style={{ color: 'var(--color-text-primary)' }}>{label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -267,8 +329,8 @@ export default function RoutePointTemplateModal({ template, onClose, onSuccess }
                   <label className={styles.label}>Status</label>
                   <select
                     className={styles.select}
-                    value={form.status}
-                    onChange={e => set('status', e.target.value as 'active' | 'inactive')}
+                    value={status}
+                    onChange={e => setStatus(e.target.value as 'active' | 'inactive')}
                   >
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>

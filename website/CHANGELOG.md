@@ -2,6 +2,32 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
+## [1.68.0] - 2026-05-17
+### Added
+- **`SearchableSelect` component** (`website/src/components/widgets/SearchableSelect.tsx`): Reusable searchable dropdown — live text filter input, per-option icon preview slot, hover highlight, checkmark on selected, outside-click close.
+- **Icon previews in RPT modal dropdowns**: Both Icon and Device Type `SearchableSelect` dropdowns render a 18×18 SVG/image preview beside each option label.
+
+### Fixed
+- **Icon and Device Type pre-selection in RPT edit modal**: Dropdowns previously used UUID as option values; now use `numericId` matching the numeric FK stored on the template — selections now pre-populate correctly on edit.
+- **`DeviceTypeData` type** (`api.ts`): Added missing icon fields (`iconId`, `iconName`, `iconCode`, `iconFileType`, `iconSvgTemplate`, `iconUrl`) to the TypeScript interface.
+- **Duplicate permission groups in Edit Role modal**: `ROUTE_PERMISSIONS` corrected from singular `device_category`/`device_type` to plural `device_categories`/`device_types`; backend startup now purges old singular-resource permissions from DB.
+
+### Changed
+- **Classification section moved** in RPT modal: "Is a Device" checkbox now appears directly below Name (before Icon/Device Type/Description).
+- **Icon field hidden when "Is a Device" is checked**: Toggling the checkbox on clears `iconId` and hides the Icon dropdown; toggling off clears `deviceTypeId` and hides the Device Type dropdown.
+- **Device Type dropdown hidden when "Is a Device" is unchecked**.
+
+## [1.67.0] - 2026-05-17
+### Added
+- **36 field flags in Route Point Template modal** (`RoutePointTemplateModal`): Full rewrite — `FLAG_GROUPS` (10 groups), `FLAG_DEFAULTS`, `flags: Record<string, boolean>` state, 2-column grouped checkbox grid with section headers.
+- **`isDevice` checkbox** in RPT modal: "Classification" section with "Is a Device" toggle.
+- **`RoutePointTemplateData` type updated** (`api.ts`): All 36 flags + `isDevice` added; old 3 flags (`isOwnerNameRequired`, `isContactNumberRequired`, `isElectricityAvailable`) removed.
+
+### Changed
+- **Device Types modal simplified** (`GlobalDeviceTypeModal`): All 36 flag fields and grouped checkbox UI removed; modal now shows only Name, Category, Icon, Description, Status.
+- **Device Types table** (`DeviceTypesGlobalClient`): "Flags" column removed; view modal "Field Flags" section removed. Table now has 7 columns: Code, Name, Category, Icon, Status, Created, Actions.
+- **Route Point Templates table** (`RoutePointTemplatesClient`): "Required Fields" column now shows an amber "X flags" count badge using all 36 new flag keys.
+
 ## [1.66.0] - 2026-05-17
 ### Added
 - **Device Types view modal** (`/manage/device-types`): Eye icon button in Actions column opens a read-only detail overlay showing name, code badge, category, icon preview, status, description, and all 36 flags grouped into 10 sections. Active flags shown as green badges with checkmark; inactive flags shown as dimmed grey. Footer "Edit" button (RBAC-gated) closes the view and opens the edit modal directly.

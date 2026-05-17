@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { RoutePointTemplateService } from '../services/RoutePointTemplateService.js';
 
-const VERSION = '1.64.0';
+const VERSION = '1.67.0';
 
 export class RoutePointTemplateController {
   constructor(private service: RoutePointTemplateService) {}
@@ -22,16 +22,57 @@ export class RoutePointTemplateController {
         deviceTypeId:            t.deviceTypeId ?? null,
         deviceTypeName:          t.deviceTypeName ?? null,
         deviceTypeCode:          t.deviceTypeCode ?? null,
-        isDevice:                Boolean(t.isDevice),
-        isPointNameRequired:     Boolean(t.isPointNameRequired),
-        isPoleNumberRequired:    Boolean(t.isPoleNumberRequired),
-        isLandmarkRequired:      Boolean(t.isLandmarkRequired),
-        isAddressRequired:       Boolean(t.isAddressRequired),
-        isPhotoRequired:         Boolean(t.isPhotoRequired),
-        isHeightRequired:        Boolean(t.isHeightRequired),
-        isOwnerNameRequired:     Boolean(t.isOwnerNameRequired),
-        isContactNumberRequired: Boolean(t.isContactNumberRequired),
-        isElectricityAvailable:  Boolean(t.isElectricityAvailable),
+        isDevice:                    Boolean(t.isDevice),
+        // Basic Information
+        isPointNameRequired:         Boolean(t.isPointNameRequired),
+        isDescriptionRequired:       Boolean(t.isDescriptionRequired),
+        isRemarksRequired:           Boolean(t.isRemarksRequired),
+        // Identification
+        isModelNumberRequired:       Boolean(t.isModelNumberRequired),
+        isSerialNumberRequired:      Boolean(t.isSerialNumberRequired),
+        isAssetTagRequired:          Boolean(t.isAssetTagRequired),
+        // Networking
+        isMacAddressRequired:        Boolean(t.isMacAddressRequired),
+        isIpv4AddressRequired:       Boolean(t.isIpv4AddressRequired),
+        isIpv6AddressRequired:       Boolean(t.isIpv6AddressRequired),
+        isSubnetRequired:            Boolean(t.isSubnetRequired),
+        isGatewayRequired:           Boolean(t.isGatewayRequired),
+        isVlanRequired:              Boolean(t.isVlanRequired),
+        // Authentication
+        isUsernameRequired:          Boolean(t.isUsernameRequired),
+        isPasswordRequired:          Boolean(t.isPasswordRequired),
+        isSnmpRequired:              Boolean(t.isSnmpRequired),
+        // GIS / Location
+        isGpsLocationRequired:       Boolean(t.isGpsLocationRequired),
+        isPoleNumberRequired:        Boolean(t.isPoleNumberRequired),
+        isLandmarkRequired:          Boolean(t.isLandmarkRequired),
+        isAddressRequired:           Boolean(t.isAddressRequired),
+        isHeightRequired:            Boolean(t.isHeightRequired),
+        // Device Installation
+        isRackNumberRequired:        Boolean(t.isRackNumberRequired),
+        isPortRequired:              Boolean(t.isPortRequired),
+        isPowerSourceRequired:       Boolean(t.isPowerSourceRequired),
+        isElectricityRequired:       Boolean(t.isElectricityRequired),
+        // Media / Files
+        isPhotoRequired:             Boolean(t.isPhotoRequired),
+        isDocumentRequired:          Boolean(t.isDocumentRequired),
+        // Optical / Signal
+        isSignalInputRequired:       Boolean(t.isSignalInputRequired),
+        isSignalOutputRequired:      Boolean(t.isSignalOutputRequired),
+        isAttenuationRequired:       Boolean(t.isAttenuationRequired),
+        isFiberCoreRequired:         Boolean(t.isFiberCoreRequired),
+        // Monitoring
+        isMonitoringEnabled:         Boolean(t.isMonitoringEnabled),
+        isSnmpMonitoringEnabled:     Boolean(t.isSnmpMonitoringEnabled),
+        isRealtimeStatusEnabled:     Boolean(t.isRealtimeStatusEnabled),
+        // Customer Mapping
+        isCustomerMappingRequired:   Boolean(t.isCustomerMappingRequired),
+        // Topology
+        supportsInputPorts:          Boolean(t.supportsInputPorts),
+        supportsOutputPorts:         Boolean(t.supportsOutputPorts),
+        supportsBidirectionalPorts:  Boolean(t.supportsBidirectionalPorts),
+        supportsSignalFlow:          Boolean(t.supportsSignalFlow),
+        supportsOpticalCalculation:  Boolean(t.supportsOpticalCalculation),
         description:             t.description ?? null,
         status:                  t.status,
       },
@@ -49,9 +90,20 @@ export class RoutePointTemplateController {
   }
 
   private parseBody(raw: Record<string, any>) {
-    const boolFields = ['isDevice','isPointNameRequired','isPoleNumberRequired','isLandmarkRequired',
-      'isAddressRequired','isPhotoRequired','isHeightRequired','isOwnerNameRequired',
-      'isContactNumberRequired','isElectricityAvailable'];
+    const boolFields = [
+      'isDevice',
+      'isPointNameRequired','isDescriptionRequired','isRemarksRequired',
+      'isModelNumberRequired','isSerialNumberRequired','isAssetTagRequired',
+      'isMacAddressRequired','isIpv4AddressRequired','isIpv6AddressRequired','isSubnetRequired','isGatewayRequired','isVlanRequired',
+      'isUsernameRequired','isPasswordRequired','isSnmpRequired',
+      'isGpsLocationRequired','isPoleNumberRequired','isLandmarkRequired','isAddressRequired','isHeightRequired',
+      'isRackNumberRequired','isPortRequired','isPowerSourceRequired','isElectricityRequired',
+      'isPhotoRequired','isDocumentRequired',
+      'isSignalInputRequired','isSignalOutputRequired','isAttenuationRequired','isFiberCoreRequired',
+      'isMonitoringEnabled','isSnmpMonitoringEnabled','isRealtimeStatusEnabled',
+      'isCustomerMappingRequired',
+      'supportsInputPorts','supportsOutputPorts','supportsBidirectionalPorts','supportsSignalFlow','supportsOpticalCalculation',
+    ];
     const out: Record<string, any> = { ...raw };
     for (const f of boolFields) { if (f in raw) out[f] = this.parseBool(raw[f]); }
     if ('iconId'       in raw) out.iconId       = raw.iconId       ? Number(raw.iconId)       : null;

@@ -14,110 +14,6 @@ function fitSvg(svg: string) {
   return svg.replace(/<svg([^>]*)>/i, (_, a) => `<svg${a.replace(/\s+(width|height)="[^"]*"/gi, '')} style="width:100%;height:100%">`);
 }
 
-const FLAG_GROUPS: { label: string; flags: { label: string; key: string }[] }[] = [
-  { label: 'Basic Information', flags: [
-    { label: 'Point Name Required',  key: 'isPointNameRequired'  },
-    { label: 'Description Required', key: 'isDescriptionRequired' },
-    { label: 'Remarks Required',     key: 'isRemarksRequired'    },
-  ]},
-  { label: 'Identification', flags: [
-    { label: 'Model Number Required', key: 'isModelNumberRequired'  },
-    { label: 'Serial Number Required', key: 'isSerialNumberRequired' },
-    { label: 'Asset Tag Required',    key: 'isAssetTagRequired'     },
-  ]},
-  { label: 'Networking', flags: [
-    { label: 'MAC Address Required',  key: 'isMacAddressRequired'  },
-    { label: 'IPv4 Address Required', key: 'isIpv4AddressRequired' },
-    { label: 'IPv6 Address Required', key: 'isIpv6AddressRequired' },
-    { label: 'Subnet Required',       key: 'isSubnetRequired'      },
-    { label: 'Gateway Required',      key: 'isGatewayRequired'     },
-    { label: 'VLAN Required',         key: 'isVlanRequired'        },
-  ]},
-  { label: 'Authentication', flags: [
-    { label: 'Username Required', key: 'isUsernameRequired' },
-    { label: 'Password Required', key: 'isPasswordRequired' },
-    { label: 'SNMP Required',     key: 'isSnmpRequired'     },
-  ]},
-  { label: 'GIS / Location', flags: [
-    { label: 'GPS Location Required', key: 'isGpsLocationRequired' },
-    { label: 'Pole Number Required',  key: 'isPoleNumberRequired'  },
-    { label: 'Landmark Required',     key: 'isLandmarkRequired'    },
-    { label: 'Address Required',      key: 'isAddressRequired'     },
-    { label: 'Height Required',       key: 'isHeightRequired'      },
-  ]},
-  { label: 'Device Installation', flags: [
-    { label: 'Rack Number Required',  key: 'isRackNumberRequired'  },
-    { label: 'Port Required',         key: 'isPortRequired'        },
-    { label: 'Power Source Required', key: 'isPowerSourceRequired' },
-    { label: 'Electricity Required',  key: 'isElectricityRequired' },
-  ]},
-  { label: 'Media / Files', flags: [
-    { label: 'Photo Required',    key: 'isPhotoRequired'    },
-    { label: 'Document Required', key: 'isDocumentRequired' },
-  ]},
-  { label: 'Optical / Signal', flags: [
-    { label: 'Signal Input Required',  key: 'isSignalInputRequired'  },
-    { label: 'Signal Output Required', key: 'isSignalOutputRequired' },
-    { label: 'Attenuation Required',   key: 'isAttenuationRequired'  },
-    { label: 'Fiber Core Required',    key: 'isFiberCoreRequired'    },
-  ]},
-  { label: 'Monitoring', flags: [
-    { label: 'Monitoring Enabled',       key: 'isMonitoringEnabled'     },
-    { label: 'SNMP Monitoring Enabled',  key: 'isSnmpMonitoringEnabled' },
-    { label: 'Realtime Status Enabled',  key: 'isRealtimeStatusEnabled' },
-  ]},
-  { label: 'Customer & Topology', flags: [
-    { label: 'Customer Mapping Required',    key: 'isCustomerMappingRequired'  },
-    { label: 'Supports Input Ports',         key: 'supportsInputPorts'         },
-    { label: 'Supports Output Ports',        key: 'supportsOutputPorts'        },
-    { label: 'Supports Bidirectional Ports', key: 'supportsBidirectionalPorts' },
-    { label: 'Supports Signal Flow',         key: 'supportsSignalFlow'         },
-    { label: 'Supports Optical Calculation', key: 'supportsOpticalCalculation' },
-  ]},
-];
-
-const FLAG_DEFAULTS: Record<string, boolean> = {
-  isPointNameRequired:       true,
-  isDescriptionRequired:     false,
-  isRemarksRequired:         false,
-  isModelNumberRequired:     false,
-  isSerialNumberRequired:    false,
-  isAssetTagRequired:        false,
-  isMacAddressRequired:      false,
-  isIpv4AddressRequired:     false,
-  isIpv6AddressRequired:     false,
-  isSubnetRequired:          false,
-  isGatewayRequired:         false,
-  isVlanRequired:            false,
-  isUsernameRequired:        false,
-  isPasswordRequired:        false,
-  isSnmpRequired:            false,
-  isGpsLocationRequired:     false,
-  isPoleNumberRequired:      false,
-  isLandmarkRequired:        false,
-  isAddressRequired:         false,
-  isHeightRequired:          false,
-  isRackNumberRequired:      false,
-  isPortRequired:            false,
-  isPowerSourceRequired:     false,
-  isElectricityRequired:     false,
-  isPhotoRequired:           false,
-  isDocumentRequired:        false,
-  isSignalInputRequired:     false,
-  isSignalOutputRequired:    false,
-  isAttenuationRequired:     false,
-  isFiberCoreRequired:       false,
-  isMonitoringEnabled:       false,
-  isSnmpMonitoringEnabled:   false,
-  isRealtimeStatusEnabled:   false,
-  isCustomerMappingRequired: false,
-  supportsInputPorts:           false,
-  supportsOutputPorts:          false,
-  supportsBidirectionalPorts:   false,
-  supportsSignalFlow:           false,
-  supportsOpticalCalculation:   false,
-};
-
 export default function GlobalDeviceTypeModal({ deviceType, categories, onClose, onSuccess }: Props) {
   const isEdit = !!deviceType;
   const [name, setName]                         = useState('');
@@ -125,7 +21,6 @@ export default function GlobalDeviceTypeModal({ deviceType, categories, onClose,
   const [deviceCategoryId, setDeviceCategoryId] = useState('');
   const [iconId, setIconId]                     = useState('');
   const [status, setStatus]                     = useState<'active' | 'inactive'>('active');
-  const [flags, setFlags]                       = useState<Record<string, boolean>>({ ...FLAG_DEFAULTS });
   const [saving, setSaving]                     = useState(false);
   const [nameErr, setNameErr]                   = useState('');
   const [icons, setIcons]                       = useState<IconData[]>([]);
@@ -142,21 +37,13 @@ export default function GlobalDeviceTypeModal({ deviceType, categories, onClose,
       setDeviceCategoryId(a.deviceCategoryId != null ? String(a.deviceCategoryId) : '');
       setIconId(a.iconId != null ? String(a.iconId) : '');
       setStatus(a.status === 'inactive' ? 'inactive' : 'active');
-      const loaded: Record<string, boolean> = { ...FLAG_DEFAULTS };
-      for (const key of Object.keys(FLAG_DEFAULTS)) {
-        if (key in a) loaded[key] = Boolean((a as any)[key]);
-      }
-      setFlags(loaded);
     } else {
       setName(''); setDescription(''); setDeviceCategoryId(''); setIconId(''); setStatus('active');
-      setFlags({ ...FLAG_DEFAULTS });
     }
     setNameErr('');
   }, [deviceType]);
 
   const selectedIcon = icons.find(ic => String(ic.attributes.numericId) === iconId);
-
-  const setFlag = (key: string, val: boolean) => setFlags(prev => ({ ...prev, [key]: val }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,7 +55,6 @@ export default function GlobalDeviceTypeModal({ deviceType, categories, onClose,
         description: description.trim() || null,
         deviceCategoryId: deviceCategoryId ? Number(deviceCategoryId) : null,
         iconId: iconId ? Number(iconId) : null,
-        ...flags,
       };
       if (isEdit) body.status = status;
       const res = isEdit
@@ -182,11 +68,10 @@ export default function GlobalDeviceTypeModal({ deviceType, categories, onClose,
 
   const inputSt: React.CSSProperties  = { width: '100%', padding: '0.5rem 0.7rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-bg-primary)', color: 'var(--color-text-primary)', fontSize: '0.85rem', boxSizing: 'border-box' };
   const labelSt: React.CSSProperties  = { display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: '0.3rem', textTransform: 'uppercase', letterSpacing: '0.04em' };
-  const checkSt: React.CSSProperties  = { display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem', cursor: 'pointer' };
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1rem' }} onClick={onClose}>
-      <div style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: 640, boxShadow: 'var(--shadow-lg)', overflow: 'hidden', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+      <div style={{ background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: 540, boxShadow: 'var(--shadow-lg)', overflow: 'hidden', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', borderBottom: '1px solid var(--color-border)', position: 'sticky', top: 0, background: 'var(--color-bg-secondary)', zIndex: 1 }}>
           <h2 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700 }}>{isEdit ? 'Edit Device Type' : 'Add Device Type'}</h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
@@ -222,31 +107,6 @@ export default function GlobalDeviceTypeModal({ deviceType, categories, onClose,
               )}
             </div>
           </div>
-
-          <div>
-            <label style={labelSt}>Field Flags</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.25rem' }}>
-              {FLAG_GROUPS.map(group => (
-                <div key={group.label} style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '0.6rem 0.8rem' }}>
-                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.45rem' }}>{group.label}</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem 1rem' }}>
-                    {group.flags.map(({ label, key }) => (
-                      <label key={key} style={checkSt}>
-                        <input
-                          type="checkbox"
-                          checked={flags[key] ?? false}
-                          onChange={e => setFlag(key, e.target.checked)}
-                          style={{ width: 15, height: 15, accentColor: '#6366f1', cursor: 'pointer' }}
-                        />
-                        <span style={{ color: 'var(--color-text-primary)' }}>{label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
           <div>
             <label style={labelSt}>Description</label>
             <textarea style={{ ...inputSt, resize: 'vertical' }} rows={2} value={description} onChange={e => setDescription(e.target.value)} placeholder="Optional description…" />
