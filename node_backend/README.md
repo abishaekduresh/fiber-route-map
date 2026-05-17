@@ -4,7 +4,7 @@ The authoritative backend REST API for the Fiber Route Map system, replicated in
 Built using [Express](https://expressjs.com/) and [TypeScript](https://www.typescriptlang.org/), leveraging [Knex.js](https://knexjs.org/) for database interaction.
 
 ## Version
-**Current Version:** 1.70.0 — New `GET /api/tenant/route-point-templates` endpoint (tenant-auth); `routePointTemplateUuid` + `fieldData` JSON columns on `tenant_route_points`; route point responses now carry RPT UUID and parsed field data
+**Current Version:** 1.71.0 — Fix: `fieldData` stored in `tenant_route_point_details` (named columns + `metadata` JSON); `routePointTemplateUuid` auto-migrated; `getPoints` LEFT JOINs and reconstructs `fieldData` transparently
 
 ## Interactive Documentation
 The API is fully documented using Swagger/OpenAPI 3.0.

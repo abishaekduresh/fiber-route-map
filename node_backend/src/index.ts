@@ -981,6 +981,15 @@ const ensureRoutePointTemplateTables = async () => {
       logger.info('Auto-migration: added tenantRoutePointDetailId column to tenant_route_points');
     }
 
+    // Patch: add routePointTemplateUuid to tenant_route_points (v1.70.0)
+    const hasRptUuid = await db.schema.hasColumn('tenant_route_points', 'routePointTemplateUuid');
+    if (!hasRptUuid) {
+      await db.schema.alterTable('tenant_route_points', (t: any) => {
+        t.string('routePointTemplateUuid', 36).nullable().after('deviceTypeUuid');
+      });
+      logger.info('Auto-migration: added routePointTemplateUuid column to tenant_route_points');
+    }
+
     // Seed permissions
     const hasPermissions = await db.schema.hasTable('permissions');
     if (hasPermissions && !rptExists) {

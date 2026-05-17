@@ -2,26 +2,27 @@
 
 All notable changes to the Fiber Route Map project will be documented in this file.
 
+## [1.71.0] - 2026-05-17
+
+### Fixed
+- **Route point field data now stored in `tenant_route_point_details`** (backend): Replaced the planned `fieldData` JSON column on `tenant_route_points` (which was never added to the DB and caused `Unknown column 'fieldData' in 'field list'` on every save) with the pre-existing `tenant_route_point_details` table.
+  - Named fields (`pointName`, `poleNumber`, `landmark`, `address`→`addressLine1`, `ownerName`, `contactNumber`, `height`→`heightMeters`, `electricity`→`electricityAvailable`, `remarks`) map to dedicated columns.
+  - All remaining RPT-driven fields (description, modelNumber, serialNumber, assetTag, macAddress, ipv4, ipv6, subnet, gateway, VLAN, username, password, SNMP, rackNumber, port, powerSource, signalIn/Out, attenuation, fiberCore) are stored in the `metadata` JSON column.
+  - `getPoints` LEFT JOINs `tenant_route_point_details` and reconstructs the `fieldData` object transparently — API response shape is unchanged.
+- **`routePointTemplateUuid` column added via auto-migration**: No manual SQL required; the column is patched onto `tenant_route_points` at server start with an idempotent `hasColumn` check.
+
 ## [1.70.0] - 2026-05-17
 
 ### Added
 - **Route Point Template selector in draw/edit route panel** (`/tenant/map`): Replaced the separate Icon and Device Type pickers on each route point with a single **Route Point Template** dropdown. After selecting a template, the panel dynamically renders only the input fields whose flags are enabled on that template (up to 27 configurable fields: Point Name, Description, Remarks, Model Number, Serial Number, Asset Tag, MAC Address, IPv4/IPv6, Subnet, Gateway, VLAN, Username, Password, SNMP, Pole Number, Landmark, Address, Height, Rack Number, Port, Power Source, Electricity, Signal In/Out, Attenuation, Fiber Core). GPS location (when flag enabled) is shown as a read-only coordinate read directly from the map click.
 - **`GET /api/tenant/route-point-templates`** — new tenant-auth protected endpoint returning all active global RPTs with full flag set and icon data. Used by the map panel to populate the template selector and render dynamic fields.
-- **`routePointTemplateUuid` and `fieldData` columns** on `tenant_route_points` — new nullable columns storing which RPT was applied to a point and the JSON key→value field data collected from the dynamic form. **Requires manual schema migration** (see below).
 - **Backward compatibility**: when editing legacy route points (no RPT assigned), `pointName`/`pointDescription`/`remarks` DB values are seeded into `fieldData` automatically for seamless display.
 - **RPT icon inline preview** in collapsed point rows — when a template with an icon is selected, the SVG/image preview appears next to the point row header.
+- **"Others" icon type**: Added `others` to the Icon Type enum across backend model, DB auto-migration, `api.ts`, `IconModal`, and `IconsClient`.
 
 ### Changed
 - **Route point form restructured**: Draw and Edit panel point rows no longer show an Icon picker or Device Type picker. All per-point data is now template-driven.
-- **`saveRoute` / `saveEdit` payloads** now carry `routePointTemplateUuid` (RPT UUID) and `fieldData` (JSON) per point. `pointName`, `pointDescription`, and `remarks` are still populated for backward compatibility with the map display layer.
-
-### DB Migration Required
-Run the following SQL on your database:
-```sql
-ALTER TABLE `tenant_route_points`
-  ADD COLUMN `routePointTemplateUuid` VARCHAR(36) NULL DEFAULT NULL AFTER `deviceTypeUuid`,
-  ADD COLUMN `fieldData` JSON NULL DEFAULT NULL AFTER `remarks`;
-```
+- **`saveRoute` / `saveEdit` payloads** now carry `routePointTemplateUuid` (RPT UUID) and `fieldData` per point. `pointName`, `pointDescription`, and `remarks` are still populated for backward compatibility with the map display layer.
 
 ## [1.62.0] - 2026-05-13
 

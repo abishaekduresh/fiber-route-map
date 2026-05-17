@@ -2,6 +2,11 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
+## [1.71.0] - 2026-05-17
+
+### Fixed
+- **Route save no longer fails with SQL error**: Backend now stores RPT field data in `tenant_route_point_details` instead of a non-existent `fieldData` column — map save/update works correctly for route points with a Route Point Template assigned.
+
 ## [1.70.0] - 2026-05-17
 
 ### Added

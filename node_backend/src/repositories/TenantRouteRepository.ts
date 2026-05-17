@@ -142,13 +142,73 @@ export class TenantRouteRepository {
   // ── Points ──────────────────────────────────────────────────────────────────
 
   async getPoints(routeId: number): Promise<TenantRoutePoint[]> {
-    return db(this.pointsTable)
-      .where({ tenantRouteId: routeId })
-      .orderBy('sequenceNumber', 'asc');
+    const rows = await db(this.pointsTable)
+      .leftJoin('tenant_route_point_details as d', `${this.pointsTable}.tenantRoutePointDetailId`, 'd.id')
+      .where({ [`${this.pointsTable}.tenantRouteId`]: routeId })
+      .orderBy(`${this.pointsTable}.sequenceNumber`, 'asc')
+      .select(
+        `${this.pointsTable}.*`,
+        'd.pointName as d_pointName',
+        'd.poleNumber as d_poleNumber',
+        'd.landmark as d_landmark',
+        'd.addressLine1 as d_addressLine1',
+        'd.ownerName as d_ownerName',
+        'd.contactNumber as d_contactNumber',
+        'd.heightMeters as d_heightMeters',
+        'd.electricityAvailable as d_electricityAvailable',
+        'd.remarks as d_remarks',
+        'd.metadata as d_metadata',
+      );
+
+    return rows.map((r: any) => {
+      // Reconstruct fieldData from detail row if present
+      let fieldData: Record<string, string> | null = null;
+      if (r.tenantRoutePointDetailId != null) {
+        const fd: Record<string, string> = {};
+        if (r.d_pointName)        fd.pointName     = r.d_pointName;
+        if (r.d_poleNumber)       fd.poleNumber    = r.d_poleNumber;
+        if (r.d_landmark)         fd.landmark      = r.d_landmark;
+        if (r.d_addressLine1)     fd.address       = r.d_addressLine1;
+        if (r.d_ownerName)        fd.ownerName     = r.d_ownerName;
+        if (r.d_contactNumber)    fd.contactNumber = r.d_contactNumber;
+        if (r.d_heightMeters != null) fd.height    = String(r.d_heightMeters);
+        if (r.d_electricityAvailable != null) fd.electricity = r.d_electricityAvailable ? 'true' : 'false';
+        if (r.d_remarks)          fd.remarks       = r.d_remarks;
+        const meta = r.d_metadata
+          ? (typeof r.d_metadata === 'string' ? JSON.parse(r.d_metadata) : r.d_metadata)
+          : {};
+        Object.assign(fd, meta);
+        if (Object.keys(fd).length > 0) fieldData = fd;
+      }
+
+      const {
+        d_pointName, d_poleNumber, d_landmark, d_addressLine1,
+        d_ownerName, d_contactNumber, d_heightMeters,
+        d_electricityAvailable, d_remarks, d_metadata,
+        ...point
+      } = r;
+      return { ...point, fieldData } as TenantRoutePoint;
+    });
   }
 
+  // fieldData keys that map to named columns in tenant_route_point_details
+  private readonly NAMED_FD_KEYS = new Set([
+    'pointName', 'poleNumber', 'landmark', 'address',
+    'ownerName', 'contactNumber', 'height', 'electricity', 'remarks',
+  ]);
+
   async upsertPoints(routeId: number, points: CreateRoutePointDTO[]): Promise<void> {
-    // Delete old points then re-insert in one operation
+    // Clean up detail rows for old points before deleting them
+    const oldPointIds: number[] = await db(this.pointsTable)
+      .where({ tenantRouteId: routeId })
+      .pluck('id');
+    if (oldPointIds.length > 0) {
+      await db('tenant_route_point_details')
+        .whereIn('tenantRoutePointId', oldPointIds)
+        .delete();
+    }
+
+    // Delete old points then re-insert
     await db(this.pointsTable).where({ tenantRouteId: routeId }).delete();
     if (points.length === 0) return;
 
@@ -164,7 +224,6 @@ export class TenantRouteRepository {
       pointIcon:               p.pointIcon               ?? null,
       deviceTypeUuid:          p.deviceTypeUuid          ?? null,
       routePointTemplateUuid:  p.routePointTemplateUuid  ?? null,
-      fieldData:               p.fieldData ? JSON.stringify(p.fieldData) : null,
       pointName:               p.pointName               ?? null,
       pointDescription:        p.pointDescription        ?? null,
       remarks:                 p.remarks                 ?? null,
@@ -172,6 +231,64 @@ export class TenantRouteRepository {
       updatedAt:               now,
     }));
     await db(this.pointsTable).insert(rows);
+
+    // Insert tenant_route_point_details for points that have a template + fieldData
+    const pointsWithDetails = points.filter(
+      p => p.routePointTemplateUuid && p.fieldData && Object.keys(p.fieldData).length > 0,
+    );
+    if (pointsWithDetails.length === 0) return;
+
+    // Resolve template uuid → id in one query
+    const templateUuids = [...new Set(pointsWithDetails.map(p => p.routePointTemplateUuid!))];
+    const templateRows: { id: number; uuid: string }[] = await db('route_point_templates')
+      .whereIn('uuid', templateUuids)
+      .select('id', 'uuid');
+    const templateIdMap = new Map(templateRows.map(r => [r.uuid, r.id]));
+
+    // Fetch newly inserted point ids by sequenceNumber
+    const insertedPoints: { id: number; sequenceNumber: number }[] = await db(this.pointsTable)
+      .where({ tenantRouteId: routeId })
+      .select('id', 'sequenceNumber');
+    const seqToPointId = new Map(insertedPoints.map(r => [r.sequenceNumber, r.id]));
+
+    for (const p of pointsWithDetails) {
+      const templateId = templateIdMap.get(p.routePointTemplateUuid!);
+      if (!templateId) continue;
+      const pointId = seqToPointId.get(p.sequenceNumber);
+      if (!pointId) continue;
+
+      const fd = p.fieldData!;
+
+      // Metadata: all keys NOT in named columns
+      const metadata: Record<string, string> = {};
+      for (const [k, v] of Object.entries(fd)) {
+        if (!this.NAMED_FD_KEYS.has(k) && v != null && v !== '') {
+          metadata[k] = v;
+        }
+      }
+
+      const [detailId] = await db('tenant_route_point_details').insert({
+        uuid:                 generateUuidV7(),
+        tenantRoutePointId:   pointId,
+        routePointTemplateId: templateId,
+        pointName:            fd.pointName     ?? null,
+        poleNumber:           fd.poleNumber    ?? null,
+        landmark:             fd.landmark      ?? null,
+        addressLine1:         fd.address       ?? null,
+        ownerName:            fd.ownerName     ?? null,
+        contactNumber:        fd.contactNumber ?? null,
+        heightMeters:         fd.height        ? (parseFloat(fd.height) || null) : null,
+        electricityAvailable: fd.electricity === 'true' || fd.electricity === '1' ? 1 : 0,
+        remarks:              fd.remarks       ?? null,
+        metadata:             Object.keys(metadata).length > 0 ? JSON.stringify(metadata) : null,
+        createdAt:            now,
+        updatedAt:            now,
+      });
+
+      await db(this.pointsTable)
+        .where({ id: pointId })
+        .update({ tenantRoutePointDetailId: detailId });
+    }
   }
 
   // ── History ─────────────────────────────────────────────────────────────────

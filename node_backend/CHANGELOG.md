@@ -5,22 +5,23 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.71.0] - 2026-05-17
+
+### Fixed
+- **Route point field data stored in `tenant_route_point_details`** (`TenantRouteRepository`): Replaced the erroneous `fieldData` JSON column insert (which caused `Unknown column 'fieldData' in 'field list'`) with inserts into the pre-existing `tenant_route_point_details` table.
+  - `upsertPoints`: Old detail rows are cleaned up before old points are deleted (prevents orphans). After reinserting points, each point with a `routePointTemplateUuid` + non-empty `fieldData` gets a corresponding `tenant_route_point_details` row; `tenant_route_points.tenantRoutePointDetailId` is updated accordingly.
+  - Named field mapping: `pointName`, `poleNumber`, `landmark`, `address`→`addressLine1`, `ownerName`, `contactNumber`, `height`→`heightMeters`, `electricity`→`electricityAvailable`, `remarks` → named columns; all other keys → `metadata` JSON.
+  - `getPoints`: Now LEFT JOINs `tenant_route_point_details` on `tenantRoutePointDetailId` and reconstructs a `fieldData: Record<string,string>` object from named columns + `metadata`. API response shape is unchanged.
+- **`routePointTemplateUuid` auto-migration** (`index.ts`): Idempotent `hasColumn` patch adds `VARCHAR(36) NULL` column to `tenant_route_points` at server start — no manual SQL required.
+
 ## [1.70.0] - 2026-05-17
 
 ### Added
 - **`GET /api/tenant/route-point-templates`** (`tenantRoutePointTemplateRoutes.ts`): New tenant-auth protected read-only endpoint. Returns all active global route point templates with their full 36-flag set plus joined icon fields (`iconSvgTemplate`, `iconUrl`, `iconFileType`, `iconName`, `iconCode`), device type name/code, and `status`. Used by the map panel to build the RPT selector and render dynamic per-point form fields.
-- **`routePointTemplateUuid` field in `CreateRoutePointDTO` / `TenantRoutePoint`**: New nullable `VARCHAR(36)` storing which Route Point Template was applied to a route point.
-- **`fieldData` field in `CreateRoutePointDTO` / `TenantRoutePoint`**: New nullable `JSON` column storing the collected template-driven field values as a `Record<string, string>` (e.g. `{ modelNumber: "CRS-1016", macAddress: "AA:BB:CC:DD:EE:FF" }`).
-- **`upsertPoints` persists new fields** (`TenantRouteRepository`): `routePointTemplateUuid` stored as-is; `fieldData` JSON-stringified on write, parsed back on read.
-- **`transformPoint` exposes new fields** (`TenantRouteController`): Both `routePointTemplateUuid` and `fieldData` (parsed from JSON string) included in every route point response.
-
-### DB Migration Required
-Run the following SQL on your database before deploying this version:
-```sql
-ALTER TABLE `tenant_route_points`
-  ADD COLUMN `routePointTemplateUuid` VARCHAR(36) NULL DEFAULT NULL AFTER `deviceTypeUuid`,
-  ADD COLUMN `fieldData` JSON NULL DEFAULT NULL AFTER `remarks`;
-```
+- **`routePointTemplateUuid` field in `CreateRoutePointDTO` / `TenantRoutePoint`**: Nullable `VARCHAR(36)` storing which Route Point Template was applied to a route point (auto-migrated at startup).
+- **`fieldData` in `CreateRoutePointDTO` / `TenantRoutePoint`**: `Record<string, string>` — collected template-driven field values, persisted via `tenant_route_point_details` (see v1.71.0 fix).
+- **`transformPoint` exposes new fields** (`TenantRouteController`): Both `routePointTemplateUuid` and `fieldData` included in every route point response.
+- **"Others" icon type**: `others` added to `icons.type` ENUM via auto-migration MODIFY COLUMN on server start.
 
 ## [1.69.0] - 2026-05-17
 ### Added
