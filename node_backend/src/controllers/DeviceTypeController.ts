@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { DeviceTypeService } from '../services/DeviceTypeService.js';
 
-const VERSION = '1.64.0';
+const VERSION = '1.66.0';
 
 export class DeviceTypeController {
   constructor(private service: DeviceTypeService) {}
@@ -22,11 +22,56 @@ export class DeviceTypeController {
         iconFileType:           dt.iconFileType ?? null,
         iconSvgTemplate:        dt.iconSvgTemplate ?? null,
         iconUrl:                dt.iconUrl ?? null,
-        isModelNumberRequired:  Boolean(dt.isModelNumberRequired),
-        isSerialNumberRequired: Boolean(dt.isSerialNumberRequired),
-        isMacAddressRequired:   Boolean(dt.isMacAddressRequired),
-        isIPAddressRequired:    Boolean(dt.isIPAddressRequired),
-        isGpsLocationRequired:  Boolean(dt.isGpsLocationRequired),
+        // Basic Information
+        isPointNameRequired:       Boolean(dt.isPointNameRequired),
+        isDescriptionRequired:     Boolean(dt.isDescriptionRequired),
+        isRemarksRequired:         Boolean(dt.isRemarksRequired),
+        // Identification
+        isModelNumberRequired:     Boolean(dt.isModelNumberRequired),
+        isSerialNumberRequired:    Boolean(dt.isSerialNumberRequired),
+        isAssetTagRequired:        Boolean(dt.isAssetTagRequired),
+        // Networking
+        isMacAddressRequired:      Boolean(dt.isMacAddressRequired),
+        isIpv4AddressRequired:     Boolean(dt.isIpv4AddressRequired),
+        isIpv6AddressRequired:     Boolean(dt.isIpv6AddressRequired),
+        isSubnetRequired:          Boolean(dt.isSubnetRequired),
+        isGatewayRequired:         Boolean(dt.isGatewayRequired),
+        isVlanRequired:            Boolean(dt.isVlanRequired),
+        // Authentication
+        isUsernameRequired:        Boolean(dt.isUsernameRequired),
+        isPasswordRequired:        Boolean(dt.isPasswordRequired),
+        isSnmpRequired:            Boolean(dt.isSnmpRequired),
+        // GIS / Location
+        isGpsLocationRequired:     Boolean(dt.isGpsLocationRequired),
+        isPoleNumberRequired:      Boolean(dt.isPoleNumberRequired),
+        isLandmarkRequired:        Boolean(dt.isLandmarkRequired),
+        isAddressRequired:         Boolean(dt.isAddressRequired),
+        isHeightRequired:          Boolean(dt.isHeightRequired),
+        // Device Installation
+        isRackNumberRequired:      Boolean(dt.isRackNumberRequired),
+        isPortRequired:            Boolean(dt.isPortRequired),
+        isPowerSourceRequired:     Boolean(dt.isPowerSourceRequired),
+        isElectricityRequired:     Boolean(dt.isElectricityRequired),
+        // Media / File
+        isPhotoRequired:           Boolean(dt.isPhotoRequired),
+        isDocumentRequired:        Boolean(dt.isDocumentRequired),
+        // Optical / Signal
+        isSignalInputRequired:     Boolean(dt.isSignalInputRequired),
+        isSignalOutputRequired:    Boolean(dt.isSignalOutputRequired),
+        isAttenuationRequired:     Boolean(dt.isAttenuationRequired),
+        isFiberCoreRequired:       Boolean(dt.isFiberCoreRequired),
+        // Monitoring
+        isMonitoringEnabled:       Boolean(dt.isMonitoringEnabled),
+        isSnmpMonitoringEnabled:   Boolean(dt.isSnmpMonitoringEnabled),
+        isRealtimeStatusEnabled:   Boolean(dt.isRealtimeStatusEnabled),
+        // Customer Mapping
+        isCustomerMappingRequired: Boolean(dt.isCustomerMappingRequired),
+        // Topology
+        supportsInputPorts:           Boolean(dt.supportsInputPorts),
+        supportsOutputPorts:          Boolean(dt.supportsOutputPorts),
+        supportsBidirectionalPorts:   Boolean(dt.supportsBidirectionalPorts),
+        supportsSignalFlow:           Boolean(dt.supportsSignalFlow),
+        supportsOpticalCalculation:   Boolean(dt.supportsOpticalCalculation),
         description:            dt.description ?? null,
         status:                 dt.status,
       },
@@ -41,7 +86,19 @@ export class DeviceTypeController {
 
   private parseBody(raw: any) {
     const out: any = { ...raw };
-    const bools = ['isModelNumberRequired','isSerialNumberRequired','isMacAddressRequired','isIPAddressRequired','isGpsLocationRequired'];
+    const bools = [
+      'isPointNameRequired','isDescriptionRequired','isRemarksRequired',
+      'isModelNumberRequired','isSerialNumberRequired','isAssetTagRequired',
+      'isMacAddressRequired','isIpv4AddressRequired','isIpv6AddressRequired','isSubnetRequired','isGatewayRequired','isVlanRequired',
+      'isUsernameRequired','isPasswordRequired','isSnmpRequired',
+      'isGpsLocationRequired','isPoleNumberRequired','isLandmarkRequired','isAddressRequired','isHeightRequired',
+      'isRackNumberRequired','isPortRequired','isPowerSourceRequired','isElectricityRequired',
+      'isPhotoRequired','isDocumentRequired',
+      'isSignalInputRequired','isSignalOutputRequired','isAttenuationRequired','isFiberCoreRequired',
+      'isMonitoringEnabled','isSnmpMonitoringEnabled','isRealtimeStatusEnabled',
+      'isCustomerMappingRequired',
+      'supportsInputPorts','supportsOutputPorts','supportsBidirectionalPorts','supportsSignalFlow','supportsOpticalCalculation',
+    ];
     for (const f of bools) {
       if (f in raw) out[f] = raw[f] === true || raw[f] === 'true' || raw[f] === 1 || raw[f] === '1';
     }

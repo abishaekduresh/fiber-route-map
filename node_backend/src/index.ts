@@ -786,6 +786,65 @@ const ensureRoutePointTemplateTables = async () => {
       logger.info('Auto-migration: device_types table created');
     }
 
+    // v1.66.0 — Patch device_types: rename isIPAddressRequired → isIpv4AddressRequired and add 31 new flag columns
+    try {
+      const hasOldIp = await db.schema.hasColumn('device_types', 'isIPAddressRequired');
+      if (hasOldIp) {
+        await db.raw('ALTER TABLE `device_types` CHANGE COLUMN `isIPAddressRequired` `isIpv4AddressRequired` BOOLEAN NOT NULL DEFAULT 0');
+        logger.info('Auto-migration: device_types.isIPAddressRequired renamed to isIpv4AddressRequired');
+      }
+
+      const newCols = [
+        { name: 'isPointNameRequired',       defaultTo: true  },
+        { name: 'isDescriptionRequired',     defaultTo: false },
+        { name: 'isRemarksRequired',         defaultTo: false },
+        { name: 'isAssetTagRequired',        defaultTo: false },
+        { name: 'isIpv4AddressRequired',     defaultTo: false },
+        { name: 'isIpv6AddressRequired',     defaultTo: false },
+        { name: 'isSubnetRequired',          defaultTo: false },
+        { name: 'isGatewayRequired',         defaultTo: false },
+        { name: 'isVlanRequired',            defaultTo: false },
+        { name: 'isUsernameRequired',        defaultTo: false },
+        { name: 'isPasswordRequired',        defaultTo: false },
+        { name: 'isSnmpRequired',            defaultTo: false },
+        { name: 'isPoleNumberRequired',      defaultTo: false },
+        { name: 'isLandmarkRequired',        defaultTo: false },
+        { name: 'isAddressRequired',         defaultTo: false },
+        { name: 'isHeightRequired',          defaultTo: false },
+        { name: 'isRackNumberRequired',      defaultTo: false },
+        { name: 'isPortRequired',            defaultTo: false },
+        { name: 'isPowerSourceRequired',     defaultTo: false },
+        { name: 'isElectricityRequired',     defaultTo: false },
+        { name: 'isPhotoRequired',           defaultTo: false },
+        { name: 'isDocumentRequired',        defaultTo: false },
+        { name: 'isSignalInputRequired',     defaultTo: false },
+        { name: 'isSignalOutputRequired',    defaultTo: false },
+        { name: 'isAttenuationRequired',     defaultTo: false },
+        { name: 'isFiberCoreRequired',       defaultTo: false },
+        { name: 'isMonitoringEnabled',       defaultTo: false },
+        { name: 'isSnmpMonitoringEnabled',   defaultTo: false },
+        { name: 'isRealtimeStatusEnabled',   defaultTo: false },
+        { name: 'isCustomerMappingRequired', defaultTo: false },
+        { name: 'supportsInputPorts',           defaultTo: false },
+        { name: 'supportsOutputPorts',          defaultTo: false },
+        { name: 'supportsBidirectionalPorts',   defaultTo: false },
+        { name: 'supportsSignalFlow',           defaultTo: false },
+        { name: 'supportsOpticalCalculation',   defaultTo: false },
+      ];
+      const colChecks = await Promise.all(newCols.map(c => db.schema.hasColumn('device_types', c.name)));
+      const missing = newCols.filter((_, i) => !colChecks[i]);
+      if (missing.length > 0) {
+        await db.schema.table('device_types', (t: any) => {
+          for (const col of missing) {
+            t.boolean(col.name).notNullable().defaultTo(col.defaultTo);
+          }
+        });
+        logger.info(`Auto-migration: added ${missing.length} flag columns to device_types`);
+      }
+    } catch (err: any) {
+      logger.warn('Auto-migration for device_types flag columns skipped or failed', { error: err.message });
+    }
+
     const rptExists = await db.schema.hasTable('route_point_templates');
     if (!rptExists) {
       await db.schema.createTable('route_point_templates', (t: any) => {
@@ -889,8 +948,8 @@ const ensureRoutePointTemplateTables = async () => {
       }
     }
 
-    // Seed device_categories permissions
-    if (hasPermissions && !dcExists) {
+    // Seed device_categories permissions (always run — INSERT IGNORE is idempotent)
+    if (hasPermissions) {
       const { generateUuidV7 } = await import('./utils/uuid.js');
       const { nowDb } = await import('./utils/time.js');
       const now = nowDb();
@@ -912,8 +971,8 @@ const ensureRoutePointTemplateTables = async () => {
       }
     }
 
-    // Seed device_types permissions
-    if (hasPermissions && !dtExists) {
+    // Seed device_types permissions (always run — INSERT IGNORE is idempotent)
+    if (hasPermissions) {
       const { generateUuidV7 } = await import('./utils/uuid.js');
       const { nowDb } = await import('./utils/time.js');
       const now = nowDb();

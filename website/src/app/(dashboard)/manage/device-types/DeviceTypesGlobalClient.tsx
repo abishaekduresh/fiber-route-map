@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/components/providers/AuthContext';
 import { toast } from 'sonner';
 import { getDeviceTypes, getDeviceCategories, deleteDeviceType, type DeviceTypeData, type DeviceCategoryData } from '@/lib/api';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import GlobalDeviceTypeModal from '@/components/widgets/GlobalDeviceTypeModal';
 
@@ -14,6 +15,7 @@ function fitSvgInline(svg: string) {
 
 export default function DeviceTypesGlobalClient() {
   const { hasPermission } = useAuth();
+  const canView   = hasPermission('device_types.view');
   const canCreate = hasPermission('device_types.create');
   const canUpdate = hasPermission('device_types.update');
   const canDelete = hasPermission('device_types.delete');
@@ -52,7 +54,7 @@ export default function DeviceTypesGlobalClient() {
     finally { setLoading(false); }
   }, [page, search, statusFilter, catFilter]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (canView) load(); }, [load, canView]);
 
   const openCreate = () => { setSelected(null); setModalOpen(true); };
   const openEdit   = (t: DeviceTypeData) => { setSelected(t); setModalOpen(true); };
@@ -68,12 +70,34 @@ export default function DeviceTypesGlobalClient() {
     finally { setDeleting(false); setConfirmOpen(false); setPendingDelete(null); }
   };
 
-  const flagKeys = ['isModelNumberRequired','isSerialNumberRequired','isMacAddressRequired','isIPAddressRequired','isGpsLocationRequired'] as const;
-  const flagLabels = { isModelNumberRequired: 'Model#', isSerialNumberRequired: 'Serial#', isMacAddressRequired: 'MAC', isIPAddressRequired: 'IP', isGpsLocationRequired: 'GPS' };
+  const ALL_FLAGS = [
+    'isPointNameRequired','isDescriptionRequired','isRemarksRequired',
+    'isModelNumberRequired','isSerialNumberRequired','isAssetTagRequired',
+    'isMacAddressRequired','isIpv4AddressRequired','isIpv6AddressRequired','isSubnetRequired','isGatewayRequired','isVlanRequired',
+    'isUsernameRequired','isPasswordRequired','isSnmpRequired',
+    'isGpsLocationRequired','isPoleNumberRequired','isLandmarkRequired','isAddressRequired','isHeightRequired',
+    'isRackNumberRequired','isPortRequired','isPowerSourceRequired','isElectricityRequired',
+    'isPhotoRequired','isDocumentRequired',
+    'isSignalInputRequired','isSignalOutputRequired','isAttenuationRequired','isFiberCoreRequired',
+    'isMonitoringEnabled','isSnmpMonitoringEnabled','isRealtimeStatusEnabled',
+    'isCustomerMappingRequired',
+    'supportsInputPorts','supportsOutputPorts','supportsBidirectionalPorts','supportsSignalFlow','supportsOpticalCalculation',
+  ] as const;
 
   const inputSt: React.CSSProperties = { padding: '0.45rem 0.7rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-bg-secondary)', color: 'var(--color-text-primary)', fontSize: '0.8rem' };
 
+  if (!canView) return (
+    <DashboardLayout title="Device Types">
+      <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ marginBottom: '1rem', opacity: 0.4 }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        <p style={{ margin: 0, fontWeight: 600 }}>Access Denied</p>
+        <p style={{ margin: '0.4rem 0 0', fontSize: '0.8rem' }}>You don't have permission to view device types.</p>
+      </div>
+    </DashboardLayout>
+  );
+
   return (
+    <DashboardLayout title="Device Types">
     <div style={{ padding: '1.5rem', maxWidth: 1200, margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
         <div>
@@ -92,7 +116,7 @@ export default function DeviceTypesGlobalClient() {
         <input style={{ ...inputSt, flex: 1, minWidth: 180 }} placeholder="Search by name or code…" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
         <select style={inputSt} value={catFilter} onChange={e => { setCatFilter(e.target.value); setPage(1); }}>
           <option value="">All Categories</option>
-          {categories.map(c => <option key={c.id} value={c.id}>{c.attributes.name}</option>)}
+          {categories.map(c => <option key={c.id} value={String(c.attributes.numericId)}>{c.attributes.name}</option>)}
         </select>
         <select style={inputSt} value={statusFilter} onChange={e => { setStatus(e.target.value); setPage(1); }}>
           <option value="">All Statuses</option>
@@ -128,12 +152,12 @@ export default function DeviceTypesGlobalClient() {
                     : <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.72rem' }}>—</span>}
                 </td>
                 <td style={{ padding: '0.55rem 0.8rem' }}>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
-                    {flagKeys.filter(k => t.attributes[k]).map(k => (
-                      <span key={k} style={{ padding: '1px 5px', borderRadius: 3, fontSize: '0.65rem', fontWeight: 700, background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>{flagLabels[k]}</span>
-                    ))}
-                    {!flagKeys.some(k => t.attributes[k]) && <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.72rem' }}>—</span>}
-                  </div>
+                  {(() => {
+                    const flagCount = ALL_FLAGS.filter(k => t.attributes[k as keyof typeof t.attributes]).length;
+                    return flagCount > 0
+                      ? <span style={{ padding: '1px 7px', borderRadius: 10, fontSize: '0.68rem', fontWeight: 700, background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>{flagCount} flag{flagCount !== 1 ? 's' : ''}</span>
+                      : <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.72rem' }}>—</span>;
+                  })()}
                 </td>
                 <td style={{ padding: '0.55rem 0.8rem' }}>
                   <span style={{ padding: '2px 8px', borderRadius: 10, fontSize: '0.7rem', fontWeight: 700, background: t.attributes.status === 'active' ? 'rgba(16,185,129,0.12)' : 'rgba(100,116,139,0.1)', color: t.attributes.status === 'active' ? '#10b981' : '#94a3b8' }}>{t.attributes.status}</span>
@@ -188,5 +212,6 @@ export default function DeviceTypesGlobalClient() {
         onCancel={() => { setConfirmOpen(false); setPendingDelete(null); }}
       />
     </div>
+    </DashboardLayout>
   );
 }

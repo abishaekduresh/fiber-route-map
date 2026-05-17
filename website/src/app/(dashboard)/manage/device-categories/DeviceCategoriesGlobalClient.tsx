@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/components/providers/AuthContext';
 import { toast } from 'sonner';
 import { getDeviceCategories, deleteDeviceCategory, type DeviceCategoryData } from '@/lib/api';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import GlobalDeviceCategoryModal from '@/components/widgets/GlobalDeviceCategoryModal';
 
@@ -11,6 +12,7 @@ const PER_PAGE = 10;
 
 export default function DeviceCategoriesGlobalClient() {
   const { hasPermission } = useAuth();
+  const canView   = hasPermission('device_categories.view');
   const canCreate = hasPermission('device_categories.create');
   const canUpdate = hasPermission('device_categories.update');
   const canDelete = hasPermission('device_categories.delete');
@@ -41,7 +43,7 @@ export default function DeviceCategoriesGlobalClient() {
     finally { setLoading(false); }
   }, [page, search, statusFilter]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (canView) load(); }, [load, canView]);
 
   const openCreate = () => { setSelected(null); setModalOpen(true); };
   const openEdit   = (c: DeviceCategoryData) => { setSelected(c); setModalOpen(true); };
@@ -57,7 +59,18 @@ export default function DeviceCategoriesGlobalClient() {
     finally { setDeleting(false); setConfirmOpen(false); setPendingDelete(null); }
   };
 
+  if (!canView) return (
+    <DashboardLayout title="Device Categories">
+      <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ marginBottom: '1rem', opacity: 0.4 }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        <p style={{ margin: 0, fontWeight: 600 }}>Access Denied</p>
+        <p style={{ margin: '0.4rem 0 0', fontSize: '0.8rem' }}>You don't have permission to view device categories.</p>
+      </div>
+    </DashboardLayout>
+  );
+
   return (
+    <DashboardLayout title="Device Categories">
     <div style={{ padding: '1.5rem', maxWidth: 1100, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
@@ -165,5 +178,6 @@ export default function DeviceCategoriesGlobalClient() {
         onCancel={() => { setConfirmOpen(false); setPendingDelete(null); }}
       />
     </div>
+    </DashboardLayout>
   );
 }

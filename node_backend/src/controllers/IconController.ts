@@ -15,6 +15,7 @@ export class IconController {
       id: w.uuid,
       type: 'icon',
       attributes: {
+        numericId:   w.id,
         code:        w.code,
         name:        w.name,
         type:        w.type,

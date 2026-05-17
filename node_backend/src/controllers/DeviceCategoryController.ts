@@ -10,7 +10,7 @@ export class DeviceCategoryController {
     return {
       id: c.uuid,
       type: 'device_category',
-      attributes: { code: c.code, name: c.name, description: c.description ?? null, status: c.status },
+      attributes: { numericId: c.id, code: c.code, name: c.name, description: c.description ?? null, status: c.status },
       meta: { createdAt: c.createdAt, updatedAt: c.updatedAt },
       links: { self: `/api/device-categories/${c.uuid}` },
     };
