@@ -5,6 +5,12 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.69.0] - 2026-05-17
+### Added
+- **Device type icon joined in RPT API** (`RoutePointTemplateRepository`): Added `LEFT JOIN icons as dt_icons ON device_types.iconId = dt_icons.id` — exposes `deviceTypeIconSvgTemplate`, `deviceTypeIconUrl`, `deviceTypeIconFileType`, `deviceTypeIconName` in every RPT response.
+- **RPT controller**: `transform()` emits all 4 device type icon fields.
+- **Swagger** (`route_point_templates.doc.ts`): GET example updated with `deviceTypeIconSvgTemplate`, `deviceTypeIconUrl`, `deviceTypeIconFileType`, `deviceTypeIconName` fields.
+
 ## [1.68.0] - 2026-05-17
 ### Added
 - **`numericId` in DeviceType API responses**: `DeviceTypeController.transform()` now exposes `attributes.numericId` — required for correct select option matching in Route Point Template modal.

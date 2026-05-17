@@ -2,6 +2,12 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
+## [1.69.0] - 2026-05-17
+### Added
+- **Icon column in Route Point Templates table**: Shows a 28×28 icon badge — device type's icon when `isDevice=true`, RPT's own icon when `isDevice=false`, "—" if none.
+- **View button in Route Point Templates table**: Eye icon opens a read-only detail modal showing name, code badge, status, Device/Passive classification, icon preview (40×40), icon/device type meta, description, and all 10 flag groups with active flags as green checkmark badges and inactive as dimmed grey badges. Footer "Edit" button (RBAC-gated) switches directly to edit modal.
+- **`DeviceTypeData` icon fields** (`api.ts`): Added `deviceTypeIconSvgTemplate`, `deviceTypeIconUrl`, `deviceTypeIconFileType`, `deviceTypeIconName` to `RoutePointTemplateData.attributes`.
+
 ## [1.68.0] - 2026-05-17
 ### Added
 - **`SearchableSelect` component** (`website/src/components/widgets/SearchableSelect.tsx`): Reusable searchable dropdown — live text filter input, per-option icon preview slot, hover highlight, checkmark on selected, outside-click close.

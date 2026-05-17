@@ -46,6 +46,7 @@ export default function RoutePointTemplatesClient() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<RoutePointTemplateData | null>(null);
   const [deleting, setDeleting]   = useState(false);
+  const [viewTemplate, setViewTemplate] = useState<RoutePointTemplateData | null>(null);
 
   const totalPages = Math.ceil(total / PER_PAGE);
 
@@ -147,6 +148,7 @@ export default function RoutePointTemplatesClient() {
               <tr>
                 <th>Code</th>
                 <th>Name</th>
+                <th>Icon</th>
                 <th>Device</th>
                 <th>Required Fields</th>
                 <th>Status</th>
@@ -165,6 +167,24 @@ export default function RoutePointTemplatesClient() {
                       </code>
                     </td>
                     <td style={{ fontWeight: 500 }}>{a.name}</td>
+                    <td>
+                      {(() => {
+                        const svgTpl  = a.isDevice ? a.deviceTypeIconSvgTemplate : a.iconSvgTemplate;
+                        const imgUrl  = a.isDevice ? a.deviceTypeIconUrl         : a.iconUrl;
+                        const label   = a.isDevice ? a.deviceTypeIconName        : a.iconName;
+                        if (svgTpl) return (
+                          <span title={label ?? undefined} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--color-border)', borderRadius: 4 }}>
+                            <span dangerouslySetInnerHTML={{ __html: svgTpl.replace(/<svg([^>]*)>/i, (_, at) => `<svg${at.replace(/\s+(width|height)="[^"]*"/gi, '')} style="width:18px;height:18px">`) }} style={{ display: 'flex', width: 18, height: 18 }} />
+                          </span>
+                        );
+                        if (imgUrl) return (
+                          <span title={label ?? undefined} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--color-border)', borderRadius: 4 }}>
+                            <img src={imgUrl} alt={label ?? ''} style={{ width: 18, height: 18, objectFit: 'contain' }} />
+                          </span>
+                        );
+                        return <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.72rem' }}>—</span>;
+                      })()}
+                    </td>
                     <td>
                       {a.isDevice
                         ? <span className={styles.statusBadge} style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8' }}>Device</span>
@@ -188,6 +208,12 @@ export default function RoutePointTemplatesClient() {
                     </td>
                     <td>
                       <div className={styles.actionCell}>
+                        <button className={styles.actionBtn} title="View" onClick={() => setViewTemplate(t)}
+                          style={{ color: 'var(--color-text-secondary)' }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                          </svg>
+                        </button>
                         {canUpdate && (
                           <button className={`${styles.actionBtn} ${styles.editBtn}`} title="Edit" onClick={() => openEdit(t)}>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -237,6 +263,156 @@ export default function RoutePointTemplatesClient() {
           onSuccess={() => { setModalOpen(false); load(); }}
         />
       )}
+      {/* View Modal */}
+      {viewTemplate && (() => {
+        const a = viewTemplate.attributes;
+        const svgTpl = a.isDevice ? a.deviceTypeIconSvgTemplate : a.iconSvgTemplate;
+        const imgUrl = a.isDevice ? a.deviceTypeIconUrl         : a.iconUrl;
+        const iconLabel = a.isDevice ? a.deviceTypeIconName     : a.iconName;
+        const FLAG_GROUPS: { label: string; flags: { label: string; key: string }[] }[] = [
+          { label: 'Basic Information', flags: [
+            { label: 'Point Name Required',  key: 'isPointNameRequired'  },
+            { label: 'Description Required', key: 'isDescriptionRequired' },
+            { label: 'Remarks Required',     key: 'isRemarksRequired'    },
+          ]},
+          { label: 'Identification', flags: [
+            { label: 'Model Number Required',  key: 'isModelNumberRequired'  },
+            { label: 'Serial Number Required', key: 'isSerialNumberRequired' },
+            { label: 'Asset Tag Required',     key: 'isAssetTagRequired'     },
+          ]},
+          { label: 'Networking', flags: [
+            { label: 'MAC Address Required',  key: 'isMacAddressRequired'  },
+            { label: 'IPv4 Address Required', key: 'isIpv4AddressRequired' },
+            { label: 'IPv6 Address Required', key: 'isIpv6AddressRequired' },
+            { label: 'Subnet Required',       key: 'isSubnetRequired'      },
+            { label: 'Gateway Required',      key: 'isGatewayRequired'     },
+            { label: 'VLAN Required',         key: 'isVlanRequired'        },
+          ]},
+          { label: 'Authentication', flags: [
+            { label: 'Username Required', key: 'isUsernameRequired' },
+            { label: 'Password Required', key: 'isPasswordRequired' },
+            { label: 'SNMP Required',     key: 'isSnmpRequired'     },
+          ]},
+          { label: 'GIS / Location', flags: [
+            { label: 'GPS Location Required', key: 'isGpsLocationRequired' },
+            { label: 'Pole Number Required',  key: 'isPoleNumberRequired'  },
+            { label: 'Landmark Required',     key: 'isLandmarkRequired'    },
+            { label: 'Address Required',      key: 'isAddressRequired'     },
+            { label: 'Height Required',       key: 'isHeightRequired'      },
+          ]},
+          { label: 'Device Installation', flags: [
+            { label: 'Rack Number Required',  key: 'isRackNumberRequired'  },
+            { label: 'Port Required',         key: 'isPortRequired'        },
+            { label: 'Power Source Required', key: 'isPowerSourceRequired' },
+            { label: 'Electricity Required',  key: 'isElectricityRequired' },
+          ]},
+          { label: 'Media / Files', flags: [
+            { label: 'Photo Required',    key: 'isPhotoRequired'    },
+            { label: 'Document Required', key: 'isDocumentRequired' },
+          ]},
+          { label: 'Optical / Signal', flags: [
+            { label: 'Signal Input Required',  key: 'isSignalInputRequired'  },
+            { label: 'Signal Output Required', key: 'isSignalOutputRequired' },
+            { label: 'Attenuation Required',   key: 'isAttenuationRequired'  },
+            { label: 'Fiber Core Required',    key: 'isFiberCoreRequired'    },
+          ]},
+          { label: 'Monitoring', flags: [
+            { label: 'Monitoring Enabled',      key: 'isMonitoringEnabled'     },
+            { label: 'SNMP Monitoring Enabled', key: 'isSnmpMonitoringEnabled' },
+            { label: 'Realtime Status Enabled', key: 'isRealtimeStatusEnabled' },
+          ]},
+          { label: 'Customer & Topology', flags: [
+            { label: 'Customer Mapping Required',    key: 'isCustomerMappingRequired'  },
+            { label: 'Supports Input Ports',         key: 'supportsInputPorts'         },
+            { label: 'Supports Output Ports',        key: 'supportsOutputPorts'        },
+            { label: 'Supports Bidirectional Ports', key: 'supportsBidirectionalPorts' },
+            { label: 'Supports Signal Flow',         key: 'supportsSignalFlow'         },
+            { label: 'Supports Optical Calculation', key: 'supportsOpticalCalculation' },
+          ]},
+        ];
+        return (
+          <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && setViewTemplate(null)}>
+            <div className={styles.modal} style={{ maxWidth: 600 }}>
+              <div className={styles.modalHeader}>
+                <h3 className={styles.modalTitle}>Template Details</h3>
+                <button type="button" className={styles.closeBtn} onClick={() => setViewTemplate(null)}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+              <div className={styles.modalContent}>
+                {/* Name + icon */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                  {(svgTpl || imgUrl) && (
+                    <span style={{ width: 40, height: 40, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--color-border)', borderRadius: 6 }}>
+                      {svgTpl
+                        ? <span dangerouslySetInnerHTML={{ __html: svgTpl.replace(/<svg([^>]*)>/i, (_, at) => `<svg${at.replace(/\s+(width|height)="[^"]*"/gi, '')} style="width:26px;height:26px">`) }} style={{ display: 'flex', width: 26, height: 26 }} />
+                        : <img src={imgUrl!} alt={iconLabel ?? ''} style={{ width: 26, height: 26, objectFit: 'contain' }} />}
+                    </span>
+                  )}
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--color-text-primary)' }}>{a.name}</div>
+                    <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.2rem', flexWrap: 'wrap' }}>
+                      <code style={{ fontSize: '0.75rem', background: 'var(--color-bg-primary)', padding: '0.1rem 0.35rem', borderRadius: 4, border: '1px solid var(--color-border)' }}>{a.code}</code>
+                      <span className={`${styles.statusBadge} ${a.status === 'active' ? styles['status-active'] : styles['status-pending']}`}>{a.status}</span>
+                      {a.isDevice
+                        ? <span className={styles.statusBadge} style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8' }}>Device</span>
+                        : <span className={styles.statusBadge} style={{ background: 'rgba(100,116,139,0.1)', color: '#94a3b8' }}>Passive</span>}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Meta rows */}
+                {[
+                  a.iconName       && !a.isDevice && { label: 'Icon',        value: `${a.iconName} (${a.iconCode})` },
+                  a.deviceTypeName && a.isDevice  && { label: 'Device Type', value: `${a.deviceTypeName} (${a.deviceTypeCode})` },
+                  a.description                   && { label: 'Description', value: a.description },
+                ].filter(Boolean).map((row: any) => (
+                  <div key={row.label} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.4rem', fontSize: '0.84rem' }}>
+                    <span style={{ color: 'var(--color-text-secondary)', minWidth: 100 }}>{row.label}</span>
+                    <span style={{ color: 'var(--color-text-primary)' }}>{row.value}</span>
+                  </div>
+                ))}
+
+                {/* Field Flags */}
+                <div style={{ marginTop: '1rem' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Field Flags</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {FLAG_GROUPS.map(group => {
+                      const active = group.flags.filter(f => (a as any)[f.key]);
+                      const inactive = group.flags.filter(f => !(a as any)[f.key]);
+                      return (
+                        <div key={group.label} style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '0.5rem 0.75rem' }}>
+                          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>{group.label}</div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
+                            {active.map(f => (
+                              <span key={f.key} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.72rem', padding: '0.15rem 0.45rem', borderRadius: 999, background: 'rgba(34,197,94,0.12)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.2)' }}>
+                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>
+                                {f.label}
+                              </span>
+                            ))}
+                            {inactive.map(f => (
+                              <span key={f.key} style={{ fontSize: '0.72rem', padding: '0.15rem 0.45rem', borderRadius: 999, background: 'rgba(100,116,139,0.08)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}>
+                                {f.label}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              <div className={styles.modalFooter}>
+                {canUpdate && (
+                  <button className={styles.submitBtn} onClick={() => { setViewTemplate(null); openEdit(viewTemplate); }}>Edit</button>
+                )}
+                <button className={styles.cancelBtn} onClick={() => setViewTemplate(null)}>Close</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       <ConfirmDialog
         isOpen={confirmOpen}
         title="Delete Template"

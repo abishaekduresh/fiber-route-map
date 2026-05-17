@@ -4,7 +4,7 @@ A futuristic, high-performance web dashboard for managing fiber optic networks.
 Built with **Next.js 16 (Turbopack)** and **TypeScript**, featuring a stunning **Glassmorphism Design System**.
 
 ## Version
-**Current Version:** 1.68.0 — Route Point Templates modal: 36 field flags + isDevice classification, searchable dropdowns with icon previews, Classification moved below Name, icon/device-type conditional visibility; SearchableSelect reusable component; duplicate permission groups fixed
+**Current Version:** 1.69.0 — Route Point Templates table: icon column (shows device type or RPT icon), view modal with 10 flag groups and green/grey badges, Edit shortcut from view
 
 ## Features
 - **Map Route Drawing** (`/tenant/map`): Click directly on the map to place route waypoints and save as a new route. "Draw Route" button in the map header (amber, gated by `tenant_routes.create`); turns red "Cancel Draw" when active. Crosshair cursor during draw mode. In-progress dashed amber polyline connects placed points; green circle = start, amber = middle, red = last point. Floating save panel with route name, type, parent, color, thickness, description, widget per point. Saved routes appear immediately on the map.

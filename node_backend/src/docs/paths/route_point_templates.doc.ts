@@ -46,6 +46,10 @@
  *                     deviceTypeId: 1
  *                     deviceTypeName: "OLT"
  *                     deviceTypeCode: "DT0001"
+ *                     deviceTypeIconSvgTemplate: "<svg>…</svg>"
+ *                     deviceTypeIconUrl: null
+ *                     deviceTypeIconFileType: "svg"
+ *                     deviceTypeIconName: "OLT Icon"
  *                     isDevice: true
  *                     isPointNameRequired: true
  *                     isDescriptionRequired: false

@@ -1349,6 +1349,10 @@ export interface RoutePointTemplateData {
     deviceTypeId: number | null;
     deviceTypeName: string | null;
     deviceTypeCode: string | null;
+    deviceTypeIconSvgTemplate: string | null;
+    deviceTypeIconUrl: string | null;
+    deviceTypeIconFileType: string | null;
+    deviceTypeIconName: string | null;
     // Classification flag
     isDevice:                    boolean;
     // Basic Information

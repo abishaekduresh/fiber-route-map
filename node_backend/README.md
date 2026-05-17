@@ -4,7 +4,7 @@ The authoritative backend REST API for the Fiber Route Map system, replicated in
 Built using [Express](https://expressjs.com/) and [TypeScript](https://www.typescriptlang.org/), leveraging [Knex.js](https://knexjs.org/) for database interaction.
 
 ## Version
-**Current Version:** 1.68.0 — 36 dynamic field flags + `isDevice` moved to Route Point Templates; `device_types` API simplified; `numericId` added to DeviceType responses; `SearchableSelect` with icon previews in RPT modal; duplicate `device_category`/`device_type` permissions auto-purged on startup; Swagger updated for RPT
+**Current Version:** 1.69.0 — RPT API now joins device type icon (`deviceTypeIconSvgTemplate`, `deviceTypeIconUrl`, etc.) via `dt_icons` alias; RPT table shows icon column + view modal with flag summary
 
 ## Interactive Documentation
 The API is fully documented using Swagger/OpenAPI 3.0.

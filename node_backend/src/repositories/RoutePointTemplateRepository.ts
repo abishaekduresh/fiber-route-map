@@ -10,6 +10,7 @@ export class RoutePointTemplateRepository {
     return db(this.table)
       .leftJoin('icons', `${this.table}.iconId`, 'icons.id')
       .leftJoin('device_types', `${this.table}.deviceTypeId`, 'device_types.id')
+      .leftJoin('icons as dt_icons', 'device_types.iconId', 'dt_icons.id')
       .whereNot(`${this.table}.status`, 'deleted')
       .select(
         `${this.table}.*`,
@@ -20,6 +21,10 @@ export class RoutePointTemplateRepository {
         'icons.iconUrl as iconUrl',
         'device_types.name as deviceTypeName',
         'device_types.code as deviceTypeCode',
+        'dt_icons.svgTemplate as deviceTypeIconSvgTemplate',
+        'dt_icons.iconUrl as deviceTypeIconUrl',
+        'dt_icons.iconType as deviceTypeIconFileType',
+        'dt_icons.name as deviceTypeIconName',
       );
   }
 
