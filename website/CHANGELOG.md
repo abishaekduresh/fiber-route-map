@@ -2,6 +2,36 @@
 
 All notable changes to the Fiber Route Map Website will be documented in this file.
 
+## [1.66.0] - 2026-05-17
+### Added
+- **Device Types view modal** (`/manage/device-types`): Eye icon button in Actions column opens a read-only detail overlay showing name, code badge, category, icon preview, status, description, and all 36 flags grouped into 10 sections. Active flags shown as green badges with checkmark; inactive flags shown as dimmed grey. Footer "Edit" button (RBAC-gated) closes the view and opens the edit modal directly.
+- **Grouped field flags UI in device type modal** (`GlobalDeviceTypeModal`): Replaced flat 5-checkbox list with a 10-group, 2-column checkbox grid. Groups: Basic Information, Identification, Networking, Authentication, GIS/Location, Device Installation, Media/Files, Optical/Signal, Monitoring, Customer & Topology.
+- **36 field flags in `DeviceTypeData`** (`api.ts`): Interface updated with all new flags; `isIPAddressRequired` removed, `isIpv4AddressRequired` added.
+
+### Fixed
+- **Category and Icon pre-selection in device type edit modal**: `numericId` now exposed in DeviceCategory and Icon API responses; select options use `numericId` as value instead of UUID, matching the numeric foreign key stored on device types.
+- **Device Categories / Device Types permission seeding**: Permissions are now always seeded on startup (INSERT IGNORE) regardless of whether the tables already existed.
+- **`/manage/device-categories` and `/manage/device-types` now show sidebar + topnav**: Both pages wrapped in `DashboardLayout`.
+
+### Changed
+- **Flags column in device types table**: Replaced individual flag badges with a compact "X flags" amber count badge (or "—" if none).
+
+## [1.65.0] - 2026-05-17
+### Removed
+- **Tenant device pages removed**: `/tenant/device-categories`, `/tenant/device-types` pages and all `tenant-device-categories/` and `tenant-device-types/` components deleted.
+- **Old tenant `DeviceCategoryData` / `DeviceTypeData` types and 10 CRUD functions removed** from `api.ts`.
+### Changed
+- **Renamed types**: `GlobalDeviceCategoryData` → `DeviceCategoryData`, `GlobalDeviceTypeData` → `DeviceTypeData`; API functions dropped `Global` prefix.
+- **`MapClient.tsx`**: Category filter updated from `tenantDeviceCategoryId` to `deviceCategoryId`.
+- **`TenantSidebar.tsx`**: Device Categories and Device Types nav entries removed.
+
+## [1.64.0] - 2026-05-17
+### Added
+- **Global Device Categories** (`/manage/device-categories`): DC0001 auto-codes, full CRUD table, `GlobalDeviceCategoryModal`, activate/deactivate, search/status filter, RBAC permission gates (`device_categories.*`).
+- **Global Device Types** (`/manage/device-types`): DT0001 auto-codes, full CRUD table, `GlobalDeviceTypeModal` with category + icon pickers, search/category/status filters, RBAC permission gates (`device_types.*`).
+- **Route Point Templates** (`/manage/route-point-templates`): RPTxxxx auto-codes, full CRUD table, `RoutePointTemplateModal` with icon picker + global device type picker, 10 field-requirement toggles.
+- **Sidebar**: Device Categories and Device Types nav entries under Manage (permission-gated).
+
 ## [1.63.0] - 2026-05-13
 ### Added
 - **Collapsible route point rows** (`/tenant/map`): Both draw and edit panels now show compact, collapsible point rows. Each row header shows: sequence badge, type badge (colored), point name or coordinates (flex-fill), inline icon/device-type preview when collapsed, amber data-dot when the point has any data, and an expand chevron. Expanding a row reveals labeled fields — Icon (with 28×28 preview), Device Type (with preview), Point Name, Note, and a pin-icon coordinate display.

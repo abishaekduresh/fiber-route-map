@@ -5,6 +5,49 @@ All notable changes to the Fiber Route Map Node.js Backend API will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.66.0] - 2026-05-17
+### Added
+- **36 dynamic field flags on `device_types`**: Expanded from 5 flags to 36 booleans across 10 logical groups:
+  - **Basic Information**: `isPointNameRequired` (default `true`), `isDescriptionRequired`, `isRemarksRequired`
+  - **Identification**: `isModelNumberRequired`, `isSerialNumberRequired`, `isAssetTagRequired`
+  - **Networking**: `isMacAddressRequired`, `isIpv4AddressRequired`, `isIpv6AddressRequired`, `isSubnetRequired`, `isGatewayRequired`, `isVlanRequired`
+  - **Authentication**: `isUsernameRequired`, `isPasswordRequired`, `isSnmpRequired`
+  - **GIS / Location**: `isGpsLocationRequired`, `isPoleNumberRequired`, `isLandmarkRequired`, `isAddressRequired`, `isHeightRequired`
+  - **Device Installation**: `isRackNumberRequired`, `isPortRequired`, `isPowerSourceRequired`, `isElectricityRequired`
+  - **Media / Files**: `isPhotoRequired`, `isDocumentRequired`
+  - **Optical / Signal**: `isSignalInputRequired`, `isSignalOutputRequired`, `isAttenuationRequired`, `isFiberCoreRequired`
+  - **Monitoring**: `isMonitoringEnabled`, `isSnmpMonitoringEnabled`, `isRealtimeStatusEnabled`
+  - **Customer & Topology**: `isCustomerMappingRequired`, `supportsInputPorts`, `supportsOutputPorts`, `supportsBidirectionalPorts`, `supportsSignalFlow`, `supportsOpticalCalculation`
+- **`numericId` in DeviceCategory API responses**: `DeviceCategoryController.transform()` now includes `attributes.numericId` (the DB integer id) — enables correct select option matching in frontend modals.
+- **`numericId` in Icon API responses**: `IconController.transform()` now includes `attributes.numericId` — fixes icon pre-selection in device type edit modal.
+- **Auto-migration patch** (`ensureRoutePointTemplateTables`):
+  - Renames `isIPAddressRequired` → `isIpv4AddressRequired` if old column exists.
+  - Batch-checks all 31 new flag columns via `Promise.all(hasColumn)` and adds missing ones in a single `db.schema.table()` call.
+  - `isPointNameRequired` defaults to `true`; all others default to `false`.
+
+### Changed
+- **`isIPAddressRequired` renamed to `isIpv4AddressRequired`** in `DeviceType` model, repository, controller, and Swagger docs.
+- **`DeviceTypeController` version bumped to `1.66.0`**.
+- **Swagger (`device_types.doc.ts`)**: Updated all request/response examples to reflect the full 36-flag schema; old `isIPAddressRequired` replaced with `isIpv4AddressRequired`.
+
+### Fixed
+- **Permission seeding guard** (`index.ts`): Removed `!dcExists` / `!dtExists` gate from `device_categories` and `device_types` permission seeding blocks. Previously, permissions were not inserted when tables already existed (e.g., migrated from `tenant_device_*`). Seeding now always runs (idempotent via `INSERT IGNORE`).
+- **Category/Icon pre-selection in device type edit modal**: Selects now use `numericId` as option values — previously used UUID, which never matched the numeric FK stored on the device type.
+
+## [1.65.0] - 2026-05-17
+### Removed
+- **Tenant device system fully removed**: Deleted `TenantDeviceCategory` and `TenantDeviceType` models, repositories, services, controllers, routes, and Swagger docs. Routes `/api/tenant/device-categories` and `/api/tenant/device-types` deregistered.
+### Changed
+- **Auto-migration**: `ensureTenantDeviceCategoriesTable` and `ensureTenantDeviceTypesTable` now rename old tables to `device_categories`/`device_types` if they exist, or drop if global tables already present.
+- **`db.sql`**: Removed `tenant_device_categories` and `tenant_device_types` DDL blocks.
+
+## [1.64.0] - 2026-05-17
+### Added
+- **Global Device Categories API** (`/api/device-categories`): DC0001 auto-codes, superadmin-scoped, activate/deactivate, soft-delete, RBAC, Swagger, auto-migration.
+- **Global Device Types API** (`/api/device-types`): DT0001 auto-codes, links `device_categories` + `icons`, auto-migration.
+- **Route Point Templates API** (`/api/route-point-templates`): RPTxxxx auto-codes, icon + global device type linking via LEFT JOIN, 10 field toggles, search/filter, RBAC, Swagger, auto-migration.
+- **`index.ts`**: Auto-creates `device_categories`, `device_types`, `route_point_templates` tables; seeds all permissions; assigns to Super Admin role.
+
 ## [1.63.0] - 2026-05-13
 ### Changed
 - No backend changes — frontend-only release. See `website/CHANGELOG.md` for details.
